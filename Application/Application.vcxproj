@@ -21,32 +21,32 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{db304c23-f26c-46f0-89d5-92a3f289b6a9}</ProjectGuid>
-    <RootNamespace>Engine</RootNamespace>
+    <ProjectGuid>{fa0b53df-3902-4154-8a07-2d272cb72b8a}</ProjectGuid>
+    <RootNamespace>Application</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -77,16 +77,14 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External;D:\Education\DLK\engine\Engine\Source;D:\VulkanSDK\1.3.216.0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External;D:\Education\DLK\engine\Engine\Source;D:\Education\DLK\engine\Application\Source;D:\VulkanSDK\1.3.216.0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-    <Lib>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>D:\VulkanSDK\1.3.216.0\Lib32;D:\Education\DLK\engine\Engine\External\GLFW;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Lib>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -97,18 +95,16 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External;D:\Education\DLK\engine\Engine\Source;D:\VulkanSDK\1.3.216.0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External;D:\Education\DLK\engine\Engine\Source;D:\Education\DLK\engine\Application\Source;D:\VulkanSDK\1.3.216.0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-    <Lib>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>D:\VulkanSDK\1.3.216.0\Lib32;D:\Education\DLK\engine\Engine\External\GLFW;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Lib>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -117,16 +113,14 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External;D:\Education\DLK\engine\Engine\Source;D:\VulkanSDK\1.3.216.0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External;D:\Education\DLK\engine\Engine\Source;D:\Education\DLK\engine\Application\Source;D:\VulkanSDK\1.3.216.0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-    <Lib>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>D:\VulkanSDK\1.3.216.0\Lib32;D:\Education\DLK\engine\Engine\External\GLFW;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Lib>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -137,28 +131,24 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External;D:\Education\DLK\engine\Engine\Source;D:\VulkanSDK\1.3.216.0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External;D:\Education\DLK\engine\Engine\Source;D:\Education\DLK\engine\Application\Source;D:\VulkanSDK\1.3.216.0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-    <Lib>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>D:\VulkanSDK\1.3.216.0\Lib32;D:\Education\DLK\engine\Engine\External\GLFW;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Lib>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Engine.h" />
-    <ClInclude Include="External\GLFW\glfw3.h" />
-    <ClInclude Include="External\GLFW\glfw3native.h" />
-    <ClInclude Include="Source\Window\WindowsWindow.h" />
+    <ClCompile Include="Source\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Engine.cpp" />
-    <ClCompile Include="Source\Window\WindowsWindow.cpp" />
+    <ProjectReference Include="..\Engine\Engine.vcxproj">
+      <Project>{db304c23-f26c-46f0-89d5-92a3f289b6a9}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
