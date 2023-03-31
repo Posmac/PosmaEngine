@@ -8,6 +8,8 @@
 #include <optional>
 #include <Windows.h>
 #include <set>
+#include <stdexcept>
+#include <cstdlib>
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include "Include/vulkan/vulkan.h"
@@ -37,6 +39,13 @@ namespace psm
             }
         };
 
+        struct SurfaceData
+        {
+            VkSurfaceCapabilitiesKHR Capabilities;
+            std::vector<VkSurfaceFormatKHR> Formats;
+            std::vector<VkPresentModeKHR> PresentModes;
+        };
+
     public:
         Vulkan();
         void Init(HINSTANCE hInstance, HWND hWnd);
@@ -47,8 +56,15 @@ namespace psm
         void VerifyInstanceExtensionsSupport(std::vector<const char*>& extensionsToEnable);
         void VerifyDeviceExtensionsSupport(std::vector<const char*>& extensionsToEnable);
         void CreateSurface(HINSTANCE hInstance, HWND hWnd);
+        void PopulateSurfaceData();
         void SelectPhysicalDevice();
         void CreateLogicalDevice();
+        void PopulateDebugUtilsMessenger(VkDebugUtilsMessengerCreateInfoEXT& debugMessengerCreateInfo);
+        void CreateDebugUtilsMessenger();
+        void CreateSwapchain();
+        void CheckFormatSupport(VkFormat& format);
+        void CheckColorSpaceSupport(VkColorSpaceKHR& colorSpace);
+        void CheckPresentModeSupport(VkPresentModeKHR& presentMode);
     private:
 
         std::vector<const char*> m_ValidationLayers =
@@ -81,5 +97,14 @@ namespace psm
         VkDevice m_LogicalDevice;
         VkSurfaceKHR m_Surface;
         QueueFamilyIndices m_QueueIndices;
+        VkDebugUtilsMessengerEXT m_DebugUtilsMessenger;
+        SurfaceData m_SurfaceData;
+        VkSwapchainKHR m_SwapChain;
+
+    private:
+        static VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+            void* pUserData);
     };
 }

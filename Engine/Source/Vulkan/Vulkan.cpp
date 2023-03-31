@@ -10,13 +10,28 @@ namespace psm
     void Vulkan::Init(HINSTANCE hInstance, HWND hWnd)
     {
         InitVulkanInstace();
+        CreateDebugUtilsMessenger();
         CreateSurface(hInstance, hWnd);
         SelectPhysicalDevice();
+        PopulateSurfaceData();
         CreateLogicalDevice();
+        CreateSwapchain();
     }
 
     void Vulkan::Deinit()
     {
+        vkDestroySwapchainKHR(m_LogicalDevice, m_SwapChain, nullptr);
+
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, 
+            "vkDestroyDebugUtilsMessengerEXT");
+
+        if (func != nullptr) 
+        {
+            func(m_Instance, m_DebugUtilsMessenger, nullptr);
+        }
+
+        vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
+        vkDestroyDevice(m_LogicalDevice, nullptr);
         vkDestroyInstance(m_Instance, nullptr);
     }
 
@@ -34,9 +49,12 @@ namespace psm
         VerifyLayersSupport(m_ValidationLayers);
         VerifyInstanceExtensionsSupport(m_InstanceExtensions);
 
+        VkDebugUtilsMessengerCreateInfoEXT debugMessegerCreateInfoExt{};
+        PopulateDebugUtilsMessenger(debugMessegerCreateInfoExt);
+
         VkInstanceCreateInfo instanceCreateInfo{};
         instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        instanceCreateInfo.pNext = nullptr;
+        instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugMessegerCreateInfoExt;
         instanceCreateInfo.flags = 0;
         instanceCreateInfo.pApplicationInfo = &applicationInfo;
         instanceCreateInfo.enabledLayerCount = m_ValidationLayers.size();
@@ -169,6 +187,38 @@ namespace psm
         {
             std::cout << "Failed to create surface" << std::endl;
         }
+
+      
+    }
+
+    void Vulkan::PopulateSurfaceData()
+    {
+        //get surface capabilities, formats and present modes
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevice, m_Surface, &m_SurfaceData.Capabilities);
+
+        uint32_t surfaceSuportedFormatsCount;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, m_Surface, &surfaceSuportedFormatsCount, nullptr);
+
+        if (surfaceSuportedFormatsCount == 0)
+        {
+            std::cout << "Failed to get supported surface formats" << std::endl;
+        }
+
+        m_SurfaceData.Formats.resize(surfaceSuportedFormatsCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, m_Surface, &surfaceSuportedFormatsCount,
+            m_SurfaceData.Formats.data());
+
+        uint32_t surfaceSupportedPresentModesCount;
+        vkGetPhysicalDeviceSurfacePresentModesKHR(m_PhysicalDevice, m_Surface, &surfaceSupportedPresentModesCount, nullptr);
+
+        if (surfaceSupportedPresentModesCount == 0)
+        {
+            std::cout << "Failed to get supported surface present modes" << std::endl;
+        }
+
+        m_SurfaceData.PresentModes.resize(surfaceSupportedPresentModesCount);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(m_PhysicalDevice, m_Surface, &surfaceSupportedPresentModesCount,
+            m_SurfaceData.PresentModes.data());
     }
 
     void Vulkan::SelectPhysicalDevice()
@@ -290,5 +340,123 @@ namespace psm
 
         vkGetDeviceQueue(m_LogicalDevice, m_QueueIndices.GraphicsFamily.value(), 0, &m_QueueIndices.GraphicsQueue);
         vkGetDeviceQueue(m_LogicalDevice, m_QueueIndices.PresentFamily.value(), 0, &m_QueueIndices.PresentQueue);
+    }
+
+    void Vulkan::PopulateDebugUtilsMessenger(VkDebugUtilsMessengerCreateInfoEXT& debugMessengerCreateInfo)
+    {
+        debugMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        debugMessengerCreateInfo.flags = 0;
+        debugMessengerCreateInfo.pNext = nullptr;
+        debugMessengerCreateInfo.pfnUserCallback = &DebugMessengerCallback;
+        debugMessengerCreateInfo.messageSeverity =
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        debugMessengerCreateInfo.messageType = 
+            VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    }
+
+    void Vulkan::CreateDebugUtilsMessenger()
+    {
+        VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+        PopulateDebugUtilsMessenger(createInfo);
+
+        auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT");
+        if (func != nullptr) 
+        {
+            VkResult result = func(m_Instance, &createInfo, nullptr, &m_DebugUtilsMessenger);
+            if (result != VK_SUCCESS)
+            {
+                std::cout << "Failed to create Debug utils messenger EXT" << std::endl;
+            }
+        }
+    }
+
+    void Vulkan::CreateSwapchain()
+    {
+        VkSwapchainCreateInfoKHR swapchainCreateInfo{};
+        swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        swapchainCreateInfo.pNext = nullptr;
+        swapchainCreateInfo.flags = 0;
+        swapchainCreateInfo.surface = m_Surface;
+        swapchainCreateInfo.minImageCount =
+            (m_SurfaceData.Capabilities.minImageCount + 1 <= m_SurfaceData.Capabilities.maxImageCount) ?
+            m_SurfaceData.Capabilities.minImageCount + 1 : m_SurfaceData.Capabilities.maxImageCount;
+
+        VkFormat imageFormat = VK_FORMAT_R32G32B32A32_SFLOAT;
+        VkColorSpaceKHR colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+        VkPresentModeKHR presetMode = VK_PRESENT_MODE_MAILBOX_KHR;
+
+        CheckFormatSupport(imageFormat);
+        CheckColorSpaceSupport(colorSpace);
+        CheckPresentModeSupport(presetMode);
+
+        swapchainCreateInfo.imageFormat = imageFormat;
+        swapchainCreateInfo.imageColorSpace = colorSpace;
+        swapchainCreateInfo.imageExtent = m_SurfaceData.Capabilities.currentExtent;
+        swapchainCreateInfo.imageArrayLayers = 1;
+        swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        swapchainCreateInfo.queueFamilyIndexCount = 0;
+        swapchainCreateInfo.pQueueFamilyIndices = nullptr;
+        swapchainCreateInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+        swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        swapchainCreateInfo.presentMode = presetMode;
+        swapchainCreateInfo.clipped = VK_TRUE;
+        swapchainCreateInfo.oldSwapchain = nullptr;
+
+        VkResult result = vkCreateSwapchainKHR(m_LogicalDevice, &swapchainCreateInfo, nullptr,
+            &m_SwapChain);
+
+        if (result != VK_SUCCESS)
+        {
+            std::cout << "Failed to create swapchain" << std::endl;
+        }
+    }
+
+    void Vulkan::CheckColorSpaceSupport(VkColorSpaceKHR& colorSpace)
+    {
+        for (auto& formatProperty : m_SurfaceData.Formats)
+        {
+            if ((formatProperty.colorSpace | colorSpace) == 0)
+            {
+                colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+            }
+        }
+    }
+
+    void Vulkan::CheckPresentModeSupport(VkPresentModeKHR& presentMode)
+    {
+        for (auto& availablePresentMode : m_SurfaceData.PresentModes)
+        {
+            if ((availablePresentMode | presentMode) == 0)
+            {
+                presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+            }
+        }
+    }
+
+    void Vulkan::CheckFormatSupport(VkFormat& format)
+    {
+        for (auto& formatProperty : m_SurfaceData.Formats)
+        {
+            if ((formatProperty.format | format) == 0)
+            {
+                format = VK_FORMAT_R32G32B32A32_SFLOAT;
+            }
+        }
+    }
+
+    VKAPI_ATTR VkBool32 VKAPI_CALL Vulkan::DebugMessengerCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
+        VkDebugUtilsMessageTypeFlagsEXT messageTypes, 
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, 
+        void* pUserData)
+    {
+        std::cerr << "Validation layer ERRORS: " << pCallbackData->pMessage << std::endl;
+        return VK_FALSE;
     }
 }
