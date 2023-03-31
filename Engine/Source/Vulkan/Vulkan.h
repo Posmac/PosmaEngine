@@ -65,6 +65,7 @@ namespace psm
         void CheckFormatSupport(VkFormat& format);
         void CheckColorSpaceSupport(VkColorSpaceKHR& colorSpace);
         void CheckPresentModeSupport(VkPresentModeKHR& presentMode);
+
     private:
 
         std::vector<const char*> m_ValidationLayers =

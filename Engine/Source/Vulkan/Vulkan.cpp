@@ -349,12 +349,9 @@ namespace psm
         debugMessengerCreateInfo.pNext = nullptr;
         debugMessengerCreateInfo.pfnUserCallback = &DebugMessengerCallback;
         debugMessengerCreateInfo.messageSeverity =
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
         debugMessengerCreateInfo.messageType = 
-            VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     }
@@ -421,33 +418,42 @@ namespace psm
     {
         for (auto& formatProperty : m_SurfaceData.Formats)
         {
-            if ((formatProperty.colorSpace | colorSpace) == 0)
+            if (formatProperty.colorSpace == colorSpace)
             {
-                colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+                break;
             }
         }
+
+        std::cout << "Desired color mode isn`t supported. Assigned VK_COLOR_SPACE_SRGB_NONLINEAR_KHR color mode" << std::endl;
+        colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     }
 
     void Vulkan::CheckPresentModeSupport(VkPresentModeKHR& presentMode)
     {
         for (auto& availablePresentMode : m_SurfaceData.PresentModes)
         {
-            if ((availablePresentMode | presentMode) == 0)
+            if (availablePresentMode == presentMode)
             {
-                presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+                break;
             }
         }
+
+        std::cout << "Desired present mode isn`t supported. Assigned VK_PRESENT_MODE_IMMEDIATE_KHR present mode" << std::endl;
+        presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
     }
 
     void Vulkan::CheckFormatSupport(VkFormat& format)
     {
         for (auto& formatProperty : m_SurfaceData.Formats)
         {
-            if ((formatProperty.format | format) == 0)
+            if (formatProperty.format == format)
             {
-                format = VK_FORMAT_R32G32B32A32_SFLOAT;
+                break;
             }
         }
+
+        std::cout << "Desired image format isn`t supported. Assigned VK_FORMAT_R8G8B8A8_UNORM format for image" << std::endl;
+        format = VK_FORMAT_R8G8B8A8_UNORM;
     }
 
     VKAPI_ATTR VkBool32 VKAPI_CALL Vulkan::DebugMessengerCallback(
@@ -456,7 +462,7 @@ namespace psm
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, 
         void* pUserData)
     {
-        std::cerr << "Validation layer ERRORS: " << pCallbackData->pMessage << std::endl;
+        std::cout << pCallbackData->pMessage << std::endl;
         return VK_FALSE;
     }
 }
