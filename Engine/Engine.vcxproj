@@ -162,6 +162,15 @@
     <ClCompile Include="Source\Vulkan\Vulkan.cpp" />
     <ClCompile Include="Source\Window\WindowsWindow.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\compile.bat" />
+    <None Include="Shaders\triangle.frag.glsl" />
+    <None Include="Shaders\triangle.vert.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Shaders\triangle.frag.txt" />
+    <Text Include="Shaders\triangle.vert.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

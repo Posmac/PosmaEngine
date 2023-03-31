@@ -42,4 +42,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\triangle.vert.glsl" />
+    <None Include="Shaders\triangle.frag.glsl" />
+    <None Include="Shaders\compile.bat">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Shaders\triangle.frag.txt" />
+    <Text Include="Shaders\triangle.vert.txt" />
+  </ItemGroup>
 </Project>

@@ -10,6 +10,7 @@
 #include <set>
 #include <stdexcept>
 #include <cstdlib>
+#include <fstream>
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include "Include/vulkan/vulkan.h"
@@ -46,6 +47,11 @@ namespace psm
             std::vector<VkPresentModeKHR> PresentModes;
         };
 
+        struct Vertex
+        {
+            float position[3];
+        };
+
     public:
         Vulkan();
         void Init(HINSTANCE hInstance, HWND hWnd);
@@ -65,6 +71,10 @@ namespace psm
         void CheckFormatSupport(VkFormat& format);
         void CheckColorSpaceSupport(VkColorSpaceKHR& colorSpace);
         void CheckPresentModeSupport(VkPresentModeKHR& presentMode);
+        void QuerrySwapchainImages();
+        void CreateRenderPass();
+        void CreatePipeline();
+        VkShaderModule CreateShaderModule(const std::string& path);
 
     private:
 
@@ -100,7 +110,17 @@ namespace psm
         QueueFamilyIndices m_QueueIndices;
         VkDebugUtilsMessengerEXT m_DebugUtilsMessenger;
         SurfaceData m_SurfaceData;
+
         VkSwapchainKHR m_SwapChain;
+        std::vector<VkImage> m_SwapChainImages;
+        std::vector<VkImageView> m_SwapchainImageViews;
+        VkFormat m_SwapChainImageFormat;
+        VkExtent2D m_SwapChainExtent;
+
+        VkRenderPass m_RenderPass;
+        VkPipelineLayout m_PipelineLayout;
+        VkPipeline m_Pipeline;
+        VkDescriptorSetLayout m_DescriptorSetLayout;
 
     private:
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

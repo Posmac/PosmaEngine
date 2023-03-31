@@ -16,6 +16,9 @@ namespace psm
         PopulateSurfaceData();
         CreateLogicalDevice();
         CreateSwapchain();
+        QuerrySwapchainImages();
+        CreateRenderPass();
+        CreatePipeline();
     }
 
     void Vulkan::Deinit()
@@ -412,6 +415,12 @@ namespace psm
         {
             std::cout << "Failed to create swapchain" << std::endl;
         }
+
+        m_SwapChainImageFormat = imageFormat;
+        m_SwapChainExtent = m_SurfaceData.Capabilities.currentExtent;
+
+        std::cout << "Current extent is: " << m_SwapChainExtent.width << 
+            " " << m_SwapChainExtent.height << std::endl;
     }
 
     void Vulkan::CheckColorSpaceSupport(VkColorSpaceKHR& colorSpace)
@@ -440,6 +449,274 @@ namespace psm
 
         std::cout << "Desired present mode isn`t supported. Assigned VK_PRESENT_MODE_IMMEDIATE_KHR present mode" << std::endl;
         presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+    }
+
+    void Vulkan::QuerrySwapchainImages()
+    {
+        uint32_t imagesCount;
+        vkGetSwapchainImagesKHR(m_LogicalDevice, m_SwapChain, &imagesCount, nullptr);
+        m_SwapChainImages.resize(imagesCount);
+        vkGetSwapchainImagesKHR(m_LogicalDevice, m_SwapChain, &imagesCount, m_SwapChainImages.data());
+
+        std::cout << "Total swapchain images retrived is: " << m_SwapChainImages.size() << std::endl;
+
+        m_SwapchainImageViews.resize(imagesCount);
+
+        for (int i = 0; i < m_SwapChainImages.size(); i++)
+        {
+            VkImageViewCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            createInfo.pNext = nullptr;
+            createInfo.flags = 0;
+            createInfo.image = m_SwapChainImages[i];
+            createInfo.format = m_SwapChainImageFormat;
+            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            createInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+            createInfo.components.g = VK_COMPONENT_SWIZZLE_G;
+            createInfo.components.b = VK_COMPONENT_SWIZZLE_B;
+            createInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            createInfo.subresourceRange.baseMipLevel = 0;
+            createInfo.subresourceRange.baseArrayLayer = 0;
+            createInfo.subresourceRange.levelCount = 1;
+            createInfo.subresourceRange.layerCount = 1;
+
+            VkResult result = vkCreateImageView(m_LogicalDevice, &createInfo,
+                nullptr, &m_SwapchainImageViews[i]);
+
+            if (result != VK_SUCCESS)
+            {
+                std::cout << "Failed to create swapchain image view" << std::endl;
+            }
+        }
+    }
+
+    void Vulkan::CreateRenderPass()
+    {
+        VkAttachmentDescription colorAttachmentDescription{};
+        colorAttachmentDescription.flags = 0;
+        colorAttachmentDescription.format = m_SwapChainImageFormat;
+        colorAttachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        colorAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
+
+        VkAttachmentReference colorAttachmentReference{};
+        colorAttachmentReference.attachment = 0;
+        colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        VkSubpassDescription subpassDescr{};
+        subpassDescr.flags = 0;
+        subpassDescr.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpassDescr.inputAttachmentCount = 0;
+        subpassDescr.pInputAttachments = nullptr;
+        subpassDescr.colorAttachmentCount = 1;
+        subpassDescr.pColorAttachments = &colorAttachmentReference;
+        subpassDescr.pResolveAttachments = nullptr;
+        subpassDescr.pDepthStencilAttachment = nullptr;
+        subpassDescr.preserveAttachmentCount = 0;
+        subpassDescr.pPreserveAttachments = nullptr;
+
+        VkRenderPassCreateInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        renderPassInfo.pNext = nullptr;
+        renderPassInfo.flags = 0;
+        renderPassInfo.attachmentCount = 1;
+        renderPassInfo.pAttachments = &colorAttachmentDescription;
+        renderPassInfo.subpassCount = 1;
+        renderPassInfo.pSubpasses = &subpassDescr;
+        renderPassInfo.dependencyCount = 0;
+        renderPassInfo.pDependencies = nullptr;
+
+        VkResult result = vkCreateRenderPass(m_LogicalDevice, &renderPassInfo, nullptr,
+            &m_RenderPass);
+        if (result != VK_SUCCESS)
+        {
+            std::cout << "Failed to create render pass" << std::endl;
+        }
+    }
+
+    void Vulkan::CreatePipeline()
+    {
+        VkDescriptorSetLayoutCreateInfo descriptorSetInfo{};
+        descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        descriptorSetInfo.pNext = nullptr;
+        descriptorSetInfo.flags = 0;
+        descriptorSetInfo.bindingCount = 0;
+        descriptorSetInfo.pBindings = nullptr;
+
+        vkCreateDescriptorSetLayout(m_LogicalDevice, &descriptorSetInfo, nullptr,
+            &m_DescriptorSetLayout);
+
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.pNext = nullptr;
+        pipelineLayoutInfo.flags = 0;
+        pipelineLayoutInfo.setLayoutCount = 1; 
+        pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
+        pipelineLayoutInfo.pushConstantRangeCount = 0;
+        pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
+        VkResult result = vkCreatePipelineLayout(m_LogicalDevice, &pipelineLayoutInfo, nullptr,
+            &m_PipelineLayout);
+
+        VkShaderModule vertexShaderModule = CreateShaderModule("../Engine/Shaders/triangle.vert.txt");
+        VkShaderModule fragmentShaderModule = CreateShaderModule("../Engine/Shaders/triangle.frag.txt");
+
+        std::vector<VkPipelineShaderStageCreateInfo> shaderStages(2);
+        shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStages[0].pNext = nullptr;
+        shaderStages[0].flags = 0;
+        shaderStages[0].pName = "main";
+        shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+        shaderStages[0].pSpecializationInfo = nullptr;
+        shaderStages[0].module = vertexShaderModule;
+
+        shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStages[1].pNext = nullptr;
+        shaderStages[1].flags = 0;
+        shaderStages[1].pName = "main";
+        shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        shaderStages[1].pSpecializationInfo = nullptr;
+        shaderStages[1].module = fragmentShaderModule;
+
+        VkVertexInputAttributeDescription vertexAttribDescr{};
+        vertexAttribDescr.binding = 0;
+        vertexAttribDescr.format = VK_FORMAT_R32G32B32_SFLOAT;
+        vertexAttribDescr.location = 0;
+        vertexAttribDescr.offset = 0;
+
+        VkVertexInputBindingDescription bindingDescr{};
+        bindingDescr.binding = 0;
+        bindingDescr.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        bindingDescr.stride = sizeof(Vertex);
+
+        VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{};
+        vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputStateCreateInfo.pNext = nullptr;
+        vertexInputStateCreateInfo.flags = 0;
+        vertexInputStateCreateInfo.vertexAttributeDescriptionCount = 1;
+        vertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
+        vertexInputStateCreateInfo.pVertexBindingDescriptions = &bindingDescr;
+        vertexInputStateCreateInfo.pVertexAttributeDescriptions = &vertexAttribDescr;
+
+        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
+        inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        inputAssemblyInfo.pNext = nullptr;
+        inputAssemblyInfo.flags = 0;
+        inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
+        inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+        VkViewport viewPort{};
+        viewPort.x = 0;
+        viewPort.y = 0;
+        viewPort.width = m_SwapChainExtent.width;
+        viewPort.height = m_SwapChainExtent.height;
+        viewPort.minDepth = 0;
+        viewPort.maxDepth = 1;
+
+        VkRect2D scriccors{};
+        scriccors.extent = m_SwapChainExtent;
+        scriccors.offset = { 0, 0 };
+
+        VkPipelineViewportStateCreateInfo viewPortInfo{};
+        viewPortInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewPortInfo.pNext = nullptr;
+        viewPortInfo.flags = 0;
+        viewPortInfo.viewportCount = 1;
+        viewPortInfo.pViewports = &viewPort;
+        viewPortInfo.scissorCount = 1;
+        viewPortInfo.pScissors = &scriccors;
+
+        VkPipelineRasterizationStateCreateInfo rasterizationStateInfo{};
+        rasterizationStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        rasterizationStateInfo.pNext = nullptr;
+        rasterizationStateInfo.flags = 0;
+        rasterizationStateInfo.depthClampEnable = VK_FALSE;
+        rasterizationStateInfo.rasterizerDiscardEnable = VK_FALSE;
+        rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+        rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+        rasterizationStateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterizationStateInfo.depthBiasEnable = VK_FALSE;
+        rasterizationStateInfo.depthBiasConstantFactor = 0;
+        rasterizationStateInfo.depthBiasClamp = 1.0f;
+        rasterizationStateInfo.depthBiasSlopeFactor = 0;
+        rasterizationStateInfo.lineWidth = 1;
+
+        std::vector<VkDynamicState> dynamicStates = {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_SCISSOR
+        };
+
+        VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{};
+        dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicStateCreateInfo.pNext = nullptr;
+        dynamicStateCreateInfo.flags = 0;
+        dynamicStateCreateInfo.dynamicStateCount = 2;
+        dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
+
+        VkGraphicsPipelineCreateInfo graphicsPipelineInfo{};
+        graphicsPipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        graphicsPipelineInfo.flags = 0;
+        graphicsPipelineInfo.pNext = nullptr;
+        graphicsPipelineInfo.stageCount = shaderStages.size();
+        graphicsPipelineInfo.pStages = shaderStages.data();
+        graphicsPipelineInfo.pVertexInputState = &vertexInputStateCreateInfo;
+        graphicsPipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
+        graphicsPipelineInfo.pTessellationState = nullptr;
+        graphicsPipelineInfo.pViewportState = &viewPortInfo;
+        graphicsPipelineInfo.pRasterizationState = &rasterizationStateInfo;
+        graphicsPipelineInfo.pMultisampleState = nullptr;
+        graphicsPipelineInfo.pDepthStencilState = nullptr;
+        graphicsPipelineInfo.pColorBlendState = nullptr;
+        graphicsPipelineInfo.pDynamicState = &dynamicStateCreateInfo;
+        graphicsPipelineInfo.layout = m_PipelineLayout;
+        graphicsPipelineInfo.renderPass = m_RenderPass;
+        graphicsPipelineInfo.subpass = 0;
+        graphicsPipelineInfo.basePipelineHandle = nullptr;
+        graphicsPipelineInfo.basePipelineIndex = 0;
+
+        result = vkCreateGraphicsPipelines(m_LogicalDevice, nullptr, 1, 
+            &graphicsPipelineInfo, nullptr, &m_Pipeline);
+    }
+
+    VkShaderModule Vulkan::CreateShaderModule(const std::string& path)
+    {
+        std::ifstream fileStream(path, std::ios::ate | std::ios::binary);
+        if (!fileStream.is_open())
+        {
+            std::cout << "File path: " << path << " is wrong!" << std::endl;
+            return nullptr;
+        }
+
+        size_t fileSize = (size_t)fileStream.tellg();
+        std::vector<char> buffer(fileSize);
+
+        fileStream.seekg(0);
+        fileStream.read(buffer.data(), fileSize);
+        fileStream.close();
+
+        VkShaderModuleCreateInfo shaderModuleCreateInfo{};
+        shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        shaderModuleCreateInfo.pNext = nullptr;
+        shaderModuleCreateInfo.flags = 0;
+        shaderModuleCreateInfo.codeSize = fileSize;
+        shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(buffer.data());
+
+        VkShaderModule module{};
+        VkResult result = vkCreateShaderModule(m_LogicalDevice, &shaderModuleCreateInfo,
+            nullptr, &module);
+
+        if (result != VK_SUCCESS)
+        {
+            std::cout << "Failed to create shader module" << std::endl;
+            return nullptr;
+        }
+
+        return module;
     }
 
     void Vulkan::CheckFormatSupport(VkFormat& format)
