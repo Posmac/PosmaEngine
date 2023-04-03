@@ -55,9 +55,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     psm::Log::Init();
 
-    psm::Renderer renderer;
-    renderer.Init(hInstance, hWnd);
-
+    psm::Renderer::Instance()->Init(hInstance, hWnd);
 
     bool isAppRuning = true;
     while (isAppRuning)
@@ -77,11 +75,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
         if (isAppRuning)
         {
-            renderer.Render();
+            psm::Renderer::Instance()->Render();
         }
     }
 
-    renderer.Deinit();
+    psm::Renderer::Instance()->Deinit();
     CloseConsole();
 
     return 0;

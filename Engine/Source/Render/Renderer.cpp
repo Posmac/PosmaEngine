@@ -2,6 +2,18 @@
 
 namespace psm
 {
+    Renderer* Renderer::s_Instance = nullptr;;
+
+    Renderer* Renderer::Instance()
+    {
+        if (s_Instance == nullptr)
+        {
+            s_Instance = new Renderer();
+        }
+
+        return s_Instance;
+    }
+
     Renderer::Renderer()
     {
     }
