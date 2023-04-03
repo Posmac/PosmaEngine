@@ -151,12 +151,14 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Core\Log.h" />
     <ClInclude Include="Source\Engine.h" />
     <ClInclude Include="Source\Render\Renderer.h" />
     <ClInclude Include="Source\Vulkan\Vulkan.h" />
     <ClInclude Include="Source\Window\WindowsWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Core\Log.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
     <ClCompile Include="Source\Render\Renderer.cpp" />
     <ClCompile Include="Source\Vulkan\Vulkan.cpp" />

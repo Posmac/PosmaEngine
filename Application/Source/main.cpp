@@ -6,6 +6,7 @@
 
 #include "Window/WindowsWindow.h"
 #include "Render/Renderer.h"
+#include "Core/Log.h"
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -52,8 +53,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     ShowWindow(hWnd, nCmdShow);
 
+    psm::Log::Init();
+
     psm::Renderer renderer;
     renderer.Init(hInstance, hWnd);
+
 
     bool isAppRuning = true;
     while (isAppRuning)
