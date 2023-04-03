@@ -78,7 +78,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     }
 
     renderer.Deinit();
-    //CloseConsole();
+    CloseConsole();
 
     return 0;
 }
