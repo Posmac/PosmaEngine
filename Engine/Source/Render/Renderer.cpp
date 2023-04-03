@@ -4,7 +4,6 @@ namespace psm
 {
     Renderer::Renderer()
     {
-
     }
 
     void Renderer::Init(HINSTANCE hInstance, HWND hWnd)

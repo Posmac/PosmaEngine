@@ -4,7 +4,6 @@ namespace psm
 {
     Engine::Engine()
     {
-
     }
 
     void Engine::Init(int width, int height)

@@ -8,6 +8,5 @@ namespace psm
         Engine();
         void Init(int width, int height);
         void Dinit();
-    private:
     };
 }
