@@ -8,7 +8,12 @@
 #include "Render/Renderer.h"
 #include "Core/Log.h"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_impl_vulkan.h"
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 FILE* pCout;
 void CreateConsole();
@@ -53,9 +58,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     ShowWindow(hWnd, nCmdShow);
 
-    psm::Log::Init();
+    IMGUI_CHECKVERSION();
+    ImGui::SetCurrentContext(ImGui::CreateContext());
+    ImGui::StyleColorsDark();
+    ImGui_ImplWin32_Init(hWnd);
 
+    psm::Log::Init();
     psm::Renderer::Instance()->Init(hInstance, hWnd);
+
 
     bool isAppRuning = true;
     while (isAppRuning)
@@ -79,6 +89,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         }
     }
 
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
     psm::Renderer::Instance()->Deinit();
     CloseConsole();
 
@@ -87,6 +101,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
+        return true;
+
     switch (uMsg)
     {
     case WM_CLOSE:

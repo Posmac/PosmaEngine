@@ -19,7 +19,5 @@ namespace psm
         void Init(HINSTANCE hInstance, HWND hWnd);
         void Deinit();
         void Render();
-    private:
-        Vulkan m_Vk;
     };
 }

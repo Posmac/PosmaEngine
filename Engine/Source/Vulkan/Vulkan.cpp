@@ -2,9 +2,36 @@
 
 namespace psm
 {
+    Vulkan* Vulkan::s_Instance = nullptr;;
+
+    Vulkan* Vulkan::Instance()
+    {
+        if (s_Instance == nullptr)
+        {
+            s_Instance = new Vulkan();
+        }
+
+        return s_Instance;
+    }
+
     Vulkan::Vulkan()
     {
-
+        m_Instance = VK_NULL_HANDLE;
+        m_PhysicalDevice = VK_NULL_HANDLE;
+        m_LogicalDevice = VK_NULL_HANDLE;
+        m_Surface = VK_NULL_HANDLE;
+        m_DebugUtilsMessenger = VK_NULL_HANDLE;
+        m_SwapChain = VK_NULL_HANDLE;
+        m_RenderPass = VK_NULL_HANDLE;
+        m_PipelineLayout = VK_NULL_HANDLE;
+        m_Pipeline = VK_NULL_HANDLE;
+        m_DescriptorSetLayout = VK_NULL_HANDLE;
+        m_CommandPool = VK_NULL_HANDLE;
+        m_DescriptorsPool = VK_NULL_HANDLE;
+        m_ImageAvailableSemaphore = VK_NULL_HANDLE;
+        m_RenderFinishedSemaphore = VK_NULL_HANDLE;
+        m_VertexBuffer = VK_NULL_HANDLE;
+        m_VertexBufferMemory = VK_NULL_HANDLE;
     }
 
     void Vulkan::Init(HINSTANCE hInstance, HWND hWnd)
@@ -23,7 +50,49 @@ namespace psm
         CreateFramebuffers();
         CreateCommandPool();
         CreateCommandBuffer();
+        CreateDescriptorPool();
         LoadModelData();
+
+        ImGui_ImplVulkan_InitInfo imguiInfo{};
+        imguiInfo.Instance = m_Instance;
+        imguiInfo.PhysicalDevice = m_PhysicalDevice;
+        imguiInfo.Device = m_LogicalDevice;
+        imguiInfo.QueueFamily = m_QueueIndices.GraphicsFamily.value();
+        imguiInfo.Queue = m_QueueIndices.GraphicsQueue;
+        imguiInfo.PipelineCache = nullptr;
+        imguiInfo.DescriptorPool = m_DescriptorsPool;
+        imguiInfo.Subpass = 0;
+        imguiInfo.MinImageCount = m_SwapChainImages.size();
+        imguiInfo.ImageCount = m_SwapChainImages.size();
+        imguiInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        imguiInfo.Allocator = nullptr;
+        imguiInfo.CheckVkResultFn = nullptr;
+
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+        ImGui_ImplVulkan_Init(&imguiInfo, m_RenderPass);
+        {
+            // Use any command queue
+            vkResetCommandPool(m_LogicalDevice, m_CommandPool, 0);
+            VkCommandBufferBeginInfo begin_info = {};
+            begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+            vkBeginCommandBuffer(m_CommandBuffers[0], &begin_info);
+
+            ImGui_ImplVulkan_CreateFontsTexture(m_CommandBuffers[0]);
+
+            VkSubmitInfo end_info = {};
+            end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            end_info.commandBufferCount = 1;
+            end_info.pCommandBuffers = &m_CommandBuffers[0];
+            vkEndCommandBuffer(m_CommandBuffers[0]);
+            vkQueueSubmit(m_QueueIndices.GraphicsQueue, 1, &end_info, VK_NULL_HANDLE);
+
+            vkDeviceWaitIdle(m_LogicalDevice);
+            ImGui_ImplVulkan_DestroyFontUploadObjects();
+        }
     }
 
     void Vulkan::Deinit()
@@ -41,10 +110,10 @@ namespace psm
         }
         vkDestroySwapchainKHR(m_LogicalDevice, m_SwapChain, nullptr);
 
-        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, 
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance,
             "vkDestroyDebugUtilsMessengerEXT");
 
-        if (func != nullptr) 
+        if (func != nullptr)
         {
             func(m_Instance, m_DebugUtilsMessenger, nullptr);
         }
@@ -79,7 +148,7 @@ namespace psm
         instanceCreateInfo.enabledLayerCount = m_ValidationLayers.size();
         instanceCreateInfo.ppEnabledLayerNames = m_ValidationLayers.data();
         instanceCreateInfo.enabledExtensionCount = m_InstanceExtensions.size();
-        instanceCreateInfo.ppEnabledExtensionNames= m_InstanceExtensions.data();
+        instanceCreateInfo.ppEnabledExtensionNames = m_InstanceExtensions.data();
 
         VkResult res = vkCreateInstance(&instanceCreateInfo, nullptr, &m_Instance);
         if (res != VK_SUCCESS)
@@ -113,7 +182,7 @@ namespace psm
         renderPassInfo.renderArea.extent = m_SwapChainExtent;
 
         std::array<VkClearValue, 2> clearColor{};
-        clearColor[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+        clearColor[0].color = { {0.2f, 0.2f, 0.2f, 1.0f} };
         clearColor[1].depthStencil = { 1.0f, 0 };
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearColor.size());
@@ -146,9 +215,33 @@ namespace psm
 
         vkCmdDraw(m_CommandBuffers[imageIndex], static_cast<uint32_t>(m_Vertices.size()), 1, 0, 0);
         //vkCmdDrawIndexed(m_CommandBuffers[imageIndex], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+
+        // Render ImGUI widgets
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+
+        {
+            ImGui::Begin("Test widget");
+            //ImGui::Text("This is some text.");
+            bool show_demo_window = false;
+            float f = 0;
+            glm::vec4 colorClear = glm::vec4(1.0);
+
+            ImGui::Checkbox("Demo Window", &show_demo_window);
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);// Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit4("clear color", &colorClear[0]);
+
+            ImGui::End();
+            ImGui::Render();
+        }
+
+        // Integrate ImGUI into Vulkan rendering pipeline
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffers[imageIndex]);
+
         vkCmdEndRenderPass(m_CommandBuffers[imageIndex]);
 
-        if (vkEndCommandBuffer(m_CommandBuffers[imageIndex]) != VK_SUCCESS) 
+        if (vkEndCommandBuffer(m_CommandBuffers[imageIndex]) != VK_SUCCESS)
         {
             std::cout << "Failed to end command buffer" << std::endl;
         }
@@ -450,15 +543,15 @@ namespace psm
         vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &queueFamilyPropertyCount, availableQueueFamilyProperties.data());
 
         int i = 0;
-        for (const auto& family : availableQueueFamilyProperties) 
+        for (const auto& family : availableQueueFamilyProperties)
         {
             VkBool32 presentSupport = false;
             vkGetPhysicalDeviceSurfaceSupportKHR(m_PhysicalDevice, i, m_Surface, &presentSupport);
-            if (family.queueFlags & VK_QUEUE_GRAPHICS_BIT) 
+            if (family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
                 m_QueueIndices.GraphicsFamily = i;
             }
-            if (presentSupport) 
+            if (presentSupport)
             {
                 m_QueueIndices.PresentFamily = i;
             }
@@ -474,7 +567,7 @@ namespace psm
                                                   m_QueueIndices.PresentFamily.value() };
         float queuePriority = 1.0f;
 
-        for (uint32_t family : uniqueQueueFamilies) 
+        for (uint32_t family : uniqueQueueFamilies)
         {
             VkDeviceQueueCreateInfo queueCreateInfo{};
             queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -507,7 +600,7 @@ namespace psm
         debugMessengerCreateInfo.messageSeverity =
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        debugMessengerCreateInfo.messageType = 
+        debugMessengerCreateInfo.messageType =
             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     }
@@ -518,7 +611,7 @@ namespace psm
         PopulateDebugUtilsMessenger(createInfo);
 
         auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT");
-        if (func != nullptr) 
+        if (func != nullptr)
         {
             VkResult result = func(m_Instance, &createInfo, nullptr, &m_DebugUtilsMessenger);
             if (result != VK_SUCCESS)
@@ -572,7 +665,7 @@ namespace psm
         m_SwapChainImageFormat = imageFormat;
         m_SwapChainExtent = m_SurfaceData.Capabilities.currentExtent;
 
-        std::cout << "Current extent is: " << m_SwapChainExtent.width << 
+        std::cout << "Current extent is: " << m_SwapChainExtent.width <<
             " " << m_SwapChainExtent.height << std::endl;
 
         //create semaphore for swapchain
@@ -714,10 +807,31 @@ namespace psm
 
     void Vulkan::CreateDescriptorPool()
     {
-        /*VkDescriptorPoolCreateInfo poolInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        poolInfo.pNext = nullptr;
-        poolInfo.flags = 0;*/
+        VkDescriptorPoolSize pool_sizes[] =
+        {
+            { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+            { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+        };
+        VkDescriptorPoolCreateInfo pool_info = {};
+        pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
+        pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+        pool_info.pPoolSizes = pool_sizes;
+        VkResult result = vkCreateDescriptorPool(m_LogicalDevice, &pool_info, nullptr, &m_DescriptorsPool);
+        if (result != VK_SUCCESS)
+        {
+            std::cout << "Failed to create descriptor pool" << std::endl;
+        }
     }
 
     void Vulkan::CreatePipeline()
@@ -736,7 +850,7 @@ namespace psm
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.pNext = nullptr;
         pipelineLayoutInfo.flags = 0;
-        pipelineLayoutInfo.setLayoutCount = 1; 
+        pipelineLayoutInfo.setLayoutCount = 1;
         pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
         pipelineLayoutInfo.pushConstantRangeCount = 0;
         pipelineLayoutInfo.pPushConstantRanges = nullptr;
@@ -876,7 +990,7 @@ namespace psm
         graphicsPipelineInfo.basePipelineHandle = nullptr;
         graphicsPipelineInfo.basePipelineIndex = 0;
 
-        result = vkCreateGraphicsPipelines(m_LogicalDevice, nullptr, 1, 
+        result = vkCreateGraphicsPipelines(m_LogicalDevice, nullptr, 1,
             &graphicsPipelineInfo, nullptr, &m_Pipeline);
     }
 
@@ -977,7 +1091,7 @@ namespace psm
         }
     }
 
-    void Vulkan::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, 
+    void Vulkan::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
         VkBuffer& buffer, VkDeviceMemory& bufferMemory)
     {
         VkBufferCreateInfo bufferInfo{};
@@ -1070,9 +1184,9 @@ namespace psm
     }
 
     VKAPI_ATTR VkBool32 VKAPI_CALL Vulkan::DebugMessengerCallback(
-        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
-        VkDebugUtilsMessageTypeFlagsEXT messageTypes, 
-        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, 
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData)
     {
         std::cout << pCallbackData->pMessage << std::endl;

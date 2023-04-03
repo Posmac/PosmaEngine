@@ -17,6 +17,12 @@
 #include "Include/vulkan/vulkan_core.h"
 #include "Include/vulkan/vulkan_win32.h"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_impl_vulkan.h"
+
+#include "glm/glm.hpp"
+
 namespace psm
 {
     class Vulkan
@@ -52,8 +58,16 @@ namespace psm
             float x, y, z;
         };
 
+        //singleton realization
     public:
+        Vulkan(Vulkan&) = delete;
+        void operator=(const Vulkan&) = delete;
+        static Vulkan* Instance();
+    private:
         Vulkan();
+        static Vulkan* s_Instance;
+        //class specific
+    public:
         void Init(HINSTANCE hInstance, HWND hWnd);
         void Deinit();
         void InitVulkanInstace();
