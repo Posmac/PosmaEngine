@@ -52,10 +52,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     ShowWindow(hWnd, nCmdShow);
 
-    {
-        psm::Renderer renderer;
-        renderer.Init(hInstance, hWnd);
-    }
+    psm::Renderer renderer;
+    renderer.Init(hInstance, hWnd);
 
     bool isAppRuning = true;
     while (isAppRuning)
@@ -72,9 +70,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             TranslateMessage(&message);
             DispatchMessage(&message);
         }
+
+        if (isAppRuning)
+        {
+            renderer.Render();
+        }
     }
 
-    CloseConsole();
+    renderer.Deinit();
+    //CloseConsole();
 
     return 0;
 }

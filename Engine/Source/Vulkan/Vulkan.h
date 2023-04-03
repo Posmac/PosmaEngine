@@ -49,7 +49,7 @@ namespace psm
 
         struct Vertex
         {
-            float position[3];
+            float x, y, z;
         };
 
     public:
@@ -57,7 +57,9 @@ namespace psm
         void Init(HINSTANCE hInstance, HWND hWnd);
         void Deinit();
         void InitVulkanInstace();
+        void Render();
     private:
+        void LoadModelData();
         void VerifyLayersSupport(std::vector< const char*>& layersToEnable);
         void VerifyInstanceExtensionsSupport(std::vector<const char*>& extensionsToEnable);
         void VerifyDeviceExtensionsSupport(std::vector<const char*>& extensionsToEnable);
@@ -73,8 +75,16 @@ namespace psm
         void CheckPresentModeSupport(VkPresentModeKHR& presentMode);
         void QuerrySwapchainImages();
         void CreateRenderPass();
+        void CreateDescriptorPool();
         void CreatePipeline();
         VkShaderModule CreateShaderModule(const std::string& path);
+        void CreateFramebuffers();
+        void CreateCommandPool();
+        void CreateCommandBuffer();
+        void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
+            VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+        uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags props);
+        void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
     private:
 
@@ -121,6 +131,18 @@ namespace psm
         VkPipelineLayout m_PipelineLayout;
         VkPipeline m_Pipeline;
         VkDescriptorSetLayout m_DescriptorSetLayout;
+        std::vector<VkFramebuffer> m_Framebuffers;
+
+        VkCommandPool m_CommandPool;
+        std::vector<VkCommandBuffer> m_CommandBuffers;
+
+        VkDescriptorPool m_DescriptorsPool;//for later use
+        VkSemaphore m_ImageAvailableSemaphore;
+        VkSemaphore m_RenderFinishedSemaphore;
+
+        std::vector<Vertex> m_Vertices;
+        VkBuffer m_VertexBuffer;
+        VkDeviceMemory m_VertexBufferMemory;
 
     private:
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

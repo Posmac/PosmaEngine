@@ -18,11 +18,27 @@ namespace psm
         CreateSwapchain();
         QuerrySwapchainImages();
         CreateRenderPass();
+        CreateDescriptorPool();
         CreatePipeline();
+        CreateFramebuffers();
+        CreateCommandPool();
+        CreateCommandBuffer();
+        LoadModelData();
     }
 
     void Vulkan::Deinit()
     {
+        for (auto& framebuffer : m_Framebuffers)
+        {
+            vkDestroyFramebuffer(m_LogicalDevice, framebuffer, nullptr);
+        }
+        vkDestroyPipeline(m_LogicalDevice, m_Pipeline, nullptr);
+        vkDestroyPipelineLayout(m_LogicalDevice, m_PipelineLayout, nullptr);
+        vkDestroyRenderPass(m_LogicalDevice, m_RenderPass, nullptr);
+        for (auto& imageView : m_SwapchainImageViews)
+        {
+            vkDestroyImageView(m_LogicalDevice, imageView, nullptr);
+        }
         vkDestroySwapchainKHR(m_LogicalDevice, m_SwapChain, nullptr);
 
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, 
@@ -70,6 +86,145 @@ namespace psm
         {
             std::cout << "Failed to create VkInstance" << std::endl;
         }
+    }
+
+    void Vulkan::Render()
+    {
+        uint32_t imageIndex;
+        vkAcquireNextImageKHR(m_LogicalDevice, m_SwapChain, UINT64_MAX, m_ImageAvailableSemaphore, nullptr, &imageIndex);
+
+        vkResetCommandBuffer(m_CommandBuffers[imageIndex], 0);
+        VkCommandBufferBeginInfo begin{};
+        begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        begin.flags = 0;
+        begin.pNext = nullptr;
+        begin.pInheritanceInfo = nullptr;
+
+        if (vkBeginCommandBuffer(m_CommandBuffers[imageIndex], &begin) != VK_SUCCESS)
+        {
+            std::cout << "Failed to begin command buffer" << std::endl;
+        }
+
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = m_RenderPass;
+        renderPassInfo.framebuffer = m_Framebuffers[imageIndex];
+        renderPassInfo.renderArea.offset = { 0, 0 };
+        renderPassInfo.renderArea.extent = m_SwapChainExtent;
+
+        std::array<VkClearValue, 2> clearColor{};
+        clearColor[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+        clearColor[1].depthStencil = { 1.0f, 0 };
+
+        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearColor.size());
+        renderPassInfo.pClearValues = clearColor.data();
+
+        vkCmdBeginRenderPass(m_CommandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(m_CommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+
+        VkBuffer vertexBuffers[] = { m_VertexBuffer };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(m_CommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
+        //vkCmdBindIndexBuffer(buffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+        VkViewport viewport{};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = static_cast<float>(m_SwapChainExtent.width);
+        viewport.height = static_cast<float>(m_SwapChainExtent.height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        vkCmdSetViewport(m_CommandBuffers[imageIndex], 0, 1, &viewport);
+
+        VkRect2D scissor{};
+        scissor.offset = { 0, 0 };
+        scissor.extent = m_SwapChainExtent;
+        vkCmdSetScissor(m_CommandBuffers[imageIndex], 0, 1, &scissor);
+
+        //vkCmdBindDescriptorSets(m_CommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+        //    m_PipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+
+        vkCmdDraw(m_CommandBuffers[imageIndex], static_cast<uint32_t>(m_Vertices.size()), 1, 0, 0);
+        //vkCmdDrawIndexed(m_CommandBuffers[imageIndex], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+        vkCmdEndRenderPass(m_CommandBuffers[imageIndex]);
+
+        if (vkEndCommandBuffer(m_CommandBuffers[imageIndex]) != VK_SUCCESS) 
+        {
+            std::cout << "Failed to end command buffer" << std::endl;
+        }
+
+        VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.pNext = nullptr;
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = &m_ImageAvailableSemaphore;
+        submitInfo.pWaitDstStageMask = &waitStage;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &m_CommandBuffers[imageIndex];
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = &m_RenderFinishedSemaphore;
+
+        vkQueueSubmit(m_QueueIndices.GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+
+        VkPresentInfoKHR presentInfo = {};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = &m_RenderFinishedSemaphore;
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = &m_SwapChain;
+        presentInfo.pImageIndices = &imageIndex;
+
+        vkQueuePresentKHR(m_QueueIndices.PresentQueue, &presentInfo);
+
+        vkDeviceWaitIdle(m_LogicalDevice);
+    }
+
+    void Vulkan::LoadModelData()
+    {
+        m_Vertices.reserve(3);
+        m_Vertices.push_back({ -1, 1, 0 });
+        m_Vertices.push_back({ 0, -1, 0 });
+        m_Vertices.push_back({ 1, 1, 0 });
+
+        VkDeviceSize bufferSize = sizeof(Vertex) * m_Vertices.size();
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.pNext = nullptr;
+        bufferInfo.flags = 0;
+        bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        bufferInfo.queueFamilyIndexCount = 1;
+        bufferInfo.pQueueFamilyIndices = &m_QueueIndices.GraphicsFamily.value();
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        bufferInfo.size = sizeof(Vertex) * m_Vertices.size();
+
+        VkResult result = vkCreateBuffer(m_LogicalDevice, &bufferInfo, nullptr, &m_VertexBuffer);
+
+        if (result != VK_SUCCESS)
+        {
+            std::cout << "Failed to create vertex buffer" << std::endl;
+        }
+
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            stagingBuffer, stagingBufferMemory);
+
+        void* data;
+        vkMapMemory(m_LogicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+        memcpy(data, m_Vertices.data(), (size_t)bufferSize);
+        vkUnmapMemory(m_LogicalDevice, stagingBufferMemory);
+
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBuffer, m_VertexBufferMemory);
+
+        CopyBuffer(stagingBuffer, m_VertexBuffer, bufferSize);
+
+        vkDestroyBuffer(m_LogicalDevice, stagingBuffer, nullptr);
+        vkFreeMemory(m_LogicalDevice, stagingBufferMemory, nullptr);
     }
 
     void Vulkan::VerifyLayersSupport(std::vector<const char*>& layersToEnable)
@@ -190,8 +345,6 @@ namespace psm
         {
             std::cout << "Failed to create surface" << std::endl;
         }
-
-      
     }
 
     void Vulkan::PopulateSurfaceData()
@@ -421,6 +574,26 @@ namespace psm
 
         std::cout << "Current extent is: " << m_SwapChainExtent.width << 
             " " << m_SwapChainExtent.height << std::endl;
+
+        //create semaphore for swapchain
+        VkSemaphoreCreateInfo semaphoreInfo{};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        semaphoreInfo.pNext = nullptr;
+        semaphoreInfo.flags = 0;
+
+        result = vkCreateSemaphore(m_LogicalDevice, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphore);
+        if (result != VK_SUCCESS)
+        {
+            std::cout << "Failed to create semaphore" << std::endl;
+        }
+
+        semaphoreInfo.flags = 0;
+
+        result = vkCreateSemaphore(m_LogicalDevice, &semaphoreInfo, nullptr, &m_RenderFinishedSemaphore);
+        if (result != VK_SUCCESS)
+        {
+            std::cout << "Failed to create semaphore" << std::endl;
+        }
     }
 
     void Vulkan::CheckColorSpaceSupport(VkColorSpaceKHR& colorSpace)
@@ -502,7 +675,7 @@ namespace psm
         colorAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         colorAttachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
+        colorAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
         VkAttachmentReference colorAttachmentReference{};
         colorAttachmentReference.attachment = 0;
@@ -537,6 +710,14 @@ namespace psm
         {
             std::cout << "Failed to create render pass" << std::endl;
         }
+    }
+
+    void Vulkan::CreateDescriptorPool()
+    {
+        /*VkDescriptorPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        poolInfo.pNext = nullptr;
+        poolInfo.flags = 0;*/
     }
 
     void Vulkan::CreatePipeline()
@@ -658,6 +839,22 @@ namespace psm
         dynamicStateCreateInfo.dynamicStateCount = 2;
         dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
 
+        VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+        colorBlendAttachment.colorWriteMask =
+            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        colorBlendAttachment.blendEnable = VK_FALSE;
+
+        VkPipelineColorBlendStateCreateInfo colorBlending{};
+        colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colorBlending.logicOpEnable = VK_FALSE;
+        colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
+        colorBlending.attachmentCount = 1;
+        colorBlending.pAttachments = &colorBlendAttachment;
+        colorBlending.blendConstants[0] = 0.0f; // Optional
+        colorBlending.blendConstants[1] = 0.0f; // Optional
+        colorBlending.blendConstants[2] = 0.0f; // Optional
+        colorBlending.blendConstants[3] = 0.0f; // Optional
+
         VkGraphicsPipelineCreateInfo graphicsPipelineInfo{};
         graphicsPipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         graphicsPipelineInfo.flags = 0;
@@ -671,7 +868,7 @@ namespace psm
         graphicsPipelineInfo.pRasterizationState = &rasterizationStateInfo;
         graphicsPipelineInfo.pMultisampleState = nullptr;
         graphicsPipelineInfo.pDepthStencilState = nullptr;
-        graphicsPipelineInfo.pColorBlendState = nullptr;
+        graphicsPipelineInfo.pColorBlendState = &colorBlending;
         graphicsPipelineInfo.pDynamicState = &dynamicStateCreateInfo;
         graphicsPipelineInfo.layout = m_PipelineLayout;
         graphicsPipelineInfo.renderPass = m_RenderPass;
@@ -717,6 +914,145 @@ namespace psm
         }
 
         return module;
+    }
+
+    void Vulkan::CreateFramebuffers()
+    {
+        m_Framebuffers.resize(2);
+
+        for (int i = 0; i < m_SwapchainImageViews.size(); i++)
+        {
+            VkFramebufferCreateInfo framebufferInfo{};
+            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebufferInfo.pNext = nullptr;
+            framebufferInfo.flags = 0;
+            framebufferInfo.width = m_SwapChainExtent.width;
+            framebufferInfo.height = m_SwapChainExtent.height;
+            framebufferInfo.attachmentCount = 1;
+            framebufferInfo.pAttachments = &m_SwapchainImageViews[i];
+            framebufferInfo.renderPass = m_RenderPass;
+            framebufferInfo.layers = 1;
+
+            VkResult result = vkCreateFramebuffer(m_LogicalDevice, &framebufferInfo, nullptr,
+                &m_Framebuffers[i]);
+
+            if (result != VK_SUCCESS)
+            {
+                std::cout << "Failed to create framebuffer" << std::endl;
+            }
+        }
+    }
+
+    void Vulkan::CreateCommandPool()
+    {
+        VkCommandPoolCreateInfo commandPoolCreateInfo{};
+        commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        commandPoolCreateInfo.pNext = nullptr;
+        commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        commandPoolCreateInfo.queueFamilyIndex = m_QueueIndices.GraphicsFamily.value();
+
+        VkResult result = vkCreateCommandPool(m_LogicalDevice, &commandPoolCreateInfo, nullptr, &m_CommandPool);
+
+        if (result != VK_SUCCESS)
+        {
+            std::cout << "Failed to create command pool" << std::endl;
+        }
+    }
+
+    void Vulkan::CreateCommandBuffer()
+    {
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.pNext = nullptr;
+        allocInfo.commandPool = m_CommandPool;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandBufferCount = 2;//because we have 2 framebufers
+
+        m_CommandBuffers.resize(2);
+
+        VkResult result = vkAllocateCommandBuffers(m_LogicalDevice, &allocInfo, m_CommandBuffers.data());
+        if (result != VK_SUCCESS)
+        {
+            std::cout << "Failed to allocate command buffers" << std::endl;
+        }
+    }
+
+    void Vulkan::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, 
+        VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+    {
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = size;
+        bufferInfo.usage = usage;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        if (vkCreateBuffer(m_LogicalDevice, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create buffer");
+        }
+
+        VkMemoryRequirements memReq{};
+        vkGetBufferMemoryRequirements(m_LogicalDevice, buffer, &memReq);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memReq.size;
+        allocInfo.memoryTypeIndex = FindMemoryType(memReq.memoryTypeBits, properties);
+
+        if (vkAllocateMemory(m_LogicalDevice, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to allocate memory");
+        }
+
+        vkBindBufferMemory(m_LogicalDevice, buffer, bufferMemory, 0);
+    }
+
+    uint32_t Vulkan::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags props)
+    {
+        VkPhysicalDeviceMemoryProperties memProps;
+        vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memProps);
+
+        for (uint32_t i = 0; i < memProps.memoryTypeCount; i++) {
+            if (typeFilter & (1 << i) &&
+                (memProps.memoryTypes[i].propertyFlags & props) == props) {
+                return i;
+            }
+        }
+    }
+
+    void Vulkan::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+    {
+        VkCommandBufferAllocateInfo allocateInfo{};
+        allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocateInfo.commandPool = m_CommandPool;
+        allocateInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        vkAllocateCommandBuffers(m_LogicalDevice, &allocateInfo, &commandBuffer);
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+        VkBufferCopy copyRegion{};
+        copyRegion.size = size;
+        copyRegion.srcOffset = 0;
+        copyRegion.dstOffset = 0;
+        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+        vkEndCommandBuffer(commandBuffer);
+
+        VkSubmitInfo submitInfo{};
+
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        vkQueueSubmit(m_QueueIndices.GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(m_QueueIndices.GraphicsQueue);
+
+        vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, 1, &commandBuffer);
     }
 
     void Vulkan::CheckFormatSupport(VkFormat& format)

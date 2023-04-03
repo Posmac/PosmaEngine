@@ -16,4 +16,9 @@ namespace psm
     {
         m_Vk.Deinit();
     }
+
+    void Renderer::Render()
+    {
+        m_Vk.Render();
+    }
 }
