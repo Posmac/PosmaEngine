@@ -22,6 +22,7 @@
 #include "Pipeline.h"
 #include "RenderPass.h"
 #include "Image.h"
+#include "Synchronization.h"
 
 #include "Mesh/Mesh.h"
 
@@ -32,11 +33,10 @@ namespace psm
         struct BaseVulkanAppData
         {
         public:
-            bool Init(HINSTANCE hInstance, HWND hWnd);
+            void Init(HINSTANCE hInstance, HWND hWnd);
             void Deinit();
 
         public:
-
             //base
             VkInstance Instance;
             VkDevice Device;
@@ -45,14 +45,14 @@ namespace psm
             VkPhysicalDevice PhysicalDevice;
             VkPhysicalDeviceProperties PhysicalDeviceProperties;
             VkPhysicalDeviceFeatures PhysicalDeviceFeatures;
-            vk::QueueFamilyIndices Queues;
+            QueueFamilyIndices Queues;
 
             //debug
             VkDebugUtilsMessengerEXT DebugMessenger;
 
             //surface
             VkSurfaceKHR Surface;
-            vk::SurfaceData SurfaceData;
+            SurfaceData SurfaceData;
 
             //swapchain
             VkSwapchainKHR SwapChain;

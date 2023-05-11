@@ -4,7 +4,7 @@ namespace psm
 {
     namespace vk
     {
-        bool BaseVulkanAppData::Init(HINSTANCE hInstance, HWND hWnd)
+        void BaseVulkanAppData::Init(HINSTANCE hInstance, HWND hWnd)
         {
             VkDebugUtilsMessengerCreateInfoEXT debugMessengerInfo{};
             vk::PopulateDebugUtilsMessenger(DebugMessengerCallback, &debugMessengerInfo);
@@ -17,20 +17,28 @@ namespace psm
             vk::CreateLogicalDevice(DeviceExtensions, ValidationLayers, PhysicalDeviceFeatures, PhysicalDevice,
                 Surface, &Queues, &Device);
             vk::CreateSwapchain(Device, PhysicalDevice, Surface, SurfaceData, &SwapChain, &SwapChainImageFormat,
-                &SwapChainExtent, &ImageAvailableSemaphore, &RenderFinishedSemaphore);
+                &SwapChainExtent);
             vk::QuerrySwapchainImages(Device, SwapChain, SwapChainImageFormat, &SwapChainImages, &SwapchainImageViews);
+            vk::CreateVkSemaphore(Device, 0, &ImageAvailableSemaphore);
+            vk::CreateVkSemaphore(Device, 0, &RenderFinishedSemaphore);
+            vk::CreateImageViews(Device, SwapChainImages, SwapChainImageFormat,
+                VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, &SwapchainImageViews);
             vk::CreateRenderPass(Device, SwapChainImageFormat, &RenderPass);
 
-            VkShaderModule vertexShader = vk::CreateShaderModule(Device, "../Engine/Shaders/triangle.vert.txt");
-            VkShaderModule fragmentShader = vk::CreateShaderModule(Device, "../Engine/Shaders/triangle.frag.txt");
+            VkShaderModule vertexShader; 
+            VkShaderModule fragmentShader;
+            vk::CreateShaderModule(Device, "../Engine/Shaders/triangle.vert.txt", &vertexShader);
+            vk::CreateShaderModule(Device, "../Engine/Shaders/triangle.frag.txt", &fragmentShader);
 
             vk::CreatePipeline(Device, vertexShader, fragmentShader, sizeof(Vertex), SwapChainExtent, RenderPass,
                 &DescriptorSetLayout, &PipelineLayout, &Pipeline);
-            vk::CreateFramebuffers(Device, SwapchainImageViews, SwapChainExtent, SwapchainImageViews.size(), RenderPass, &Framebuffers);
+            vk::CreateFramebuffers(Device, SwapchainImageViews, SwapChainExtent, SwapchainImageViews.size(), 
+                RenderPass, &Framebuffers);
             vk::CreateCommandPool(Device, Queues.GraphicsFamily.value(), &CommandPool);
             vk::CreateCommandBuffers(Device, CommandPool, SwapChainImages.size(), &CommandBuffers);
 
-            return true;
+            vk::DestroyShaderModule(Device, vertexShader);
+            vk::DestroyShaderModule(Device, fragmentShader);
         }
 
         void BaseVulkanAppData::Deinit()
@@ -40,9 +48,10 @@ namespace psm
             vk::DestroyPipelineLayout(Device, PipelineLayout);
             vk::DestroyRenderPass(Device, RenderPass);
             vk::DestroyImageViews(Device, SwapchainImageViews);
-            vk::DestroySwapchain(Device, SwapChain);
-            vk::DestroyDebugUtilsMessenger(Instance, DebugMessenger);
+            vk::DestroySwapchain(Device, SwapChain);vk::DestroyDebugUtilsMessenger(Instance, DebugMessenger);
             vk::DestroySurface(Instance, Surface);
+            vk::DestroySemaphore(Device, ImageAvailableSemaphore);
+            vk::DestroySemaphore(Device, RenderFinishedSemaphore);
             vk::DestroyDevice(Device);
             vk::DestroyInstance(Instance);
         }

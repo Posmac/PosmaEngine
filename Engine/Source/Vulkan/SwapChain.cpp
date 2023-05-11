@@ -6,8 +6,7 @@ namespace psm
     {
         void CreateSwapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
             SurfaceData surfaceData, VkSwapchainKHR* swapchain,
-            VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent,
-            VkSemaphore* imageAvailableSemaphore, VkSemaphore* renderFinishedSemaphore)
+            VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent)
         {
             VkSwapchainCreateInfoKHR swapchainCreateInfo{};
             swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -52,28 +51,6 @@ namespace psm
 
             std::cout << "Current extent is: " << swapchainExtent->width <<
                 " " << swapchainExtent->height << std::endl;
-
-            //create semaphore for swapchain
-            VkSemaphoreCreateInfo semaphoreInfo{};
-            semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-            semaphoreInfo.pNext = nullptr;
-            semaphoreInfo.flags = 0;
-
-
-            //later move on own file
-            result = vkCreateSemaphore(device, &semaphoreInfo, nullptr, imageAvailableSemaphore);
-            if (result != VK_SUCCESS)
-            {
-                std::cout << "Failed to create semaphore" << std::endl;
-            }
-
-            semaphoreInfo.flags = 0;
-
-            result = vkCreateSemaphore(device, &semaphoreInfo, nullptr, renderFinishedSemaphore);
-            if (result != VK_SUCCESS)
-            {
-                std::cout << "Failed to create semaphore" << std::endl;
-            }
         }
 
         void CheckFormatSupport(VkFormat& format, const std::vector<VkSurfaceFormatKHR>& formats)
@@ -128,36 +105,6 @@ namespace psm
             vkGetSwapchainImagesKHR(device, swapchain, &imagesCount, swapchainImages->data());
 
             std::cout << "Total swapchain images retrived is: " << swapchainImages->size() << std::endl;
-
-            swapchainImageViews->resize(imagesCount);
-
-            for (int i = 0; i < swapchainImages->size(); i++)
-            {
-                VkImageViewCreateInfo createInfo{};
-                createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-                createInfo.pNext = nullptr;
-                createInfo.flags = 0;
-                createInfo.image = (*swapchainImages)[i];
-                createInfo.format = swapchainImagesFormat;
-                createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-                createInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-                createInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-                createInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-                createInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-                createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                createInfo.subresourceRange.baseMipLevel = 0;
-                createInfo.subresourceRange.baseArrayLayer = 0;
-                createInfo.subresourceRange.levelCount = 1;
-                createInfo.subresourceRange.layerCount = 1;
-
-                VkResult result = vkCreateImageView(device, &createInfo,
-                    nullptr, &(*swapchainImageViews)[i]);
-
-                if (result != VK_SUCCESS)
-                {
-                    std::cout << "Failed to create swapchain image view" << std::endl;
-                }
-            }
         }
 
         void DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain)

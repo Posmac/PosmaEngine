@@ -179,6 +179,7 @@
     <ClInclude Include="Source\Vulkan\Shader.h" />
     <ClInclude Include="Source\Vulkan\SwapChain.h" />
     <ClInclude Include="Source\Vulkan\BaseVulkan.h" />
+    <ClInclude Include="Source\Vulkan\Synchronization.h" />
     <ClInclude Include="Source\Vulkan\VulkanImGui.h" />
     <ClInclude Include="Source\Vulkan\Win32Surface.h" />
   </ItemGroup>
@@ -207,6 +208,7 @@
     <ClCompile Include="Source\Vulkan\Shader.cpp" />
     <ClCompile Include="Source\Vulkan\SwapChain.cpp" />
     <ClCompile Include="Source\Vulkan\BaseVulkan.cpp" />
+    <ClCompile Include="Source\Vulkan\Synchronization.cpp" />
     <ClCompile Include="Source\Vulkan\VulkanImGui.cpp" />
     <ClCompile Include="Source\Vulkan\Win32Surface.cpp" />
   </ItemGroup>

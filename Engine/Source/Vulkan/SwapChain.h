@@ -11,8 +11,7 @@ namespace psm
     {
         void CreateSwapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
             SurfaceData surfaceData, VkSwapchainKHR* swapchain,
-            VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent,
-            VkSemaphore* imageAvailableSemaphore, VkSemaphore* renderFinishedSemaphore);
+            VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent);
         void CheckFormatSupport(VkFormat& format, const std::vector<VkSurfaceFormatKHR>& formats);
         void CheckColorSpaceSupport(VkColorSpaceKHR& colorSpace, const std::vector<VkSurfaceFormatKHR>& formats);
         void CheckPresentModeSupport(VkPresentModeKHR& presentMode, const std::vector<VkPresentModeKHR>& presentModes);

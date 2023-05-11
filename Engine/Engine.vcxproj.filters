@@ -105,6 +105,9 @@
     <ClInclude Include="Source\Vulkan\Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Vulkan\Synchronization.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine.cpp">
@@ -183,6 +186,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Vulkan\Image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Vulkan\Synchronization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

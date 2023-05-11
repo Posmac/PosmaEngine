@@ -11,6 +11,7 @@ namespace psm
 {
     namespace vk
     {
-        VkShaderModule CreateShaderModule(VkDevice logicalDevice, const std::string& path);
+        void CreateShaderModule(VkDevice logicalDevice, const std::string& path, VkShaderModule* module);
+        void DestroyShaderModule(VkDevice device, VkShaderModule module);
     }
 }
