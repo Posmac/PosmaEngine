@@ -4,7 +4,6 @@
 #include <io.h>
 #include <fcntl.h>
 
-#include "Window/WindowsWindow.h"
 #include "Render/Renderer.h"
 #include "Core/Log.h"
 
@@ -46,8 +45,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         return -1;
     }
 
-    HWND hWnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, 
-        windowClassName, windowName, WS_OVERLAPPEDWINDOW, 
+    HWND hWnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
+        windowClassName, windowName, WS_OVERLAPPEDWINDOW,
         320, 180, 1280, 720, NULL, NULL, hInstance, NULL);
 
     if (hWnd == NULL)
@@ -58,14 +57,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     ShowWindow(hWnd, nCmdShow);
 
-    IMGUI_CHECKVERSION();
-    ImGui::SetCurrentContext(ImGui::CreateContext());
-    ImGui::StyleColorsDark();
-    ImGui_ImplWin32_Init(hWnd);
-
     psm::Log::Init();
     psm::Renderer::Instance()->Init(hInstance, hWnd);
-
 
     bool isAppRuning = true;
     while (isAppRuning)
@@ -88,10 +81,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             psm::Renderer::Instance()->Render();
         }
     }
-
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplWin32_Shutdown();
-    ImGui::DestroyContext();
 
     psm::Renderer::Instance()->Deinit();
     CloseConsole();

@@ -20,16 +20,16 @@ namespace psm
 
     void Renderer::Init(HINSTANCE hInstance, HWND hWnd)
     {
-        Vulkan::Instance()->Init(hInstance, hWnd);
+        vk::BaseVulkan::Instance()->Init(hInstance, hWnd);
     }
 
     void Renderer::Deinit()
     {
-        Vulkan::Instance()->Deinit();
+        vk::BaseVulkan::Instance()->Deinit();
     }
 
     void Renderer::Render()
     {
-        Vulkan::Instance()->Render();
+        vk::BaseVulkan::Instance()->Render();
     }
 }

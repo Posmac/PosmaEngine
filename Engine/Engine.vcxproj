@@ -161,9 +161,26 @@
     <ClInclude Include="External\imgui\imstb_truetype.h" />
     <ClInclude Include="Source\Core\Log.h" />
     <ClInclude Include="Source\Engine.h" />
+    <ClInclude Include="Source\Mesh\Mesh.h" />
     <ClInclude Include="Source\Render\Renderer.h" />
-    <ClInclude Include="Source\Vulkan\Vulkan.h" />
-    <ClInclude Include="Source\Window\WindowsWindow.h" />
+    <ClInclude Include="Source\Vulkan\BaseVulkanAppData.h" />
+    <ClInclude Include="Source\Vulkan\Buffer.h" />
+    <ClInclude Include="Source\Vulkan\CommandBuffer.h" />
+    <ClInclude Include="Source\Vulkan\Core.h" />
+    <ClInclude Include="Source\Vulkan\DebugUtilsMessenger.h" />
+    <ClInclude Include="Source\Vulkan\Framebuffer.h" />
+    <ClInclude Include="Source\Vulkan\Image.h" />
+    <ClInclude Include="Source\Vulkan\Instance.h" />
+    <ClInclude Include="Source\Vulkan\LogicalDevice.h" />
+    <ClInclude Include="Source\Vulkan\PhysicalDevice.h" />
+    <ClInclude Include="Source\Vulkan\Pipeline.h" />
+    <ClInclude Include="Source\Vulkan\Queue.h" />
+    <ClInclude Include="Source\Vulkan\RenderPass.h" />
+    <ClInclude Include="Source\Vulkan\Shader.h" />
+    <ClInclude Include="Source\Vulkan\SwapChain.h" />
+    <ClInclude Include="Source\Vulkan\BaseVulkan.h" />
+    <ClInclude Include="Source\Vulkan\VulkanImGui.h" />
+    <ClInclude Include="Source\Vulkan\Win32Surface.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui\imgui.cpp" />
@@ -176,8 +193,22 @@
     <ClCompile Include="Source\Core\Log.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
     <ClCompile Include="Source\Render\Renderer.cpp" />
-    <ClCompile Include="Source\Vulkan\Vulkan.cpp" />
-    <ClCompile Include="Source\Window\WindowsWindow.cpp" />
+    <ClCompile Include="Source\Vulkan\BaseVulkanAppData.cpp" />
+    <ClCompile Include="Source\Vulkan\Buffer.cpp" />
+    <ClCompile Include="Source\Vulkan\CommandBuffer.cpp" />
+    <ClCompile Include="Source\Vulkan\DebugUtilsMessenger.cpp" />
+    <ClCompile Include="Source\Vulkan\Framebuffer.cpp" />
+    <ClCompile Include="Source\Vulkan\Image.cpp" />
+    <ClCompile Include="Source\Vulkan\Instance.cpp" />
+    <ClCompile Include="Source\Vulkan\LogicalDevice.cpp" />
+    <ClCompile Include="Source\Vulkan\PhysicalDevice.cpp" />
+    <ClCompile Include="Source\Vulkan\Pipeline.cpp" />
+    <ClCompile Include="Source\Vulkan\RenderPass.cpp" />
+    <ClCompile Include="Source\Vulkan\Shader.cpp" />
+    <ClCompile Include="Source\Vulkan\SwapChain.cpp" />
+    <ClCompile Include="Source\Vulkan\BaseVulkan.cpp" />
+    <ClCompile Include="Source\Vulkan\VulkanImGui.cpp" />
+    <ClCompile Include="Source\Vulkan\Win32Surface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\compile.bat" />

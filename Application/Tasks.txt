@@ -1,0 +1,20 @@
+1. Abstract vulkan logic
+	a. Creating instance
+	b. Physical device
+	c. Logical device
+	d. Debug Logger
+	e. Swapchain
+	f. Buffers, push constants
+	g. Images
+	h. Command buffers/Pool
+	i. Render pass
+	j. Render pipeline
+	k. Shaders
+	l. Syncronization primitives
+2. Applying textures into shaders
+	a. Simple textured triangle
+	b. Multiple textures
+3. Camera
+4. Loading GLTF 2.0 format
+5. Multiple passes in one cicle (more render targets in one pass)
+6. Push constants/Constant
