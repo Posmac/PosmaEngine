@@ -2,7 +2,12 @@
 
 layout(location = 0) in vec3 localPosition;
 
+layout(binding = 0) uniform VertexBuffer
+{
+	vec4 offset;
+} ubo;
+
 void main()
 {
-	gl_Position = vec4(localPosition, 1.0);
+	gl_Position = ubo.offset + vec4(localPosition, 1.0);
 }

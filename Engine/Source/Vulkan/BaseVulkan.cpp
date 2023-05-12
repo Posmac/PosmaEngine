@@ -21,6 +21,97 @@ namespace psm
             m_VulkanData.Init(hInstance, hWnd);
             m_VkImgui.Init(hWnd, m_VulkanData.SwapChainImages.size(), m_VulkanData, &m_ImGuiDescriptorsPool);
             LoadModelData();
+
+            {
+                VkDeviceSize bufferSize = sizeof(VertexShaderUBO);
+                uint32_t size = m_VulkanData.SwapChainImages.size();
+                uniformBuffers.resize(size);
+                uniformBufferMemory.resize(size);
+                uniformBufferMapping.resize(size);
+                for (int i = 0; i < size; i++)
+                {
+                    vk::CreateBuffer(m_VulkanData.Device, m_VulkanData.PhysicalDevice,
+                        bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                        &uniformBuffers[i], &uniformBufferMemory[i]);
+
+                    vkMapMemory(m_VulkanData.Device, uniformBufferMemory[i], 0,
+                        bufferSize, 0, &uniformBufferMapping[i]);
+                }
+            }
+
+            {
+                uint32_t size = m_VulkanData.SwapChainImages.size();
+
+                {
+                    //moved to pipeline
+                    
+                  
+                }
+
+                {
+                    //Create a descriptor pool : 
+                    //Create a descriptor pool object to allocate descriptor sets.
+
+                    VkDescriptorPoolSize poolSize{};
+                    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                    poolSize.descriptorCount = size;
+
+                    VkDescriptorPoolCreateInfo poolInfo{};
+                    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+                    poolInfo.pNext = nullptr;
+                    poolInfo.poolSizeCount = 1;
+                    poolInfo.pPoolSizes = &poolSize;
+                    poolInfo.maxSets = size;
+                    poolInfo.flags = 0;
+
+                    vkCreateDescriptorPool(m_VulkanData.Device, &poolInfo, nullptr, &uniformPool);
+                }
+
+                {
+                    //Allocate descriptor sets : 
+                    //Allocate one or more descriptor sets from the descriptor pool,
+                    std::vector<VkDescriptorSetLayout> layouts(size, m_VulkanData.DescriptorSetLayout);
+
+                    VkDescriptorSetAllocateInfo setsAllocInfo{};
+                    setsAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                    setsAllocInfo.pNext = nullptr;
+                    setsAllocInfo.descriptorPool = uniformPool;
+                    setsAllocInfo.descriptorSetCount = size;
+                    setsAllocInfo.pSetLayouts = layouts.data();
+
+                    uniformDescriptorSets.resize(size);
+                    vkAllocateDescriptorSets(m_VulkanData.Device, &setsAllocInfo, uniformDescriptorSets.data());
+                }
+
+                {
+                    //Update descriptor sets : 
+                    //Update the descriptor sets with the appropriate information.
+                    //Specify the buffer to be bound, its offset, and size.
+
+                    for (int i = 0; i < size; i++)
+                    {
+                        VkDescriptorBufferInfo bufferInfo{};
+                        bufferInfo.buffer = uniformBuffers[i];
+                        bufferInfo.offset = 0;
+                        bufferInfo.range = sizeof(VertexShaderUBO);//VK_WHOLE_SIZE
+
+                        VkWriteDescriptorSet writeDescriptor{};
+                        writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        writeDescriptor.pNext = nullptr;
+                        writeDescriptor.dstBinding = 0;
+                        writeDescriptor.dstArrayElement = 0;
+                        writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        writeDescriptor.descriptorCount = 1;
+                        writeDescriptor.pBufferInfo = &bufferInfo;
+                        writeDescriptor.pImageInfo = nullptr;
+                        writeDescriptor.pTexelBufferView = nullptr;
+                        writeDescriptor.dstSet = uniformDescriptorSets[i];
+
+                        vkUpdateDescriptorSets(m_VulkanData.Device, 1, &writeDescriptor, 0, nullptr);
+                    }
+                }
+            }
         }
 
         void BaseVulkan::Deinit()
@@ -39,6 +130,12 @@ namespace psm
             uint32_t imageIndex;
             vkAcquireNextImageKHR(m_VulkanData.Device, m_VulkanData.SwapChain, UINT64_MAX,
                 m_VulkanData.ImageAvailableSemaphore, nullptr, &imageIndex);
+
+            VertexShaderUBO ubo{};
+            ubo.Offset = glm::vec4(0.2f, 0.5f, 0.0f, 0.0f);
+
+            VertexShaderUBO* dataPtr = reinterpret_cast<VertexShaderUBO*>(uniformBufferMapping[imageIndex]);
+            *dataPtr = ubo;
 
             vkResetCommandBuffer(m_VulkanData.CommandBuffers[imageIndex], 0);
             VkCommandBufferBeginInfo begin{};
@@ -88,8 +185,12 @@ namespace psm
             scissor.extent = m_VulkanData.SwapChainExtent;
             vkCmdSetScissor(m_VulkanData.CommandBuffers[imageIndex], 0, 1, &scissor);
 
-            //vkCmdBindDescriptorSets(m_CommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
-            //    m_PipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            //Bind the descriptor set: 
+            //Bind the descriptor set to the pipeline during the command buffer recording phase. 
+            //This step associates the uniform buffer with a specific shader stage.
+            vkCmdBindDescriptorSets(m_VulkanData.CommandBuffers[imageIndex], 
+                VK_PIPELINE_BIND_POINT_GRAPHICS, m_VulkanData.PipelineLayout, 0, 1, 
+                &uniformDescriptorSets[imageIndex], 0, nullptr);
 
             vkCmdDraw(m_VulkanData.CommandBuffers[imageIndex], static_cast<uint32_t>(m_Vertices.size()), 1, 0, 0);
             //vkCmdDrawIndexed(m_CommandBuffers[imageIndex], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);

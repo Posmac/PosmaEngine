@@ -153,6 +153,7 @@ XCOPY  /s /i /y "$(SolutionDir)Engine\Shaders" "$(SolutionDir)x64/Engine/Shaders
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Application.cpp" />
     <ClCompile Include="Source\main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -165,6 +166,9 @@ XCOPY  /s /i /y "$(SolutionDir)Engine\Shaders" "$(SolutionDir)x64/Engine/Shaders
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\Application.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

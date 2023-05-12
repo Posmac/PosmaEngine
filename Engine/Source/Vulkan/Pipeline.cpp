@@ -10,22 +10,33 @@ namespace psm
             VkDescriptorSetLayout* descriptorSetLayout, VkPipelineLayout* pipelineLayout,
             VkPipeline* pipeline)
         {
-            VkDescriptorSetLayoutCreateInfo descriptorSetInfo{};
-            descriptorSetInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            descriptorSetInfo.pNext = nullptr;
-            descriptorSetInfo.flags = 0;
-            descriptorSetInfo.bindingCount = 0;
-            descriptorSetInfo.pBindings = nullptr;
+            //Create a descriptor set layout : 
+            // Define a descriptor set layout that specifies the binding type 
+            // and other properties of your uniform buffer.
+            // This layout describes how the uniform data will be accessed in the shader.
+            VkDescriptorSetLayoutBinding vertexUbo{};
+            vertexUbo.binding = 0;
+            vertexUbo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            vertexUbo.descriptorCount = 1;
+            vertexUbo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            vertexUbo.pImmutableSamplers = nullptr;
 
-            vkCreateDescriptorSetLayout(logicalDevice, &descriptorSetInfo, nullptr,
+            VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo{};
+            descriptorLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            descriptorLayoutInfo.pNext = nullptr;
+            descriptorLayoutInfo.bindingCount = 1;
+            descriptorLayoutInfo.pBindings = &vertexUbo;
+            descriptorLayoutInfo.flags = 0;
+
+            vkCreateDescriptorSetLayout(logicalDevice, &descriptorLayoutInfo, nullptr,
                 descriptorSetLayout);
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
             pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             pipelineLayoutInfo.pNext = nullptr;
-            pipelineLayoutInfo.flags = 0;
             pipelineLayoutInfo.setLayoutCount = 1;
             pipelineLayoutInfo.pSetLayouts = descriptorSetLayout;
+            pipelineLayoutInfo.flags = 0;
             pipelineLayoutInfo.pushConstantRangeCount = 0;
             pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
