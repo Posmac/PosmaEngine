@@ -24,92 +24,79 @@ namespace psm
 
             {
                 VkDeviceSize bufferSize = sizeof(VertexShaderUBO);
-                uint32_t size = m_VulkanData.SwapChainImages.size();
-                uniformBuffers.resize(size);
-                uniformBufferMemory.resize(size);
-                uniformBufferMapping.resize(size);
-                for (int i = 0; i < size; i++)
-                {
-                    vk::CreateBuffer(m_VulkanData.Device, m_VulkanData.PhysicalDevice,
-                        bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                        &uniformBuffers[i], &uniformBufferMemory[i]);
 
-                    vkMapMemory(m_VulkanData.Device, uniformBufferMemory[i], 0,
-                        bufferSize, 0, &uniformBufferMapping[i]);
-                }
+                //create buffer for vertex shader uniform buffer
+                vk::CreateBuffer(m_VulkanData.Device, m_VulkanData.PhysicalDevice,
+                    bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    &vertexBuffer, &vertexBufferMemory);
+                vkMapMemory(m_VulkanData.Device, vertexBufferMemory, 0,
+                    bufferSize, 0, &vertexBufferMapping);
+
+                //create buffer for fragment shader uniform buffer
+                vk::CreateBuffer(m_VulkanData.Device, m_VulkanData.PhysicalDevice,
+                    bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    &fragmentBuffer, &fragmentBufferMemory);
+                vkMapMemory(m_VulkanData.Device, fragmentBufferMemory, 0,
+                    bufferSize, 0, &fragmentBufferMapping);
             }
 
             {
-                uint32_t size = m_VulkanData.SwapChainImages.size();
-
                 {
                     //moved to pipeline
-                    
-                  
                 }
 
                 {
-                    //Create a descriptor pool : 
-                    //Create a descriptor pool object to allocate descriptor sets.
-
-                    VkDescriptorPoolSize poolSize{};
-                    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    poolSize.descriptorCount = size;
-
-                    VkDescriptorPoolCreateInfo poolInfo{};
-                    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-                    poolInfo.pNext = nullptr;
-                    poolInfo.poolSizeCount = 1;
-                    poolInfo.pPoolSizes = &poolSize;
-                    poolInfo.maxSets = size;
-                    poolInfo.flags = 0;
-
-                    vkCreateDescriptorPool(m_VulkanData.Device, &poolInfo, nullptr, &uniformPool);
-                }
-
-                {
-                    //Allocate descriptor sets : 
-                    //Allocate one or more descriptor sets from the descriptor pool,
-                    std::vector<VkDescriptorSetLayout> layouts(size, m_VulkanData.DescriptorSetLayout);
-
-                    VkDescriptorSetAllocateInfo setsAllocInfo{};
-                    setsAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-                    setsAllocInfo.pNext = nullptr;
-                    setsAllocInfo.descriptorPool = uniformPool;
-                    setsAllocInfo.descriptorSetCount = size;
-                    setsAllocInfo.pSetLayouts = layouts.data();
-
-                    uniformDescriptorSets.resize(size);
-                    vkAllocateDescriptorSets(m_VulkanData.Device, &setsAllocInfo, uniformDescriptorSets.data());
-                }
-
-                {
-                    //Update descriptor sets : 
-                    //Update the descriptor sets with the appropriate information.
-                    //Specify the buffer to be bound, its offset, and size.
-
-                    for (int i = 0; i < size; i++)
+                    std::vector<vk::DescriptorSize> vertexShaderDescriptors =
                     {
-                        VkDescriptorBufferInfo bufferInfo{};
-                        bufferInfo.buffer = uniformBuffers[i];
-                        bufferInfo.offset = 0;
-                        bufferInfo.range = sizeof(VertexShaderUBO);//VK_WHOLE_SIZE
+                        {
+                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                            1
+                        },
+                    };
 
-                        VkWriteDescriptorSet writeDescriptor{};
-                        writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                        writeDescriptor.pNext = nullptr;
-                        writeDescriptor.dstBinding = 0;
-                        writeDescriptor.dstArrayElement = 0;
-                        writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                        writeDescriptor.descriptorCount = 1;
-                        writeDescriptor.pBufferInfo = &bufferInfo;
-                        writeDescriptor.pImageInfo = nullptr;
-                        writeDescriptor.pTexelBufferView = nullptr;
-                        writeDescriptor.dstSet = uniformDescriptorSets[i];
+                    std::vector<vk::DescriptorSize> fragmentShaderDescriptors =
+                    {
+                        {
+                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                            1
+                        },
+                    };
 
-                        vkUpdateDescriptorSets(m_VulkanData.Device, 1, &writeDescriptor, 0, nullptr);
-                    }
+                    vk::CreateDescriptorPool(m_VulkanData.Device, vertexShaderDescriptors, 1, 0, &vertexUniformPool);
+                    vk::CreateDescriptorPool(m_VulkanData.Device, fragmentShaderDescriptors, 1, 0, &fragmentUniformPool);
+                }
+
+                {
+                    vk::AllocateDescriptorSets(m_VulkanData.Device, vertexUniformPool, { m_VulkanData.VertexDescriptorSetLayout },
+                        1, &vertexUniformDescriptorSet);
+                    vk::AllocateDescriptorSets(m_VulkanData.Device, fragmentUniformPool, { m_VulkanData.FragmentDescriptorSetLayout },
+                        1, &fragmentUniformDescriptorSet);
+                }
+
+                {
+                    vk::UpdateBuffersInfo vertexBufferInfo =
+                    {
+                        vertexBuffer,
+                        0,
+                        VK_WHOLE_SIZE,
+                    };
+
+                    vk::UpdateBuffersInfo fragmentBufferInfo =
+                    {
+                        fragmentBuffer,
+                        0,
+                        VK_WHOLE_SIZE,
+                    };
+
+                    vk::UpdateDescriptorSets(m_VulkanData.Device, { vertexBufferInfo }, 0, 0, 
+                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                        1, vertexUniformDescriptorSet);
+
+                    vk::UpdateDescriptorSets(m_VulkanData.Device, { fragmentBufferInfo }, 
+                        0, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                        1, fragmentUniformDescriptorSet);
                 }
             }
         }
@@ -119,7 +106,18 @@ namespace psm
             vk::DestroyBuffer(m_VulkanData.Device, m_VertexBuffer);
             vk::FreeMemory(m_VulkanData.Device, m_VertexBufferMemory);
 
-            vkDestroyDescriptorPool(m_VulkanData.Device, m_ImGuiDescriptorsPool, nullptr);
+            vk::DestroyDescriptorPool(m_VulkanData.Device, m_ImGuiDescriptorsPool);
+
+            vk::DestroyBuffer(m_VulkanData.Device, vertexBuffer);
+            vk::UnmapMemory(m_VulkanData.Device, vertexBufferMemory);
+            vk::FreeMemory(m_VulkanData.Device, vertexBufferMemory);
+            vk::DestroyDescriptorPool(m_VulkanData.Device, vertexUniformPool);
+
+            vk::DestroyBuffer(m_VulkanData.Device, fragmentBuffer);
+            vk::UnmapMemory(m_VulkanData.Device, fragmentBufferMemory);
+            vk::FreeMemory(m_VulkanData.Device, fragmentBufferMemory);
+            vk::DestroyDescriptorPool(m_VulkanData.Device, fragmentUniformPool);
+
             m_VkImgui.Deinit();
 
             m_VulkanData.Deinit();
@@ -133,9 +131,13 @@ namespace psm
 
             VertexShaderUBO ubo{};
             ubo.Offset = glm::vec4(0.2f, 0.5f, 0.0f, 0.0f);
-
-            VertexShaderUBO* dataPtr = reinterpret_cast<VertexShaderUBO*>(uniformBufferMapping[imageIndex]);
+            VertexShaderUBO* dataPtr = reinterpret_cast<VertexShaderUBO*>(vertexBufferMapping);
             *dataPtr = ubo;
+
+            FragmentShaderUBO fubo{};
+            fubo.color = glm::vec4(0, 1, 1, 0);
+            FragmentShaderUBO* fData = reinterpret_cast<FragmentShaderUBO*>(fragmentBufferMapping);
+            *fData = fubo;
 
             vkResetCommandBuffer(m_VulkanData.CommandBuffers[imageIndex], 0);
             VkCommandBufferBeginInfo begin{};
@@ -185,12 +187,8 @@ namespace psm
             scissor.extent = m_VulkanData.SwapChainExtent;
             vkCmdSetScissor(m_VulkanData.CommandBuffers[imageIndex], 0, 1, &scissor);
 
-            //Bind the descriptor set: 
-            //Bind the descriptor set to the pipeline during the command buffer recording phase. 
-            //This step associates the uniform buffer with a specific shader stage.
-            vkCmdBindDescriptorSets(m_VulkanData.CommandBuffers[imageIndex], 
-                VK_PIPELINE_BIND_POINT_GRAPHICS, m_VulkanData.PipelineLayout, 0, 1, 
-                &uniformDescriptorSets[imageIndex], 0, nullptr);
+            vk::BindDescriptorSets(m_VulkanData.CommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                m_VulkanData.PipelineLayout, { vertexUniformDescriptorSet, fragmentUniformDescriptorSet });
 
             vkCmdDraw(m_VulkanData.CommandBuffers[imageIndex], static_cast<uint32_t>(m_Vertices.size()), 1, 0, 0);
             //vkCmdDrawIndexed(m_CommandBuffers[imageIndex], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);

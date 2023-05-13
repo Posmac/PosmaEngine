@@ -30,8 +30,28 @@ namespace psm
             vk::CreateShaderModule(Device, "../Engine/Shaders/triangle.vert.txt", &vertexShader);
             vk::CreateShaderModule(Device, "../Engine/Shaders/triangle.frag.txt", &fragmentShader);
 
+            DescriptorLayoutInfo vertexInfo = 
+            {
+                0,
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                1,
+                VK_SHADER_STAGE_VERTEX_BIT
+            };
+
+            DescriptorLayoutInfo fragmentInfo =
+            {
+                0,
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                1,
+                VK_SHADER_STAGE_FRAGMENT_BIT
+            };
+
+            vk::CreateDestriptorSetLayout(Device, { vertexInfo }, 0, &VertexDescriptorSetLayout);
+            vk::CreateDestriptorSetLayout(Device, { fragmentInfo }, 0, &FragmentDescriptorSetLayout);
+
             vk::CreatePipeline(Device, vertexShader, fragmentShader, sizeof(Vertex), SwapChainExtent, RenderPass,
-                &DescriptorSetLayout, &PipelineLayout, &Pipeline);
+                {VertexDescriptorSetLayout, FragmentDescriptorSetLayout}, &PipelineLayout, &Pipeline);
+
             vk::CreateFramebuffers(Device, SwapchainImageViews, SwapChainExtent, SwapchainImageViews.size(), 
                 RenderPass, &Framebuffers);
             vk::CreateCommandPool(Device, Queues.GraphicsFamily.value(), &CommandPool);

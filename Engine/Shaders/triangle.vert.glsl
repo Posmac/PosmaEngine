@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec3 localPosition;
 
-layout(binding = 0) uniform VertexBuffer
+layout(set = 0, binding = 0) uniform VertexBuffer
 {
 	vec4 offset;
 } ubo;

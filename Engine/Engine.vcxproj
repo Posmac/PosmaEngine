@@ -168,6 +168,7 @@
     <ClInclude Include="Source\Vulkan\CommandBuffer.h" />
     <ClInclude Include="Source\Vulkan\Core.h" />
     <ClInclude Include="Source\Vulkan\DebugUtilsMessenger.h" />
+    <ClInclude Include="Source\Vulkan\Descriptors.h" />
     <ClInclude Include="Source\Vulkan\Framebuffer.h" />
     <ClInclude Include="Source\Vulkan\Image.h" />
     <ClInclude Include="Source\Vulkan\Instance.h" />
@@ -198,6 +199,7 @@
     <ClCompile Include="Source\Vulkan\Buffer.cpp" />
     <ClCompile Include="Source\Vulkan\CommandBuffer.cpp" />
     <ClCompile Include="Source\Vulkan\DebugUtilsMessenger.cpp" />
+    <ClCompile Include="Source\Vulkan\Descriptors.cpp" />
     <ClCompile Include="Source\Vulkan\Framebuffer.cpp" />
     <ClCompile Include="Source\Vulkan\Image.cpp" />
     <ClCompile Include="Source\Vulkan\Instance.cpp" />

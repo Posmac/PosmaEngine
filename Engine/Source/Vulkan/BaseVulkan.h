@@ -8,6 +8,7 @@
 #include "PhysicalDevice.h"
 #include "Win32Surface.h"
 #include "Buffer.h"
+#include "Descriptors.h"
 
 #include "Mesh/Mesh.h"
 
@@ -57,19 +58,15 @@ namespace psm
 
             VkBuffer vertexBuffer;
             VkDeviceMemory vertexBufferMemory;
+            void* vertexBufferMapping;
+            VkDescriptorPool vertexUniformPool;
+            VkDescriptorSet vertexUniformDescriptorSet;
 
             VkBuffer fragmentBuffer;
             VkDeviceMemory fragmentBufferMemory;
-
-            VkBuffer indexBuffer;
-            VkDeviceMemory indexBufferMemory;
-
-            std::vector<VkBuffer> uniformBuffers;
-            std::vector<VkDeviceMemory> uniformBufferMemory;
-            std::vector<void*> uniformBufferMapping;
-
-            VkDescriptorPool uniformPool;
-            std::vector<VkDescriptorSet> uniformDescriptorSets;
+            void* fragmentBufferMapping;
+            VkDescriptorPool fragmentUniformPool;
+            VkDescriptorSet fragmentUniformDescriptorSet;
 
             //Imgui
             VulkanImGui m_VkImgui;

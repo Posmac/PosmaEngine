@@ -23,6 +23,7 @@
 #include "RenderPass.h"
 #include "Image.h"
 #include "Synchronization.h"
+#include "Descriptors.h"
 
 #include "Mesh/Mesh.h"
 
@@ -70,7 +71,8 @@ namespace psm
             //pipeline
             VkPipelineLayout PipelineLayout;
             VkPipeline Pipeline;
-            VkDescriptorSetLayout DescriptorSetLayout;
+            VkDescriptorSetLayout FragmentDescriptorSetLayout;
+            VkDescriptorSetLayout VertexDescriptorSetLayout;
 
             //command buffers
             VkCommandPool CommandPool;

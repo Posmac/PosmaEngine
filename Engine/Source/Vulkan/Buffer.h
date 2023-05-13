@@ -17,7 +17,7 @@ namespace psm
             VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
         uint32_t FindMemoryType(VkPhysicalDevice gpu, uint32_t typeFilter, VkMemoryPropertyFlags props);
-
+        void UnmapMemory(VkDevice device, VkDeviceMemory memory);
         void DestroyBuffer(VkDevice device, VkBuffer buffer);
         void FreeMemory(VkDevice device, VkDeviceMemory memory);
     }

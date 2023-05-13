@@ -86,6 +86,11 @@ namespace psm
             }
         }
 
+        void UnmapMemory(VkDevice device, VkDeviceMemory memory)
+        {
+            vkUnmapMemory(device, memory);
+        }
+
         void DestroyBuffer(VkDevice device, VkBuffer buffer)
         {
             vkDestroyBuffer(device, buffer, nullptr);
