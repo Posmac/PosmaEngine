@@ -7,6 +7,7 @@ namespace psm
         void CreatePipeline(VkDevice logicalDevice, VkShaderModule vertexModule,
             VkShaderModule fragmentModule, uint32_t vertexInputBindingDescriptionStride,
             VkExtent2D viewPortExtent, VkRenderPass renderPass,
+            const std::vector< VkPushConstantRange>& pushConstants,
             const std::vector<VkDescriptorSetLayout>& layouts,
             VkPipelineLayout* pipelineLayout,
             VkPipeline* pipeline)
@@ -17,8 +18,8 @@ namespace psm
             pipelineLayoutInfo.setLayoutCount = layouts.size();
             pipelineLayoutInfo.pSetLayouts = layouts.data();
             pipelineLayoutInfo.flags = 0;
-            pipelineLayoutInfo.pushConstantRangeCount = 0;
-            pipelineLayoutInfo.pPushConstantRanges = nullptr;
+            pipelineLayoutInfo.pushConstantRangeCount = 1;
+            pipelineLayoutInfo.pPushConstantRanges = pushConstants.data();
 
             VkResult result = vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr,
                 pipelineLayout);

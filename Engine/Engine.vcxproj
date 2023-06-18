@@ -163,7 +163,7 @@
     <ClInclude Include="Source\Engine.h" />
     <ClInclude Include="Source\Mesh\Mesh.h" />
     <ClInclude Include="Source\Render\Renderer.h" />
-    <ClInclude Include="Source\Vulkan\BaseVulkanAppData.h" />
+    <ClInclude Include="Source\Render\Vk.h" />
     <ClInclude Include="Source\Vulkan\Buffer.h" />
     <ClInclude Include="Source\Vulkan\CommandBuffer.h" />
     <ClInclude Include="Source\Vulkan\Core.h" />
@@ -179,7 +179,6 @@
     <ClInclude Include="Source\Vulkan\RenderPass.h" />
     <ClInclude Include="Source\Vulkan\Shader.h" />
     <ClInclude Include="Source\Vulkan\SwapChain.h" />
-    <ClInclude Include="Source\Vulkan\BaseVulkan.h" />
     <ClInclude Include="Source\Vulkan\Synchronization.h" />
     <ClInclude Include="Source\Vulkan\VulkanImGui.h" />
     <ClInclude Include="Source\Vulkan\Win32Surface.h" />
@@ -195,7 +194,7 @@
     <ClCompile Include="Source\Core\Log.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
     <ClCompile Include="Source\Render\Renderer.cpp" />
-    <ClCompile Include="Source\Vulkan\BaseVulkanAppData.cpp" />
+    <ClCompile Include="Source\Render\Vk.cpp" />
     <ClCompile Include="Source\Vulkan\Buffer.cpp" />
     <ClCompile Include="Source\Vulkan\CommandBuffer.cpp" />
     <ClCompile Include="Source\Vulkan\DebugUtilsMessenger.cpp" />
@@ -209,7 +208,6 @@
     <ClCompile Include="Source\Vulkan\RenderPass.cpp" />
     <ClCompile Include="Source\Vulkan\Shader.cpp" />
     <ClCompile Include="Source\Vulkan\SwapChain.cpp" />
-    <ClCompile Include="Source\Vulkan\BaseVulkan.cpp" />
     <ClCompile Include="Source\Vulkan\Synchronization.cpp" />
     <ClCompile Include="Source\Vulkan\VulkanImGui.cpp" />
     <ClCompile Include="Source\Vulkan\Win32Surface.cpp" />

@@ -1,12 +1,14 @@
 #include "VulkanImGui.h"
-#include "BaseVulkanAppData.h"
+#include "Render/Vk.h"
 
 namespace psm
 {
     namespace vk
     {
         void VulkanImGui::Init(HWND hWnd, uint32_t swapchainImagesCount,
-            const BaseVulkanAppData& appData, VkDescriptorPool* descriptorPool)
+            VkDescriptorPool* descriptorPool, VkRenderPass renderPass, 
+            VkQueue graphicsQueue, uint32_t queueFamily,
+            VkCommandPool cmdPool, VkCommandBuffer cmdBuf)
         {
             IMGUI_CHECKVERSION();
             ImGui::SetCurrentContext(ImGui::CreateContext());
@@ -35,7 +37,7 @@ namespace psm
             pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
             pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
             pool_info.pPoolSizes = pool_sizes;
-            VkResult result = vkCreateDescriptorPool(appData.Device, &pool_info, nullptr, descriptorPool);
+            VkResult result = vkCreateDescriptorPool(vk::Device, &pool_info, nullptr, descriptorPool);
             if (result != VK_SUCCESS)
             {
                 std::cout << "Failed to create descriptor pool" << std::endl;
@@ -43,11 +45,11 @@ namespace psm
 
             //init imgui
             ImGui_ImplVulkan_InitInfo imguiInfo{};
-            imguiInfo.Instance = appData.Instance;
-            imguiInfo.PhysicalDevice = appData.PhysicalDevice;
-            imguiInfo.Device = appData.Device;
-            imguiInfo.QueueFamily = appData.Queues.GraphicsFamily.value();
-            imguiInfo.Queue = appData.Queues.GraphicsQueue;
+            imguiInfo.Instance = vk::Instance;
+            imguiInfo.PhysicalDevice = vk::PhysicalDevice;
+            imguiInfo.Device = vk::Device;
+            imguiInfo.QueueFamily = queueFamily;
+            imguiInfo.Queue = graphicsQueue;
             imguiInfo.PipelineCache = nullptr;
             imguiInfo.DescriptorPool = *descriptorPool;
             imguiInfo.Subpass = 0;
@@ -61,25 +63,25 @@ namespace psm
             io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
             io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-            ImGui_ImplVulkan_Init(&imguiInfo, appData.RenderPass);
+            ImGui_ImplVulkan_Init(&imguiInfo, renderPass);
             {
                 // Use any command queue
-                vkResetCommandPool(appData.Device, appData.CommandPool, 0);
+                vkResetCommandPool(vk::Device, cmdPool, 0);
                 VkCommandBufferBeginInfo begin_info = {};
                 begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
                 begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-                vkBeginCommandBuffer(appData.CommandBuffers[0], &begin_info);
+                vkBeginCommandBuffer(cmdBuf, &begin_info);
 
-                ImGui_ImplVulkan_CreateFontsTexture(appData.CommandBuffers[0]);
+                ImGui_ImplVulkan_CreateFontsTexture(cmdBuf);
 
                 VkSubmitInfo end_info = {};
                 end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
                 end_info.commandBufferCount = 1;
-                end_info.pCommandBuffers = &appData.CommandBuffers[0];
-                vkEndCommandBuffer(appData.CommandBuffers[0]);
-                vkQueueSubmit(appData.Queues.GraphicsQueue, 1, &end_info, VK_NULL_HANDLE);
+                end_info.pCommandBuffers = &cmdBuf;
+                vkEndCommandBuffer(cmdBuf);
+                vkQueueSubmit(graphicsQueue, 1, &end_info, VK_NULL_HANDLE);
 
-                vkDeviceWaitIdle(appData.Device);
+                vkDeviceWaitIdle(vk::Device);
                 ImGui_ImplVulkan_DestroyFontUploadObjects();
             }
         }

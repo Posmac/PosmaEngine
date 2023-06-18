@@ -1,5 +1,11 @@
 #pragma once
 
+#include <Windows.h>
+
+#include "Render/Vk.h"
+#include "Render/Renderer.h"
+#include "Core/Log.h"
+
 namespace psm
 {
     class Engine
@@ -10,11 +16,11 @@ namespace psm
         void operator=(const Engine&) = delete;
         static Engine* Instance();
     private:
-        Engine();
+        Engine() = default;
         static Engine* s_Instance;
     //class specific
     public:
-        void Init(int width, int height);
-        void Dinit();
+        void Init(HWND hWnd, HINSTANCE hInstance);
+        void Dispose();
     };
 }

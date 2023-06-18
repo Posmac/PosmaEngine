@@ -12,13 +12,13 @@ namespace psm
 {
     namespace vk
     {
-        struct BaseVulkanAppData;
-
         class VulkanImGui
         {
         public:
             void Init(HWND hWnd, uint32_t swapchainImagesCount,
-                const BaseVulkanAppData& appData, VkDescriptorPool* descriptorPool);
+                VkDescriptorPool* descriptorPool, VkRenderPass renderPass,
+                VkQueue graphicsQueue, uint32_t queueFamily,
+                VkCommandPool cmdPool, VkCommandBuffer cmdBuf);
             void Deinit();
             void Render(VkCommandBuffer commandBuffer);
         };

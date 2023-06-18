@@ -20,5 +20,6 @@ namespace psm
         void UnmapMemory(VkDevice device, VkDeviceMemory memory);
         void DestroyBuffer(VkDevice device, VkBuffer buffer);
         void FreeMemory(VkDevice device, VkDeviceMemory memory);
+
     }
 }

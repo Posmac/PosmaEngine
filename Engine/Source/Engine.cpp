@@ -14,15 +14,15 @@ namespace psm
         return s_Instance;
     }
 
-    Engine::Engine()
+    void Engine::Init(HWND hWnd, HINSTANCE hInstance)
     {
+        vk::Vk::GetInstance()->Init(hInstance, hWnd);
+        Renderer::Instance()->Init(hInstance, hWnd);
+        Log::Init();
     }
 
-    void Engine::Init(int width, int height)
+    void Engine::Dispose()
     {
-    }
-
-    void Engine::Dinit()
-    {
+        Renderer::Instance()->Deinit();
     }
 }

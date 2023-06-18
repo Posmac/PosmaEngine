@@ -1,10 +1,12 @@
+
 #include <iostream>
 #include <Windows.h>
 #include <stdio.h>
 #include <io.h>
 #include <fcntl.h>
 
-#include "Render/Renderer.h"
+#include "Application.h"
+#include "Engine.h"
 #include "Core/Log.h"
 
 #include "imgui/imgui.h"
@@ -57,8 +59,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     ShowWindow(hWnd, nCmdShow);
 
-    psm::Log::Init();
-    psm::Renderer::Instance()->Init(hInstance, hWnd);
+    psm::Engine::Instance()->Init(hWnd, hInstance);
+    psm::Application app;
+    app.Init();
 
     bool isAppRuning = true;
     while (isAppRuning)
@@ -78,11 +81,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
         if (isAppRuning)
         {
-            psm::Renderer::Instance()->Render();
+            app.Update();
         }
     }
 
-    psm::Renderer::Instance()->Deinit();
+    psm::Engine::Instance()->Dispose();
     CloseConsole();
 
     return 0;

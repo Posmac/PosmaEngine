@@ -11,7 +11,8 @@
 	j. Render pipeline+
 	k. Shaders+
 	l. Syncronization primitives+
-2. Uniform buffers/Push constants
+2. Uniform buffers/Push constants+
+2.1. Refactor everything. Unique code infrastructure
 3. Applying textures into shaders
 	a. Simple textured triangle
 	b. Multiple textures

@@ -1,19 +1,25 @@
 #include "Application.h"
 
-namespace sandbox
+namespace psm
 {
     void Application::Init()
     {
-
+        LoadModelData();
     }
 
-    void Application::Render()
+    void Application::Update()
     {
-
+        time += 0.01f;
+        Renderer::Instance()->Render(time);
     }
 
     void Application::Deinit()
     {
+       
+    }
 
+    void Application::LoadModelData()
+    {
+        Renderer::Instance()->LoadDataIntoBuffer();
     }
 }

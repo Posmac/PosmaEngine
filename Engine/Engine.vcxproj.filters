@@ -21,9 +21,6 @@
     <ClInclude Include="Source\Render\Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Vulkan\BaseVulkan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Core\Log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -78,9 +75,6 @@
     <ClInclude Include="Source\Vulkan\Buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Vulkan\BaseVulkanAppData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Vulkan\VulkanImGui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -111,15 +105,15 @@
     <ClInclude Include="Source\Vulkan\Descriptors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Render\Vk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Render\Renderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Vulkan\BaseVulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\Log.cpp">
@@ -179,9 +173,6 @@
     <ClCompile Include="Source\Vulkan\Framebuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Vulkan\BaseVulkanAppData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Vulkan\DebugUtilsMessenger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -195,6 +186,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Vulkan\Descriptors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Render\Vk.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

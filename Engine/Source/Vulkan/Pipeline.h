@@ -12,6 +12,7 @@ namespace psm
         void CreatePipeline(VkDevice logicalDevice, VkShaderModule vertexModule,
             VkShaderModule fragmentModule, uint32_t vertexInputBindingDescriptionStride,
             VkExtent2D viewPortExtent, VkRenderPass renderPass,
+            const std::vector< VkPushConstantRange>& pushConstants,
             const std::vector<VkDescriptorSetLayout>& layouts,
             VkPipelineLayout* pipelineLayout,
             VkPipeline* pipeline);
