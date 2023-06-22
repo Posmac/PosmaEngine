@@ -39,9 +39,7 @@ namespace psm
         void AllocateDescriptorSets(VkDevice device, VkDescriptorPool pool,
             const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts,
             uint32_t descriptorSetCount, VkDescriptorSet* descriptorSet);
-        void UpdateDescriptorSets(VkDevice device, const std::vector<UpdateBuffersInfo>& updateBuffersInfo,
-            uint32_t dstBinding, uint32_t dstArrayElement, VkDescriptorType descriptorType,
-            uint32_t descriptorCount, VkDescriptorSet dstSet);
+        void UpdateDescriptorSets(VkDevice device, const std::vector<VkWriteDescriptorSet>& writeDescriptors);
         void BindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBindPoint bindPoint, VkPipelineLayout layout,
             const std::vector<VkDescriptorSet>& sets);
         void DestroyDescriptorPool(VkDevice device, VkDescriptorPool pool);

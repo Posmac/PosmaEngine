@@ -28,7 +28,7 @@ namespace psm
         void LoadDataIntoBuffer();
     private:
 
-        //swapchain
+        //swapchain (abstract info vulkan windows class maybe)
         VkSwapchainKHR m_SwapChain;
         std::vector<VkImage> m_SwapChainImages;
         std::vector<VkImageView> m_SwapchainImageViews;
@@ -37,11 +37,11 @@ namespace psm
         VkSemaphore m_ImageAvailableSemaphore;
         VkSemaphore m_RenderFinishedSemaphore;
 
-        //render pass
+        //render pass (should be simply to create)
         VkRenderPass m_RenderPass;
         std::vector<VkFramebuffer> m_Framebuffers;
 
-        //command buffers
+        //command buffers (should be simply to create)
         VkCommandPool m_CommandPool;
         std::vector<VkCommandBuffer> m_CommandBuffers;
 
@@ -50,35 +50,25 @@ namespace psm
             float Time;
         } m_PushConstant;
 
-        //pipeline
+        //pipeline (should be simply to create)
         VkPipelineLayout PipelineLayout;
         VkPipeline Pipeline;
-        VkDescriptorSetLayout FragmentDescriptorSetLayout;
-        VkDescriptorSetLayout VertexDescriptorSetLayout;
+        VkDescriptorSetLayout ShaderDescriptorSetLayout;
 
-        //uniform buffers for shaders
-        struct VertexShaderUBO
+        //uniform buffers for shaders (should be simply to create)
+        struct ShaderUBO
         {
             glm::vec4 Offset;
+            glm::vec4 Color;
         } m_VertexUBO;
 
-        struct FragmentShaderUBO
-        {
-            glm::vec4 color;
-        } m_FragmentUBO;
+        VkBuffer shaderBuffer;
+        VkDeviceMemory shaderBufferMemory;
+        void* shaderBufferMapping;
+        VkDescriptorPool shaderUniformPool;
+        VkDescriptorSet shaderUniformDescriptorSet;
 
-        VkBuffer vertexBuffer;
-        VkDeviceMemory vertexBufferMemory;
-        void* vertexBufferMapping;
-        VkDescriptorPool vertexUniformPool;
-        VkDescriptorSet vertexUniformDescriptorSet;
-
-        VkBuffer fragmentBuffer;
-        VkDeviceMemory fragmentBufferMemory;
-        void* fragmentBufferMapping;
-        VkDescriptorPool fragmentUniformPool;
-        VkDescriptorSet fragmentUniformDescriptorSet;
-
+        //move to model class
         VkBuffer m_VertexBuffer;
         VkDeviceMemory m_VertexBufferMemory;
         std::vector<Vertex> m_Vertices;

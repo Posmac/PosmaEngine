@@ -2,7 +2,7 @@
 
 layout(location = 0) out vec4 AttachmentColor;
 
-layout(set = 1, binding = 0) uniform FragmentBuffer
+layout(set = 0, binding = 1) uniform FragmentBuffer
 {
 	vec4 color;
 } fubo;

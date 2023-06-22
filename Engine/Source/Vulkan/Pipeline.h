@@ -3,6 +3,7 @@
 #include <vector>
 #include <array>
 
+#include "Vulkan/Core.h"
 #include "Include/vulkan/vulkan.h"
 
 namespace psm

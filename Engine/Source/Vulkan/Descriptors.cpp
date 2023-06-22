@@ -24,8 +24,10 @@ namespace psm
             descriptorLayoutInfo.pBindings = bindings.data();
             descriptorLayoutInfo.flags = flags;
 
-            vkCreateDescriptorSetLayout(device, &descriptorLayoutInfo, nullptr,
+            VkResult result = vkCreateDescriptorSetLayout(device, &descriptorLayoutInfo, nullptr,
                 layout);
+
+            VK_CHECK_RESULT(result);
         }
 
         void CreateDescriptorPool(VkDevice device, const std::vector<DescriptorSize>& descriptorsInfo,
@@ -65,32 +67,9 @@ namespace psm
             vkAllocateDescriptorSets(device, &setsAllocInfo, descriptorSet);
         }
 
-        void UpdateDescriptorSets(VkDevice device, const std::vector<UpdateBuffersInfo>& updateBuffersInfo, 
-            uint32_t dstBinding, uint32_t dstArrayElement, VkDescriptorType descriptorType,
-            uint32_t descriptorCount, VkDescriptorSet dstSet)
+        void UpdateDescriptorSets(VkDevice device, const std::vector<VkWriteDescriptorSet>& writeDescriptors)
         {
-            std::vector<VkDescriptorBufferInfo> buffersInfo(updateBuffersInfo.size());
-
-            for (int i = 0; i < updateBuffersInfo.size(); i++)
-            {
-                buffersInfo[i].buffer = updateBuffersInfo[i].Buffer;
-                buffersInfo[i].offset = updateBuffersInfo[i].Offset;
-                buffersInfo[i].range =  updateBuffersInfo[i].Range;
-            }
-
-            VkWriteDescriptorSet vertexWriteDescriptor{};
-            vertexWriteDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            vertexWriteDescriptor.pNext = nullptr;
-            vertexWriteDescriptor.dstBinding = dstBinding;
-            vertexWriteDescriptor.dstArrayElement = dstArrayElement;
-            vertexWriteDescriptor.descriptorType = descriptorType;
-            vertexWriteDescriptor.descriptorCount = descriptorCount;
-            vertexWriteDescriptor.pBufferInfo = buffersInfo.data();
-            vertexWriteDescriptor.pImageInfo = nullptr;
-            vertexWriteDescriptor.pTexelBufferView = nullptr;
-            vertexWriteDescriptor.dstSet = dstSet;
-
-            vkUpdateDescriptorSets(device, 1, &vertexWriteDescriptor, 0, nullptr);
+            vkUpdateDescriptorSets(device, writeDescriptors.size(), writeDescriptors.data(), 0, nullptr);
         }
 
         void BindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBindPoint bindPoint, VkPipelineLayout layout,

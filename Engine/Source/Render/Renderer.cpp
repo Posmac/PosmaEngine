@@ -35,24 +35,16 @@ namespace psm
         vk::CreateCommandBuffers(vk::Device, m_CommandPool, m_SwapChainImages.size(), &m_CommandBuffers);
 
         {
-            VkDeviceSize bufferSize = sizeof(VertexShaderUBO);
+            VkDeviceSize bufferSize = sizeof(ShaderUBO);
 
-            //create buffer for vertex shader uniform buffer
-            vk::CreateBuffer(vk::Device, vk::PhysicalDevice,
-                bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                &vertexBuffer, &vertexBufferMemory);
-            vkMapMemory(vk::Device, vertexBufferMemory, 0,
-                bufferSize, 0, &vertexBufferMapping);
-
-            //create buffer for fragment shader uniform buffer
+            //create buffer for shaders uniform buffer
             vk::CreateBuffer(vk::Device,
                 vk::PhysicalDevice,
                 bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                &fragmentBuffer, &fragmentBufferMemory);
-            vkMapMemory(vk::Device, fragmentBufferMemory, 0,
-                bufferSize, 0, &fragmentBufferMapping);
+                &shaderBuffer, &shaderBufferMemory);
+            vkMapMemory(vk::Device, shaderBufferMemory, 0,
+                bufferSize, 0, &shaderBufferMapping);
         }
 
         {
@@ -61,75 +53,80 @@ namespace psm
             }
 
             {
-                std::vector<vk::DescriptorSize> vertexShaderDescriptors =
+                std::vector<vk::DescriptorSize> shaderDescriptors =
                 {
                     {
                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                        1
+                        2
                     },
                 };
 
-                std::vector<vk::DescriptorSize> fragmentShaderDescriptors =
+                vk::CreateDescriptorPool(vk::Device, shaderDescriptors, 1, 0, &shaderUniformPool);
+            }
+
+            {
+
+                std::vector<vk::DescriptorLayoutInfo> shaderDescriptorInfo =
                 {
                     {
+                        0,
                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                        1
+                        1,
+                        VK_SHADER_STAGE_VERTEX_BIT
+                    },
+                    {
+                        1,
+                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                        1,
+                        VK_SHADER_STAGE_FRAGMENT_BIT
                     },
                 };
 
-                vk::CreateDescriptorPool(vk::Device, vertexShaderDescriptors, 1, 0, &vertexUniformPool);
-                vk::CreateDescriptorPool(vk::Device, fragmentShaderDescriptors, 1, 0, &fragmentUniformPool);
+                vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo }, 0, &ShaderDescriptorSetLayout);
+
+                vk::AllocateDescriptorSets(vk::Device, shaderUniformPool, { ShaderDescriptorSetLayout },
+                    1, &shaderUniformDescriptorSet);
             }
 
             {
-                
-                vk::DescriptorLayoutInfo vertexInfo =
+                std::vector<VkDescriptorBufferInfo> buffersInfo =
                 {
-                    0,
-                    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    1,
-                    VK_SHADER_STAGE_VERTEX_BIT
+                     {
+                         shaderBuffer,
+                         offsetof(ShaderUBO, Offset),
+                         sizeof(glm::vec4),
+                    },
+                    {
+                        shaderBuffer,
+                        offsetof(ShaderUBO, Color),
+                        sizeof(glm::vec4),
+                    },
                 };
 
-                vk::DescriptorLayoutInfo fragmentInfo =
-                {
-                    0,
-                    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    1,
-                    VK_SHADER_STAGE_FRAGMENT_BIT
-                };
+                std::vector< VkWriteDescriptorSet> vertexWriteDescriptor(2);
+                vertexWriteDescriptor[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                vertexWriteDescriptor[0].pNext = nullptr;
+                vertexWriteDescriptor[0].dstBinding = 0;
+                vertexWriteDescriptor[0].dstArrayElement = 0;
+                vertexWriteDescriptor[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                vertexWriteDescriptor[0].descriptorCount = 1;
+                vertexWriteDescriptor[0].pBufferInfo = &buffersInfo[0];
+                vertexWriteDescriptor[0].pImageInfo = nullptr;
+                vertexWriteDescriptor[0].pTexelBufferView = nullptr;
+                vertexWriteDescriptor[0].dstSet = shaderUniformDescriptorSet;
 
-                vk::CreateDestriptorSetLayout(vk::Device, { vertexInfo }, 0, &VertexDescriptorSetLayout);
-                vk::CreateDestriptorSetLayout(vk::Device, { fragmentInfo }, 0, &FragmentDescriptorSetLayout);
+                vertexWriteDescriptor[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                vertexWriteDescriptor[1].pNext = nullptr;
+                vertexWriteDescriptor[1].dstBinding = 1;
+                vertexWriteDescriptor[1].dstArrayElement = 0;
+                vertexWriteDescriptor[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                vertexWriteDescriptor[1].descriptorCount = 1;
+                vertexWriteDescriptor[1].pBufferInfo = &buffersInfo[1];
+                vertexWriteDescriptor[1].pImageInfo = nullptr;
+                vertexWriteDescriptor[1].pTexelBufferView = nullptr;
+                vertexWriteDescriptor[1].dstSet = shaderUniformDescriptorSet;
 
-                vk::AllocateDescriptorSets(vk::Device, vertexUniformPool, { VertexDescriptorSetLayout },
-                    1, &vertexUniformDescriptorSet);
-                vk::AllocateDescriptorSets(vk::Device, fragmentUniformPool, { FragmentDescriptorSetLayout },
-                    1, &fragmentUniformDescriptorSet);
-            }
-
-            {
-                vk::UpdateBuffersInfo vertexBufferInfo =
-                {
-                    vertexBuffer,
-                    0,
-                    VK_WHOLE_SIZE,
-                };
-
-                vk::UpdateBuffersInfo fragmentBufferInfo =
-                {
-                    fragmentBuffer,
-                    0,
-                    VK_WHOLE_SIZE,
-                };
-
-                vk::UpdateDescriptorSets(vk::Device, { vertexBufferInfo }, 0, 0,
-                    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    1, vertexUniformDescriptorSet);
-
-                vk::UpdateDescriptorSets(vk::Device, { fragmentBufferInfo },
-                    0, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    1, fragmentUniformDescriptorSet);
+                vk::UpdateDescriptorSets(vk::Device, vertexWriteDescriptor);
             }
         }
 
@@ -138,25 +135,6 @@ namespace psm
         vk::CreateShaderModule(vk::Device, "../Engine/Shaders/triangle.vert.txt", &vertexShader);
         vk::CreateShaderModule(vk::Device, "../Engine/Shaders/triangle.frag.txt", &fragmentShader);
 
-        vk::DescriptorLayoutInfo vertexInfo =
-        {
-            0,
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            1,
-            VK_SHADER_STAGE_VERTEX_BIT
-        };
-
-        vk::DescriptorLayoutInfo fragmentInfo =
-        {
-            0,
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            1,
-            VK_SHADER_STAGE_FRAGMENT_BIT
-        };
-
-        vk::CreateDestriptorSetLayout(vk::Device, { vertexInfo }, 0, &VertexDescriptorSetLayout);
-        vk::CreateDestriptorSetLayout(vk::Device, { fragmentInfo }, 0, &FragmentDescriptorSetLayout);
-
         VkPushConstantRange constantRange{};
         constantRange.size = sizeof(float);
         constantRange.offset = 0;
@@ -164,7 +142,7 @@ namespace psm
 
         vk::CreatePipeline(vk::Device, vertexShader, fragmentShader, sizeof(Vertex),
             m_SwapChainExtent, m_RenderPass,
-            { constantRange }, { VertexDescriptorSetLayout, FragmentDescriptorSetLayout }, &PipelineLayout, &Pipeline);
+            { constantRange }, { ShaderDescriptorSetLayout }, &PipelineLayout, &Pipeline);
 
         vk::DestroyShaderModule(vk::Device, vertexShader);
         vk::DestroyShaderModule(vk::Device, fragmentShader);
@@ -180,15 +158,10 @@ namespace psm
 
         //vk::DestroyDescriptorPool(*vk::Device, m_ImGuiDescriptorsPool);
 
-        vk::DestroyBuffer(vk::Device, vertexBuffer);
-        vk::UnmapMemory(vk::Device, vertexBufferMemory);
-        vk::FreeMemory(vk::Device, vertexBufferMemory);
-        vk::DestroyDescriptorPool(vk::Device, vertexUniformPool);
-
-        vk::DestroyBuffer(vk::Device, fragmentBuffer);
-        vk::UnmapMemory(vk::Device, fragmentBufferMemory);
-        vk::FreeMemory(vk::Device, fragmentBufferMemory);
-        vk::DestroyDescriptorPool(vk::Device, fragmentUniformPool);
+        vk::DestroyBuffer(vk::Device, shaderBuffer);
+        vk::UnmapMemory(vk::Device, shaderBufferMemory);
+        vk::FreeMemory(vk::Device, shaderBufferMemory);
+        vk::DestroyDescriptorPool(vk::Device, shaderUniformPool);
 
         //m_VkImgui.Deinit();
 
@@ -208,15 +181,11 @@ namespace psm
         vkAcquireNextImageKHR(vk::Device, m_SwapChain, UINT64_MAX,
             m_ImageAvailableSemaphore, nullptr, &imageIndex);
 
-        VertexShaderUBO ubo{};
-        ubo.Offset = glm::vec4(0.2f, 0.5f, 0.0f, 0.0f) * std::sin(deltaTime);
-        VertexShaderUBO* dataPtr = reinterpret_cast<VertexShaderUBO*>(vertexBufferMapping);
+        ShaderUBO ubo{};
+        ubo.Offset = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+        ubo.Color = glm::vec4(1, 0, 0, 1);
+        ShaderUBO* dataPtr = reinterpret_cast<ShaderUBO*>(shaderBufferMapping);
         *dataPtr = ubo;
-
-        FragmentShaderUBO fubo{};
-        fubo.color = glm::vec4(0, 1, 1, 0);
-        FragmentShaderUBO* fData = reinterpret_cast<FragmentShaderUBO*>(fragmentBufferMapping);
-        *fData = fubo;
 
         vkResetCommandBuffer(m_CommandBuffers[imageIndex], 0);
         VkCommandBufferBeginInfo begin{};
@@ -270,7 +239,7 @@ namespace psm
         vkCmdSetScissor(m_CommandBuffers[imageIndex], 0, 1, &scissor);
 
         vk::BindDescriptorSets(m_CommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
-            PipelineLayout, { vertexUniformDescriptorSet, fragmentUniformDescriptorSet });
+            PipelineLayout, { shaderUniformDescriptorSet });
 
         vkCmdDraw(m_CommandBuffers[imageIndex], static_cast<uint32_t>(m_Vertices.size()), 1, 0, 0);
         //vkCmdDrawIndexed(m_CommandBuffers[imageIndex], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);

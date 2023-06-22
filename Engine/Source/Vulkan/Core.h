@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
+#include <cassert>
 
-#define VK_CHECK_RESULT(vkresult) if( (vkresult) == 0) {return;} \
-                                  fprintf(stdout, "[Vulkan Error]: VkResult = %d\n", (vkresult) ); \
-                                  if( (vkresult) < 0) { abort; }
+#define VK_CHECK_RESULT(vkresult) assert((vkresult) == VK_SUCCESS);
