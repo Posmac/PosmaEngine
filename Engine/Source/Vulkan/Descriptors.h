@@ -18,7 +18,7 @@ namespace psm
             VkShaderStageFlagBits StageFlags;
         };
 
-        struct DescriptorSize
+        struct DescriptorPoolSize
         {
             VkDescriptorType Type;
             uint32_t Size;
@@ -33,7 +33,7 @@ namespace psm
 
         void CreateDestriptorSetLayout(VkDevice device, const std::vector<DescriptorLayoutInfo>& descriptorLayoutsInfo,
             VkDescriptorSetLayoutCreateFlags flags, VkDescriptorSetLayout* layout);
-        void CreateDescriptorPool(VkDevice device, const std::vector<DescriptorSize>& descriptorsInfo,
+        void CreateDescriptorPool(VkDevice device, const std::vector<DescriptorPoolSize>& descriptorsInfo,
             uint32_t maximumDescriptorSets, VkDescriptorPoolCreateFlags poolFlags,
             VkDescriptorPool* pool);
         void AllocateDescriptorSets(VkDevice device, VkDescriptorPool pool,

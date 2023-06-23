@@ -41,11 +41,16 @@ namespace psm
             shaderStages[1].pSpecializationInfo = nullptr;
             shaderStages[1].module = fragmentModule;
 
-            VkVertexInputAttributeDescription vertexAttribDescr{};
-            vertexAttribDescr.binding = 0;
-            vertexAttribDescr.format = VK_FORMAT_R32G32B32_SFLOAT;
-            vertexAttribDescr.location = 0;
-            vertexAttribDescr.offset = 0;
+            std::array<VkVertexInputAttributeDescription,2> vertexAttribDescr{};
+            vertexAttribDescr[0].binding = 0;
+            vertexAttribDescr[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+            vertexAttribDescr[0].location = 0;
+            vertexAttribDescr[0].offset = 0;
+
+            vertexAttribDescr[1].binding = 0;
+            vertexAttribDescr[1].format = VK_FORMAT_R32G32_SFLOAT;
+            vertexAttribDescr[1].location = 1;
+            vertexAttribDescr[1].offset = 16;
 
             VkVertexInputBindingDescription bindingDescr{};
             bindingDescr.binding = 0;
@@ -56,10 +61,10 @@ namespace psm
             vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
             vertexInputStateCreateInfo.pNext = nullptr;
             vertexInputStateCreateInfo.flags = 0;
-            vertexInputStateCreateInfo.vertexAttributeDescriptionCount = 1;
+            vertexInputStateCreateInfo.vertexAttributeDescriptionCount = vertexAttribDescr.size();;
             vertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
             vertexInputStateCreateInfo.pVertexBindingDescriptions = &bindingDescr;
-            vertexInputStateCreateInfo.pVertexAttributeDescriptions = &vertexAttribDescr;
+            vertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexAttribDescr.data();
 
             VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
             inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -97,7 +102,7 @@ namespace psm
             rasterizationStateInfo.rasterizerDiscardEnable = VK_FALSE;
             rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
             rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-            rasterizationStateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+            rasterizationStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             rasterizationStateInfo.depthBiasEnable = VK_FALSE;
             rasterizationStateInfo.depthBiasConstantFactor = 0;
             rasterizationStateInfo.depthBiasClamp = 1.0f;

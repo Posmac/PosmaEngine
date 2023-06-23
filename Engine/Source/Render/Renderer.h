@@ -5,8 +5,9 @@
 #include "Vk.h"
 #include "Include/vulkan/vulkan.hpp"
 #include "glm/glm.hpp"
-#include "Vulkan/VulkanImGui.h"
+#include "Utilities/TextureLoader.h"
 #include "Vulkan/Descriptors.h"
+#include "Vulkan/Sampler.h"
 
 namespace psm
 {
@@ -73,8 +74,15 @@ namespace psm
         VkDeviceMemory m_VertexBufferMemory;
         std::vector<Vertex> m_Vertices;
 
+        //sample for shaders
+        VkImage image;
+        VkDeviceMemory imageMemory;
+        VkImageView imageView;
+
+        VkSampler sampler;
+
         //Imgui
-        //VulkanImGui m_VkImgui;
+        //vk::VulkanImGui m_VkImgui;
         //VkDescriptorPool m_ImGuiDescriptorsPool;//used for imgui
     };
 }

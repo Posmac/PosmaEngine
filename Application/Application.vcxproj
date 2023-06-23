@@ -129,7 +129,7 @@ XCOPY  /s /i /y "$(SolutionDir)Engine\Shaders" "$(SolutionDir)x64/Engine/Shaders
     <PostBuildEvent>
       <Command>
 XCOPY  /s /i /y "$(SolutionDir)Engine\Shaders" "$(SolutionDir)x64/Engine/Shaders"
-</Command>
+XCOPY  /s /i /y "$(SolutionDir)Application\Textures" "$(SolutionDir)x64/Engine/Shaders"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -169,6 +169,9 @@ XCOPY  /s /i /y "$(SolutionDir)Engine\Shaders" "$(SolutionDir)x64/Engine/Shaders
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Application.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Textures\texture.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

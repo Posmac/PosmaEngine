@@ -30,7 +30,7 @@ namespace psm
             VK_CHECK_RESULT(result);
         }
 
-        void CreateDescriptorPool(VkDevice device, const std::vector<DescriptorSize>& descriptorsInfo,
+        void CreateDescriptorPool(VkDevice device, const std::vector<DescriptorPoolSize>& descriptorsInfo,
             uint32_t maximumDescriptorSets, VkDescriptorPoolCreateFlags poolFlags, 
             VkDescriptorPool* pool)
         {

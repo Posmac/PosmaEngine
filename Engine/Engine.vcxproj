@@ -128,8 +128,8 @@
       <AdditionalLibraryDirectories>D:\VulkanSDK\1.3.216.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <PreBuildEvent>
-      <Command>cd Shaders &amp; compile.bat
-</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -163,11 +163,13 @@
     <ClInclude Include="External\imgui\imstb_rectpack.h" />
     <ClInclude Include="External\imgui\imstb_textedit.h" />
     <ClInclude Include="External\imgui\imstb_truetype.h" />
+    <ClInclude Include="External\stb_image.h" />
     <ClInclude Include="Source\Core\Log.h" />
     <ClInclude Include="Source\Engine.h" />
     <ClInclude Include="Source\Mesh\Mesh.h" />
     <ClInclude Include="Source\Render\Renderer.h" />
     <ClInclude Include="Source\Render\Vk.h" />
+    <ClInclude Include="Source\Utilities\TextureLoader.h" />
     <ClInclude Include="Source\Vulkan\Buffer.h" />
     <ClInclude Include="Source\Vulkan\CommandBuffer.h" />
     <ClInclude Include="Source\Vulkan\Core.h" />
@@ -177,10 +179,12 @@
     <ClInclude Include="Source\Vulkan\Image.h" />
     <ClInclude Include="Source\Vulkan\Instance.h" />
     <ClInclude Include="Source\Vulkan\LogicalDevice.h" />
+    <ClInclude Include="Source\Vulkan\Memory.h" />
     <ClInclude Include="Source\Vulkan\PhysicalDevice.h" />
     <ClInclude Include="Source\Vulkan\Pipeline.h" />
     <ClInclude Include="Source\Vulkan\Queue.h" />
     <ClInclude Include="Source\Vulkan\RenderPass.h" />
+    <ClInclude Include="Source\Vulkan\Sampler.h" />
     <ClInclude Include="Source\Vulkan\Shader.h" />
     <ClInclude Include="Source\Vulkan\SwapChain.h" />
     <ClInclude Include="Source\Vulkan\Synchronization.h" />
@@ -195,10 +199,12 @@
     <ClCompile Include="External\imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="External\imgui\imgui_tables.cpp" />
     <ClCompile Include="External\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="External\stb_image.cpp" />
     <ClCompile Include="Source\Core\Log.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
     <ClCompile Include="Source\Render\Renderer.cpp" />
     <ClCompile Include="Source\Render\Vk.cpp" />
+    <ClCompile Include="Source\Utilities\TextureLoader.cpp" />
     <ClCompile Include="Source\Vulkan\Buffer.cpp" />
     <ClCompile Include="Source\Vulkan\CommandBuffer.cpp" />
     <ClCompile Include="Source\Vulkan\DebugUtilsMessenger.cpp" />
@@ -207,9 +213,11 @@
     <ClCompile Include="Source\Vulkan\Image.cpp" />
     <ClCompile Include="Source\Vulkan\Instance.cpp" />
     <ClCompile Include="Source\Vulkan\LogicalDevice.cpp" />
+    <ClCompile Include="Source\Vulkan\Memory.cpp" />
     <ClCompile Include="Source\Vulkan\PhysicalDevice.cpp" />
     <ClCompile Include="Source\Vulkan\Pipeline.cpp" />
     <ClCompile Include="Source\Vulkan\RenderPass.cpp" />
+    <ClCompile Include="Source\Vulkan\Sampler.cpp" />
     <ClCompile Include="Source\Vulkan\Shader.cpp" />
     <ClCompile Include="Source\Vulkan\SwapChain.cpp" />
     <ClCompile Include="Source\Vulkan\Synchronization.cpp" />

@@ -35,16 +35,59 @@ namespace psm
         vk::CreateCommandBuffers(vk::Device, m_CommandPool, m_SwapChainImages.size(), &m_CommandBuffers);
 
         {
-            VkDeviceSize bufferSize = sizeof(ShaderUBO);
+            //create buffer for both shaders uniform buffers
+            vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice, sizeof(ShaderUBO),
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                &shaderBuffer, &shaderBufferMemory, &shaderBufferMapping);
 
-            //create buffer for shaders uniform buffer
-            vk::CreateBuffer(vk::Device,
-                vk::PhysicalDevice,
-                bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            //image creation
+            VkBuffer stagingBuffer;
+            VkDeviceMemory stagingBufferMemory;
+
+            putils::RawTextureData textureData{ putils::RGB_Type::Rgb_alpha };
+
+            putils::LoadRawTextureData("Textures/texture.jpg", &textureData);
+
+            VkDeviceSize imageSize = textureData.Width * textureData.Height * textureData.Type;
+
+            vk::CreateBuffer(vk::Device, vk::PhysicalDevice, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                &shaderBuffer, &shaderBufferMemory);
-            vkMapMemory(vk::Device, shaderBufferMemory, 0,
-                bufferSize, 0, &shaderBufferMapping);
+                &stagingBuffer, &stagingBufferMemory);
+
+            void* data;
+            VkResult result = vkMapMemory(vk::Device, stagingBufferMemory, 0, imageSize, 0, &data);
+            VK_CHECK_RESULT(result);
+
+            memcpy(data, textureData.Data, static_cast<size_t>(imageSize));
+            vkUnmapMemory(vk::Device, stagingBufferMemory);
+
+            putils::CleanRawTextureData(textureData.Data);
+
+            vk::CreateImage(vk::Device, vk::PhysicalDevice,
+                { static_cast<uint32_t>(textureData.Width),
+                static_cast<uint32_t>(textureData.Height), 1 },
+                1, 1, VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB,
+                VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0, &image, &imageMemory);
+            vk::CreateImageView(vk::Device, image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D,
+                VK_IMAGE_ASPECT_COLOR_BIT, &imageView);
+
+            vk::ImageLayoutTransition(vk::Device, m_CommandPool, vk::Queues.GraphicsQueue,
+                image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            vk::CopyBufferToImage(vk::Device, m_CommandPool, vk::Queues.GraphicsQueue, stagingBuffer, image,
+                { static_cast<uint32_t>(textureData.Width), static_cast<uint32_t>(textureData.Height), 1 });
+            vk::ImageLayoutTransition(vk::Device, m_CommandPool, vk::Queues.GraphicsQueue,
+                image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+            //create image sampler
+            vk::CreateTextureSampler(vk::Device, VK_FILTER_LINEAR,
+                VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                VK_SAMPLER_ADDRESS_MODE_REPEAT, false, 0.0f, VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+                false, VK_COMPARE_OP_ALWAYS, 0, 0.0, 0.0, 0.0, VK_SAMPLER_MIPMAP_MODE_LINEAR, false, &sampler);
         }
 
         {
@@ -53,19 +96,22 @@ namespace psm
             }
 
             {
-                std::vector<vk::DescriptorSize> shaderDescriptors =
+                std::vector<vk::DescriptorPoolSize> shaderDescriptors =
                 {
                     {
                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                         2
                     },
+                    {
+                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                        1
+                    }
                 };
 
                 vk::CreateDescriptorPool(vk::Device, shaderDescriptors, 1, 0, &shaderUniformPool);
             }
 
             {
-
                 std::vector<vk::DescriptorLayoutInfo> shaderDescriptorInfo =
                 {
                     {
@@ -80,6 +126,12 @@ namespace psm
                         1,
                         VK_SHADER_STAGE_FRAGMENT_BIT
                     },
+                    {
+                        2,
+                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                        1,
+                        VK_SHADER_STAGE_FRAGMENT_BIT
+                    }
                 };
 
                 vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo }, 0, &ShaderDescriptorSetLayout);
@@ -103,30 +155,46 @@ namespace psm
                     },
                 };
 
-                std::vector< VkWriteDescriptorSet> vertexWriteDescriptor(2);
-                vertexWriteDescriptor[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                vertexWriteDescriptor[0].pNext = nullptr;
-                vertexWriteDescriptor[0].dstBinding = 0;
-                vertexWriteDescriptor[0].dstArrayElement = 0;
-                vertexWriteDescriptor[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                vertexWriteDescriptor[0].descriptorCount = 1;
-                vertexWriteDescriptor[0].pBufferInfo = &buffersInfo[0];
-                vertexWriteDescriptor[0].pImageInfo = nullptr;
-                vertexWriteDescriptor[0].pTexelBufferView = nullptr;
-                vertexWriteDescriptor[0].dstSet = shaderUniformDescriptorSet;
+                VkDescriptorImageInfo imageInfo{};
+                imageInfo.imageView = imageView;
+                imageInfo.sampler = sampler;
+                imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-                vertexWriteDescriptor[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                vertexWriteDescriptor[1].pNext = nullptr;
-                vertexWriteDescriptor[1].dstBinding = 1;
-                vertexWriteDescriptor[1].dstArrayElement = 0;
-                vertexWriteDescriptor[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                vertexWriteDescriptor[1].descriptorCount = 1;
-                vertexWriteDescriptor[1].pBufferInfo = &buffersInfo[1];
-                vertexWriteDescriptor[1].pImageInfo = nullptr;
-                vertexWriteDescriptor[1].pTexelBufferView = nullptr;
-                vertexWriteDescriptor[1].dstSet = shaderUniformDescriptorSet;
+                std::vector<VkWriteDescriptorSet> writeDescriptors(3);
+                writeDescriptors[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writeDescriptors[0].pNext = nullptr;
+                writeDescriptors[0].dstBinding = 0;
+                writeDescriptors[0].dstArrayElement = 0;
+                writeDescriptors[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                writeDescriptors[0].descriptorCount = 1;
+                writeDescriptors[0].pBufferInfo = &buffersInfo[0];
+                writeDescriptors[0].pImageInfo = nullptr;
+                writeDescriptors[0].pTexelBufferView = nullptr;
+                writeDescriptors[0].dstSet = shaderUniformDescriptorSet;
 
-                vk::UpdateDescriptorSets(vk::Device, vertexWriteDescriptor);
+                writeDescriptors[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writeDescriptors[1].pNext = nullptr;
+                writeDescriptors[1].dstBinding = 1;
+                writeDescriptors[1].dstArrayElement = 0;
+                writeDescriptors[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                writeDescriptors[1].descriptorCount = 1;
+                writeDescriptors[1].pBufferInfo = &buffersInfo[1];
+                writeDescriptors[1].pImageInfo = nullptr;
+                writeDescriptors[1].pTexelBufferView = nullptr;
+                writeDescriptors[1].dstSet = shaderUniformDescriptorSet;
+
+                writeDescriptors[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writeDescriptors[2].pNext = nullptr;
+                writeDescriptors[2].dstBinding = 2;
+                writeDescriptors[2].dstArrayElement = 0;
+                writeDescriptors[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                writeDescriptors[2].descriptorCount = 1;
+                writeDescriptors[2].pBufferInfo = nullptr;
+                writeDescriptors[2].pImageInfo = &imageInfo;
+                writeDescriptors[2].pTexelBufferView = nullptr;
+                writeDescriptors[2].dstSet = shaderUniformDescriptorSet;
+
+                vk::UpdateDescriptorSets(vk::Device, writeDescriptors);
             }
         }
 
@@ -285,49 +353,38 @@ namespace psm
 
     void Renderer::LoadDataIntoBuffer()
     {
-        m_Vertices.reserve(3);
-        m_Vertices.push_back({ glm::vec3(-1, 1, 0) });
-        m_Vertices.push_back({ glm::vec3(0, -1, 0) });
-        m_Vertices.push_back({ glm::vec3(1, 1, 0) });
+        m_Vertices.reserve(6);
+        m_Vertices.push_back({ glm::vec4(-1, -1, 0, 1), glm::vec2(0, 0) });
+        m_Vertices.push_back({ glm::vec4(-1, 1, 0, 1), glm::vec2(0, 1) });
+        m_Vertices.push_back({ glm::vec4(1, 1, 0, 1), glm::vec2(1, 1) });
+
+        m_Vertices.push_back({ glm::vec4(-1, -1, 0, 1), glm::vec2(0, 0) });
+        m_Vertices.push_back({ glm::vec4(1, 1, 0, 1), glm::vec2(1, 1) });
+        m_Vertices.push_back({ glm::vec4(1, -1, 0, 1), glm::vec2(1, 0) });
 
         VkDeviceSize bufferSize = sizeof(Vertex) * m_Vertices.size();
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
 
-        VkBufferCreateInfo bufferInfo{};
-        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.pNext = nullptr;
-        bufferInfo.flags = 0;
-        bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        bufferInfo.queueFamilyIndexCount = 1;
-        bufferInfo.pQueueFamilyIndices = &vk::Queues.GraphicsFamily.value();
-        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        bufferInfo.size = sizeof(Vertex) * m_Vertices.size();
-
-        VkResult result = vkCreateBuffer(vk::Device, &bufferInfo, nullptr, &m_VertexBuffer);
-
-        if (result != VK_SUCCESS)
-        {
-            std::cout << "Failed to create vertex buffer" << std::endl;
-        }
-
-        psm::vk::CreateBuffer(vk::Device, vk::PhysicalDevice, bufferSize,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, bufferSize,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             &stagingBuffer, &stagingBufferMemory);
+
+        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, bufferSize, 
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+            &m_VertexBuffer, &m_VertexBufferMemory);
 
         void* data;
         vkMapMemory(vk::Device, stagingBufferMemory, 0, bufferSize, 0, &data);
         memcpy(data, m_Vertices.data(), (size_t)bufferSize);
         vkUnmapMemory(vk::Device, stagingBufferMemory);
 
-        psm::vk::CreateBuffer(vk::Device, vk::PhysicalDevice,
-            bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_VertexBuffer, &m_VertexBufferMemory);
-
-        psm::vk::CopyBuffer(vk::Device, m_CommandPool, vk::Queues.GraphicsQueue,
+        vk::CopyBuffer(vk::Device, m_CommandPool, vk::Queues.GraphicsQueue,
             stagingBuffer, m_VertexBuffer, bufferSize);
 
-        psm::vk::DestroyBuffer(vk::Device, stagingBuffer);
-        psm::vk::FreeMemory(vk::Device, stagingBufferMemory);
+        vk::DestroyBuffer(vk::Device, stagingBuffer);
+        vk::FreeMemory(vk::Device, stagingBufferMemory);
     }
 }

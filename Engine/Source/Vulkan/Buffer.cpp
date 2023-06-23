@@ -13,6 +13,35 @@ namespace psm
             bufferInfo.usage = usage;
             bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
+            VkResult result = vkCreateBuffer(device, &bufferInfo, nullptr, buffer);
+            VK_CHECK_RESULT(result);
+
+            VkMemoryRequirements memReq{};
+            vkGetBufferMemoryRequirements(device, *buffer, &memReq);
+
+            VkMemoryAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+            allocInfo.allocationSize = memReq.size;
+            allocInfo.memoryTypeIndex = FindMemoryType(gpu, memReq.memoryTypeBits, properties);
+
+            result = vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory);
+            VK_CHECK_RESULT(result);
+
+            result = vkBindBufferMemory(device, *buffer, *bufferMemory, 0);
+            VK_CHECK_RESULT(result);
+        }
+
+        void CreateBufferAndMapMemory(VkDevice device, VkPhysicalDevice gpu,
+            VkDeviceSize size, VkBufferUsageFlags usage,
+            VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory,
+            void** mapping)
+        {
+            VkBufferCreateInfo bufferInfo{};
+            bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            bufferInfo.size = size;
+            bufferInfo.usage = usage;
+            bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
             if (vkCreateBuffer(device, &bufferInfo, nullptr, buffer) != VK_SUCCESS) {
                 throw std::runtime_error("Failed to create buffer");
             }
@@ -25,31 +54,21 @@ namespace psm
             allocInfo.allocationSize = memReq.size;
             allocInfo.memoryTypeIndex = FindMemoryType(gpu, memReq.memoryTypeBits, properties);
 
-            if (vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory) != VK_SUCCESS) 
+            if (vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory) != VK_SUCCESS)
             {
                 throw std::runtime_error("Failed to allocate memory");
             }
 
             vkBindBufferMemory(device, *buffer, *bufferMemory, 0);
+
+            vkMapMemory(device, *bufferMemory, 0,
+                size, 0, mapping);
         }
 
         void CopyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue,
             VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
         {
-            VkCommandBufferAllocateInfo allocateInfo{};
-            allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocateInfo.commandPool = commandPool;
-            allocateInfo.commandBufferCount = 1;
-
-            VkCommandBuffer commandBuffer;
-            vkAllocateCommandBuffers(device, &allocateInfo, &commandBuffer);
-
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-            vkBeginCommandBuffer(commandBuffer, &beginInfo);
+            VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(device, commandPool);
 
             VkBufferCopy copyRegion{};
             copyRegion.size = size;
@@ -57,33 +76,34 @@ namespace psm
             copyRegion.dstOffset = 0;
             vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
-            vkEndCommandBuffer(commandBuffer);
-
-            VkSubmitInfo submitInfo{};
-
-            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            submitInfo.commandBufferCount = 1;
-            submitInfo.pCommandBuffers = &commandBuffer;
-
-            vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-            vkQueueWaitIdle(graphicsQueue);
-
-            vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+            putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, graphicsQueue);
         }
 
-        uint32_t FindMemoryType(VkPhysicalDevice gpu, uint32_t typeFilter, VkMemoryPropertyFlags props)
+        void CopyBufferToImage(VkDevice device,
+            VkCommandPool commandPool,
+            VkQueue graphicsQueue,
+            VkBuffer srcBuffer,
+            VkImage dstImage,
+            VkExtent3D imageExtent)
         {
-            VkPhysicalDeviceMemoryProperties memProps;
-            vkGetPhysicalDeviceMemoryProperties(gpu, &memProps);
+            VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(device, commandPool);
 
-            for (uint32_t i = 0; i < memProps.memoryTypeCount; i++) 
-            {
-                if (typeFilter & (1 << i) &&
-                    (memProps.memoryTypes[i].propertyFlags & props) == props) 
-                {
-                    return i;
-                }
-            }
+            VkBufferImageCopy copy{};
+            copy.bufferOffset = 0;
+            copy.bufferImageHeight = 0;
+            copy.bufferRowLength = 0;
+
+            copy.imageOffset = { 0, 0, 0 };
+            copy.imageExtent = imageExtent;
+            copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            copy.imageSubresource.baseArrayLayer = 0;
+            copy.imageSubresource.layerCount = 1;
+            copy.imageSubresource.mipLevel = 0;
+
+            vkCmdCopyBufferToImage(commandBuffer, srcBuffer, dstImage,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+
+                        putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, graphicsQueue);
         }
 
         void UnmapMemory(VkDevice device, VkDeviceMemory memory)
