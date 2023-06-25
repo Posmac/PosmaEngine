@@ -42,52 +42,52 @@ namespace psm
                 &shaderBuffer, &shaderBufferMemory, &shaderBufferMapping);
 
             //image creation
-            VkBuffer stagingBuffer;
-            VkDeviceMemory stagingBufferMemory;
-
             putils::RawTextureData textureData{ putils::RGB_Type::Rgb_alpha };
-
             putils::LoadRawTextureData("Textures/texture.jpg", &textureData);
 
-            VkDeviceSize imageSize = textureData.Width * textureData.Height * textureData.Type;
+            vk::CreateImageAndView(vk::Device, vk::PhysicalDevice, 
+                {(uint32_t)textureData.Width, (uint32_t)textureData.Height, 1}, 1, 1, 
+                VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
+                VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
+                VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
+                &image, &imageMemory, & imageView);
 
-            vk::CreateBuffer(vk::Device, vk::PhysicalDevice, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                &stagingBuffer, &stagingBufferMemory);
-
-            void* data;
-            VkResult result = vkMapMemory(vk::Device, stagingBufferMemory, 0, imageSize, 0, &data);
-            VK_CHECK_RESULT(result);
-
-            memcpy(data, textureData.Data, static_cast<size_t>(imageSize));
-            vkUnmapMemory(vk::Device, stagingBufferMemory);
+            vk::LoadDataIntoImageUsingBuffer(vk::Device, vk::PhysicalDevice,
+                textureData.Width * textureData.Height * textureData.Type,
+                textureData.Data, m_CommandPool, vk::Queues.GraphicsQueue,
+                { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
+                VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_FORMAT_R8G8B8A8_SRGB,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &image);
 
             putils::CleanRawTextureData(textureData.Data);
-
-            vk::CreateImage(vk::Device, vk::PhysicalDevice,
-                { static_cast<uint32_t>(textureData.Width),
-                static_cast<uint32_t>(textureData.Height), 1 },
-                1, 1, VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB,
-                VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
-                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0, &image, &imageMemory);
-            vk::CreateImageView(vk::Device, image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D,
-                VK_IMAGE_ASPECT_COLOR_BIT, &imageView);
-
-            vk::ImageLayoutTransition(vk::Device, m_CommandPool, vk::Queues.GraphicsQueue,
-                image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-            vk::CopyBufferToImage(vk::Device, m_CommandPool, vk::Queues.GraphicsQueue, stagingBuffer, image,
-                { static_cast<uint32_t>(textureData.Width), static_cast<uint32_t>(textureData.Height), 1 });
-            vk::ImageLayoutTransition(vk::Device, m_CommandPool, vk::Queues.GraphicsQueue,
-                image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
             //create image sampler
             vk::CreateTextureSampler(vk::Device, VK_FILTER_LINEAR,
                 VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT,
                 VK_SAMPLER_ADDRESS_MODE_REPEAT, false, 0.0f, VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
                 false, VK_COMPARE_OP_ALWAYS, 0, 0.0, 0.0, 0.0, VK_SAMPLER_MIPMAP_MODE_LINEAR, false, &sampler);
+
+            //load another texture
+            putils::RawTextureData cobbleData{ putils::RGB_Type::Rgb_alpha };
+            putils::LoadRawTextureData("Textures/Cobblestone/Cobblestone_albedo.png", &cobbleData);
+
+            vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
+                { (uint32_t)cobbleData.Width, (uint32_t)cobbleData.Height, 1 }, 1, 1,
+                VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
+                VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
+                VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
+                &cobbleImage, &cobbleImageMemory, &cobbleImageView);
+
+            vk::LoadDataIntoImageUsingBuffer(vk::Device, vk::PhysicalDevice,
+                cobbleData.Width * cobbleData.Height * cobbleData.Type,
+                cobbleData.Data, m_CommandPool, vk::Queues.GraphicsQueue,
+                { (uint32_t)cobbleData.Width, (uint32_t)cobbleData.Height, 1 },
+                VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_FORMAT_R8G8B8A8_SRGB,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &cobbleImage);
+
+            putils::CleanRawTextureData(cobbleData.Data);
         }
 
         {
@@ -104,7 +104,7 @@ namespace psm
                     },
                     {
                         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                        1
+                        2
                     }
                 };
 
@@ -130,6 +130,12 @@ namespace psm
                         2,
                         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                         1,
+                        VK_SHADER_STAGE_FRAGMENT_BIT
+                    },
+                    {
+                        3,
+                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                        1, 
                         VK_SHADER_STAGE_FRAGMENT_BIT
                     }
                 };
@@ -160,7 +166,12 @@ namespace psm
                 imageInfo.sampler = sampler;
                 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-                std::vector<VkWriteDescriptorSet> writeDescriptors(3);
+                VkDescriptorImageInfo cobbleImageInfo{};
+                cobbleImageInfo.imageView = cobbleImageView;
+                cobbleImageInfo.sampler = sampler;
+                cobbleImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+                std::vector<VkWriteDescriptorSet> writeDescriptors(4);
                 writeDescriptors[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 writeDescriptors[0].pNext = nullptr;
                 writeDescriptors[0].dstBinding = 0;
@@ -193,6 +204,17 @@ namespace psm
                 writeDescriptors[2].pImageInfo = &imageInfo;
                 writeDescriptors[2].pTexelBufferView = nullptr;
                 writeDescriptors[2].dstSet = shaderUniformDescriptorSet;
+
+                writeDescriptors[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writeDescriptors[3].pNext = nullptr;
+                writeDescriptors[3].dstBinding = 3;
+                writeDescriptors[3].dstArrayElement = 0;
+                writeDescriptors[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                writeDescriptors[3].descriptorCount = 1;
+                writeDescriptors[3].pBufferInfo = nullptr;
+                writeDescriptors[3].pImageInfo = &cobbleImageInfo;
+                writeDescriptors[3].pTexelBufferView = nullptr;
+                writeDescriptors[3].dstSet = shaderUniformDescriptorSet;
 
                 vk::UpdateDescriptorSets(vk::Device, writeDescriptors);
             }
@@ -367,13 +389,13 @@ namespace psm
         VkDeviceMemory stagingBufferMemory;
 
         vk::CreateBuffer(vk::Device, vk::PhysicalDevice, bufferSize,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             &stagingBuffer, &stagingBufferMemory);
 
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, bufferSize, 
+        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, bufferSize,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
             &m_VertexBuffer, &m_VertexBufferMemory);
 
         void* data;

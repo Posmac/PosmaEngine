@@ -79,6 +79,10 @@ namespace psm
         VkDeviceMemory imageMemory;
         VkImageView imageView;
 
+        VkImage cobbleImage;
+        VkDeviceMemory cobbleImageMemory;
+        VkImageView cobbleImageView;
+
         VkSampler sampler;
 
         //Imgui

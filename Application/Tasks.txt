@@ -11,12 +11,13 @@
 	j. Render pipeline+
 	k. Shaders+
 	l. Syncronization primitives+
+
 2. Uniform buffers/Push constants+
-2.1. Refactor everything. Unique code infrastructure
-3. Applying textures into shaders
-	a. Simple textured triangle
+2.1. Refactor everything. Unique code infrastructure+
+3. Applying textures into shaders+
+	a. Simple textured triangle+
 	b. Multiple textures
 4. Camera
-5. Loading GLTF 2.0 format
+5. Loading GLTF 2.0 format (Model Loader)
 6. Multiple passes in one cicle (more render targets in one pass)
 7. Frames in flight

@@ -185,6 +185,76 @@ namespace psm
             putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, graphicsQueue);
         }
 
+        void CreateImageAndView(VkDevice device,
+            VkPhysicalDevice physicalDevice,
+            VkExtent3D extent,
+            int mipLevels,
+            int arrayLevels,
+            VkImageType imageType,
+            VkFormat imageFormat,
+            VkImageTiling tiling,
+            VkImageLayout initialLayout,
+            VkImageUsageFlags usage,
+            VkSharingMode sharingMode,
+            VkSampleCountFlagBits samples,
+            VkImageCreateFlags flags,
+            VkFormat imageViewFormat,
+            VkImageViewType imageViewType,
+            VkImageAspectFlags imageViewAspectFlags,
+            VkImage* image,
+            VkDeviceMemory* imageMemory,
+            VkImageView* imageView)
+        {
+            CreateImage(device, physicalDevice, extent, mipLevels, arrayLevels, imageType, imageFormat,
+                tiling, initialLayout, usage, sharingMode, samples, flags, image, imageMemory);
+
+            CreateImageView(device, *image, imageViewFormat, imageViewType,
+                imageViewAspectFlags, imageView);
+        }
+
+        void LoadDataIntoImageUsingBuffer(VkDevice device, 
+            VkPhysicalDevice physicalDevice,
+            VkDeviceSize dataToLoadSize,
+            void* dataToLoad, 
+            VkCommandPool commandPool, 
+            VkQueue commandQueue, 
+            VkExtent3D size, 
+            VkFormat imageFormatBeforeTransition, 
+            VkImageLayout imageLayoutBeforeTransition, 
+            VkFormat imageFormatAfterTransition, 
+            VkImageLayout imageLayoutAfterTransition,
+            VkImage* dstImage)
+        {
+            VkBuffer stagingBuffer;
+            VkDeviceMemory stagingBufferMemory;
+
+            CreateBuffer(device, physicalDevice, dataToLoadSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                &stagingBuffer, &stagingBufferMemory);
+
+            void* data;
+            VkResult result = vkMapMemory(device, stagingBufferMemory, 0, dataToLoadSize, 0, &data);
+            VK_CHECK_RESULT(result);
+
+            memcpy(data, dataToLoad, static_cast<size_t>(dataToLoadSize));
+            vkUnmapMemory(device, stagingBufferMemory);
+
+            //transfer image layout
+            //from current one to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+            vk::ImageLayoutTransition(device, commandPool, commandQueue,
+                *dstImage, imageFormatBeforeTransition, imageLayoutBeforeTransition,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            //copy data to image with respective layout
+            vk::CopyBufferToImage(device, commandPool, commandQueue, stagingBuffer, *dstImage, size);
+            //from VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to final one
+            vk::ImageLayoutTransition(device, commandPool, commandQueue,
+                *dstImage, imageFormatAfterTransition, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                imageLayoutAfterTransition);
+
+            vk::FreeMemory(device, stagingBufferMemory);
+            vk::DestroyBuffer(device, stagingBuffer);
+        }
+
         void DestroyImage(VkDevice device, VkImage image)
         {
             vkDestroyImage(device, image, nullptr);

@@ -64,7 +64,8 @@ namespace psm
             setsAllocInfo.descriptorSetCount = descriptorSetCount;
             setsAllocInfo.pSetLayouts = descriptorSetLayouts.data();
 
-            vkAllocateDescriptorSets(device, &setsAllocInfo, descriptorSet);
+            VkResult result = vkAllocateDescriptorSets(device, &setsAllocInfo, descriptorSet);
+            VK_CHECK_RESULT(result);
         }
 
         void UpdateDescriptorSets(VkDevice device, const std::vector<VkWriteDescriptorSet>& writeDescriptors)
