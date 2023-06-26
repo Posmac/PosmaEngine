@@ -32,6 +32,49 @@ namespace psm
         {
             vkDestroyRenderPass(device, renderpass, nullptr);
         }
+
+        void BeginRenderPass(VkRenderPass renderPass, 
+            VkFramebuffer framebuffer, 
+            VkOffset2D offset,
+            VkExtent2D extent, 
+            VkClearValue* clearValues, 
+            uint32_t clearValuesCount, 
+            VkCommandBuffer commandBuffer, 
+            VkSubpassContents subpassContents)
+        {
+            VkRenderPassBeginInfo renderPassInfo{};
+            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            renderPassInfo.renderPass = renderPass;
+            renderPassInfo.framebuffer = framebuffer;
+            renderPassInfo.renderArea.offset = offset;
+            renderPassInfo.renderArea.extent = extent;
+            renderPassInfo.clearValueCount = clearValuesCount;
+            renderPassInfo.pClearValues = clearValues;
+
+            vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, subpassContents);
+        }
+
+        void SetViewPortAndScissors(VkCommandBuffer commandBuffer, 
+            float viewPortX, float viewPortY,
+            float viewPortWidth, float viewPortHeight, 
+            float viewPortMinDepth, float viewPortMaxDepth, 
+            VkOffset2D scissorsOffet,
+            VkExtent2D scissorsExtent)
+        {
+            VkViewport viewport{};
+            viewport.x = viewPortX;
+            viewport.y = viewPortY;
+            viewport.width = viewPortWidth;
+            viewport.height = viewPortHeight;
+            viewport.minDepth = viewPortMinDepth;
+            viewport.maxDepth = viewPortMaxDepth;
+            vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+            VkRect2D scissor{};
+            scissor.offset = scissorsOffet;
+            scissor.extent = scissorsExtent;
+            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+        }
     }
 }
 

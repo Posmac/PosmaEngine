@@ -18,6 +18,7 @@ namespace psm
     {
         //m_VkImgui.Init(hWnd, m_SwapChainImages.size(), *this, &m_ImGuiDescriptorsPool);
 
+        //later move into windows class
         vk::CreateSwapchain(vk::Device, vk::PhysicalDevice, vk::Surface, vk::SurfData, &m_SwapChain, &m_SwapChainImageFormat,
             &m_SwapChainExtent);
 
@@ -70,6 +71,7 @@ namespace psm
         vk::CreateFramebuffers(vk::Device, m_SwapchainImageViews, m_SwapChainExtent, m_SwapchainImageViews.size(),
             m_RenderPass, &m_Framebuffers);
 
+        //command buffers
         vk::CreateCommandPool(vk::Device, vk::Queues.GraphicsFamily.value(), &m_CommandPool);
         vk::CreateCommandBuffers(vk::Device, m_CommandPool, m_SwapChainImages.size(), &m_CommandBuffers);
 
@@ -254,8 +256,9 @@ namespace psm
     void Renderer::Render(float deltaTime)
     {
         uint32_t imageIndex;
-        vkAcquireNextImageKHR(vk::Device, m_SwapChain, UINT64_MAX,
+        VkResult result = vkAcquireNextImageKHR(vk::Device, m_SwapChain, UINT64_MAX,
             m_ImageAvailableSemaphore, nullptr, &imageIndex);
+        VK_CHECK_RESULT(result);
 
         ShaderUBO ubo{};
         ubo.Offset = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -263,33 +266,19 @@ namespace psm
         ShaderUBO* dataPtr = reinterpret_cast<ShaderUBO*>(shaderBufferMapping);
         *dataPtr = ubo;
 
-        vkResetCommandBuffer(m_CommandBuffers[imageIndex], 0);
-        VkCommandBufferBeginInfo begin{};
-        begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        begin.flags = 0;
-        begin.pNext = nullptr;
-        begin.pInheritanceInfo = nullptr;
+        result = vkResetCommandBuffer(m_CommandBuffers[imageIndex], 0);
+        VK_CHECK_RESULT(result);
 
-        if (vkBeginCommandBuffer(m_CommandBuffers[imageIndex], &begin) != VK_SUCCESS)
-        {
-            std::cout << "Failed to begin command buffer" << std::endl;
-        }
-
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = m_RenderPass;
-        renderPassInfo.framebuffer = m_Framebuffers[imageIndex];
-        renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = m_SwapChainExtent;
+        vk::BeginCommandBuffer(m_CommandBuffers[imageIndex], 0);
 
         std::array<VkClearValue, 2> clearColor{};
         clearColor[0].color = { {0.2f, 0.2f, 0.2f, 1.0f} };
         clearColor[1].depthStencil = { 1.0f, 0 };
 
-        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearColor.size());
-        renderPassInfo.pClearValues = clearColor.data();
+        vk::BeginRenderPass(m_RenderPass, m_Framebuffers[imageIndex],
+            {0, 0}, m_SwapChainExtent, clearColor.data(), clearColor.size(), 
+            m_CommandBuffers[imageIndex], VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBeginRenderPass(m_CommandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(m_CommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline);
 
         vkCmdPushConstants(m_CommandBuffers[imageIndex],
@@ -300,19 +289,10 @@ namespace psm
         vkCmdBindVertexBuffers(m_CommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
         //vkCmdBindIndexBuffer(buffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        VkViewport viewport{};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = static_cast<float>(m_SwapChainExtent.width);
-        viewport.height = static_cast<float>(m_SwapChainExtent.height);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-        vkCmdSetViewport(m_CommandBuffers[imageIndex], 0, 1, &viewport);
-
-        VkRect2D scissor{};
-        scissor.offset = { 0, 0 };
-        scissor.extent = m_SwapChainExtent;
-        vkCmdSetScissor(m_CommandBuffers[imageIndex], 0, 1, &scissor);
+        vk::SetViewPortAndScissors(m_CommandBuffers[imageIndex],
+            0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width), 
+            static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f,
+            {0, 0}, m_SwapChainExtent);
 
         vk::BindDescriptorSets(m_CommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
             PipelineLayout, { shaderUniformDescriptorSet });
@@ -326,35 +306,14 @@ namespace psm
         //continue
         vkCmdEndRenderPass(m_CommandBuffers[imageIndex]);
 
-        if (vkEndCommandBuffer(m_CommandBuffers[imageIndex]) != VK_SUCCESS)
-        {
-            std::cout << "Failed to end command buffer" << std::endl;
-        }
+        vk::EndCommandBuffer(m_CommandBuffers[imageIndex]);
 
-        VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        vk::Submit(vk::Queues.GraphicsQueue, 1, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            &m_ImageAvailableSemaphore, 1, &m_CommandBuffers[imageIndex], 1, 
+            &m_RenderFinishedSemaphore, 1, VK_NULL_HANDLE);
 
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.pNext = nullptr;
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = &m_ImageAvailableSemaphore;
-        submitInfo.pWaitDstStageMask = &waitStage;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &m_CommandBuffers[imageIndex];
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &m_RenderFinishedSemaphore;
-
-        vkQueueSubmit(vk::Queues.GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-
-        VkPresentInfoKHR presentInfo = {};
-        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &m_RenderFinishedSemaphore;
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = &m_SwapChain;
-        presentInfo.pImageIndices = &imageIndex;
-
-        vkQueuePresentKHR(vk::Queues.PresentQueue, &presentInfo);
+        vk::Present(vk::Queues.PresentQueue, &m_RenderFinishedSemaphore, 1, 
+            &m_SwapChain, 1, &imageIndex);
 
         vkDeviceWaitIdle(vk::Device);
     }

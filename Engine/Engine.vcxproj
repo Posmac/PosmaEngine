@@ -216,6 +216,7 @@
     <ClCompile Include="Source\Vulkan\Memory.cpp" />
     <ClCompile Include="Source\Vulkan\PhysicalDevice.cpp" />
     <ClCompile Include="Source\Vulkan\Pipeline.cpp" />
+    <ClCompile Include="Source\Vulkan\Queue.cpp" />
     <ClCompile Include="Source\Vulkan\RenderPass.cpp" />
     <ClCompile Include="Source\Vulkan\Sampler.cpp" />
     <ClCompile Include="Source\Vulkan\Shader.cpp" />

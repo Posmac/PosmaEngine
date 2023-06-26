@@ -25,5 +25,23 @@ namespace psm
                 return GraphicsFamily.value() == PresentFamily.value();
             }
         };
+
+        void Submit(VkQueue queue,
+            uint32_t submitCount,
+            VkPipelineStageFlags waitStageFlags,
+            const VkSemaphore* pWaitSemaphores,
+            uint32_t waitSemaphoresCount,
+            const VkCommandBuffer* pCommandBuffers,
+            uint32_t commandBuffersCount,
+            const VkSemaphore* pSignalSemaphores,
+            uint32_t signalSemaphoresCount,
+            VkFence fence);
+
+        void Present(VkQueue queue,
+            const VkSemaphore* pWaitSemaphores,
+            uint32_t waitSemaphoresCount,
+            VkSwapchainKHR* pSwapchains,
+            uint32_t swapchainsCount,
+            uint32_t* imageIndices);
     }
 }

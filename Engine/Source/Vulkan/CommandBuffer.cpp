@@ -35,6 +35,24 @@ namespace psm
             VkResult result = vkAllocateCommandBuffers(logicalDevice, &allocInfo, commandBuffers->data());
             VK_CHECK_RESULT(result);
         }
+
+        void BeginCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferUsageFlags flags)
+        {
+            VkCommandBufferBeginInfo begin{};
+            begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            begin.flags = flags;
+            begin.pNext = nullptr;
+            begin.pInheritanceInfo = nullptr;
+
+            VkResult result = vkBeginCommandBuffer(commandBuffer, &begin);
+            VK_CHECK_RESULT(result);
+        }
+
+        void EndCommandBuffer(VkCommandBuffer commandBuffer)
+        {
+            VkResult result = vkEndCommandBuffer(commandBuffer);
+            VK_CHECK_RESULT(result);
+        }
     }
 
     namespace putils

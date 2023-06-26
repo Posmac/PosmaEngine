@@ -15,5 +15,21 @@ namespace psm
             VkRenderPass* renderPass);
 
         void DestroyRenderPass(VkDevice device, VkRenderPass renderpass);
+
+        void BeginRenderPass(VkRenderPass renderPass,
+            VkFramebuffer framebuffer,
+            VkOffset2D offset,
+            VkExtent2D extent,
+            VkClearValue* clearValues,
+            uint32_t clearValuesCount,
+            VkCommandBuffer commandBuffer,
+            VkSubpassContents subpassContents);
+
+        void SetViewPortAndScissors(VkCommandBuffer commandBuffer,
+            float viewPortX, float viewPortY,
+            float viewPortWidth, float viewPortHeight,
+            float viewPortMinDepth, float viewPortMaxDepth,
+            VkOffset2D scissorsOffet,
+            VkExtent2D scissorsExtent);
     }
 }
