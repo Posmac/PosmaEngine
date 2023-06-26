@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 
+#include "Core.h"
 #include "Include/vulkan/vulkan.h"
 
 namespace psm

@@ -15,11 +15,7 @@ namespace psm
             commandPoolCreateInfo.queueFamilyIndex = graphicsFamilyIndex;
 
             VkResult result = vkCreateCommandPool(logicalDevice, &commandPoolCreateInfo, nullptr, commandPool);
-
-            if (result != VK_SUCCESS)
-            {
-                std::cout << "Failed to create command pool" << std::endl;
-            }
+            VK_CHECK_RESULT(result);
         }
 
         void CreateCommandBuffers(VkDevice logicalDevice,
@@ -37,10 +33,7 @@ namespace psm
             commandBuffers->resize(size);
 
             VkResult result = vkAllocateCommandBuffers(logicalDevice, &allocInfo, commandBuffers->data());
-            if (result != VK_SUCCESS)
-            {
-                std::cout << "Failed to allocate command buffers" << std::endl;
-            }
+            VK_CHECK_RESULT(result);
         }
     }
 
@@ -56,7 +49,8 @@ namespace psm
             info.commandBufferCount = 1;
 
             VkCommandBuffer buffer;
-            vkAllocateCommandBuffers(device, &info, &buffer);
+            VkResult result = vkAllocateCommandBuffers(device, &info, &buffer);
+            VK_CHECK_RESULT(result);
 
             VkCommandBufferBeginInfo beginInfo{};
             beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -64,7 +58,8 @@ namespace psm
             beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
             beginInfo.pInheritanceInfo = nullptr;
 
-            vkBeginCommandBuffer(buffer, &beginInfo);
+            result = vkBeginCommandBuffer(buffer, &beginInfo);
+            VK_CHECK_RESULT(result);
 
             return buffer;
         }
@@ -74,15 +69,19 @@ namespace psm
             VkCommandBuffer commandBuffer, 
             VkQueue graphicsQueue)
         {
-            vkEndCommandBuffer(commandBuffer);
+            VkResult result = vkEndCommandBuffer(commandBuffer);
+            VK_CHECK_RESULT(result);
 
             VkSubmitInfo submitInfo{};
             submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
             submitInfo.commandBufferCount = 1;
             submitInfo.pCommandBuffers = &commandBuffer;
 
-            vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-            vkQueueWaitIdle(graphicsQueue);
+            result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+            VK_CHECK_RESULT(result);
+
+            result = vkQueueWaitIdle(graphicsQueue);
+            VK_CHECK_RESULT(result);
 
             vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
         }
