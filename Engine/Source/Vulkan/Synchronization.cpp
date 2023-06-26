@@ -12,10 +12,7 @@ namespace psm
             semaphoreInfo.flags = flags;
 
             VkResult result = vkCreateSemaphore(device, &semaphoreInfo, nullptr, semaphore);
-            if (result != VK_SUCCESS)
-            {
-                std::cout << "Failed to create semaphore" << std::endl;
-            }
+            VK_CHECK_RESULT(result);
         }
 
         void CreateVkFence(VkDevice device, VkFenceCreateFlags flags, VkFence* fence)
@@ -26,10 +23,7 @@ namespace psm
             fenceInfo.flags = flags;
 
             VkResult result = vkCreateFence(device, &fenceInfo, nullptr, fence);
-            if (result != VK_SUCCESS)
-            {
-                std::cout << "Failed to create semaphore" << std::endl;
-            }
+            VK_CHECK_RESULT(result);
         }
 
         void DestroySemaphore(VkDevice device, VkSemaphore semaphore)
