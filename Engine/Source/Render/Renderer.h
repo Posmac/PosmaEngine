@@ -27,6 +27,8 @@ namespace psm
         void Deinit();
         void Render(float deltaTime);
         void LoadDataIntoBuffer();
+        void PrepareDescriptorSets();
+
     private:
 
         //swapchain (abstract info vulkan windows class maybe)

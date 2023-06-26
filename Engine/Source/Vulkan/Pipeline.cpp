@@ -4,75 +4,16 @@ namespace psm
 {
     namespace vk
     {
-        void CreatePipeline(VkDevice logicalDevice, VkShaderModule vertexModule,
-            VkShaderModule fragmentModule, uint32_t vertexInputBindingDescriptionStride,
-            VkExtent2D viewPortExtent, VkRenderPass renderPass,
-            const std::vector< VkPushConstantRange>& pushConstants,
-            const std::vector<VkDescriptorSetLayout>& layouts,
-            VkPipelineLayout* pipelineLayout,
+        void CreateGraphicsPipeline(VkDevice logicalDevice,
+            VkExtent2D viewPortExtent, 
+            VkRenderPass renderPass,
+            VkPipelineLayout pipelineLayout,
+            const VkPipelineShaderStageCreateInfo* pShaderStages,
+            uint32_t shaderStagesCount,
+            VkPipelineVertexInputStateCreateInfo vertexInput,
+            VkPipelineInputAssemblyStateCreateInfo inputAssembly,
             VkPipeline* pipeline)
         {
-            VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-            pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            pipelineLayoutInfo.pNext = nullptr;
-            pipelineLayoutInfo.setLayoutCount = layouts.size();
-            pipelineLayoutInfo.pSetLayouts = layouts.data();
-            pipelineLayoutInfo.flags = 0;
-            pipelineLayoutInfo.pushConstantRangeCount = 1;
-            pipelineLayoutInfo.pPushConstantRanges = pushConstants.data();
-
-            VkResult result = vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr,
-                pipelineLayout);
-
-            std::vector<VkPipelineShaderStageCreateInfo> shaderStages(2);
-            shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-            shaderStages[0].pNext = nullptr;
-            shaderStages[0].flags = 0;
-            shaderStages[0].pName = "main";
-            shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-            shaderStages[0].pSpecializationInfo = nullptr;
-            shaderStages[0].module = vertexModule;
-
-            shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-            shaderStages[1].pNext = nullptr;
-            shaderStages[1].flags = 0;
-            shaderStages[1].pName = "main";
-            shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-            shaderStages[1].pSpecializationInfo = nullptr;
-            shaderStages[1].module = fragmentModule;
-
-            std::array<VkVertexInputAttributeDescription,2> vertexAttribDescr{};
-            vertexAttribDescr[0].binding = 0;
-            vertexAttribDescr[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-            vertexAttribDescr[0].location = 0;
-            vertexAttribDescr[0].offset = 0;
-
-            vertexAttribDescr[1].binding = 0;
-            vertexAttribDescr[1].format = VK_FORMAT_R32G32_SFLOAT;
-            vertexAttribDescr[1].location = 1;
-            vertexAttribDescr[1].offset = 16;
-
-            VkVertexInputBindingDescription bindingDescr{};
-            bindingDescr.binding = 0;
-            bindingDescr.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-            bindingDescr.stride = vertexInputBindingDescriptionStride;
-
-            VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{};
-            vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-            vertexInputStateCreateInfo.pNext = nullptr;
-            vertexInputStateCreateInfo.flags = 0;
-            vertexInputStateCreateInfo.vertexAttributeDescriptionCount = vertexAttribDescr.size();;
-            vertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
-            vertexInputStateCreateInfo.pVertexBindingDescriptions = &bindingDescr;
-            vertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexAttribDescr.data();
-
-            VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
-            inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-            inputAssemblyInfo.pNext = nullptr;
-            inputAssemblyInfo.flags = 0;
-            inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
-            inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
             VkViewport viewPort{};
             viewPort.x = 0;
             viewPort.y = 0;
@@ -109,7 +50,18 @@ namespace psm
             rasterizationStateInfo.depthBiasSlopeFactor = 0;
             rasterizationStateInfo.lineWidth = 1;
 
-            std::vector<VkDynamicState> dynamicStates = {
+            VkPipelineMultisampleStateCreateInfo msState{};
+            msState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+            msState.pNext = nullptr;
+            msState.alphaToCoverageEnable = false;
+            msState.alphaToOneEnable = false;
+            msState.flags = 0;
+            msState.minSampleShading = 1;
+            msState.pSampleMask = 0;
+            msState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+            std::vector<VkDynamicState> dynamicStates = 
+            {
                 VK_DYNAMIC_STATE_VIEWPORT,
                 VK_DYNAMIC_STATE_SCISSOR
             };
@@ -141,24 +93,24 @@ namespace psm
             graphicsPipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             graphicsPipelineInfo.flags = 0;
             graphicsPipelineInfo.pNext = nullptr;
-            graphicsPipelineInfo.stageCount = shaderStages.size();
-            graphicsPipelineInfo.pStages = shaderStages.data();
-            graphicsPipelineInfo.pVertexInputState = &vertexInputStateCreateInfo;
-            graphicsPipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
+            graphicsPipelineInfo.stageCount = shaderStagesCount;
+            graphicsPipelineInfo.pStages = pShaderStages;
+            graphicsPipelineInfo.pVertexInputState = &vertexInput;
+            graphicsPipelineInfo.pInputAssemblyState = &inputAssembly;
             graphicsPipelineInfo.pTessellationState = nullptr;
             graphicsPipelineInfo.pViewportState = &viewPortInfo;
             graphicsPipelineInfo.pRasterizationState = &rasterizationStateInfo;
-            graphicsPipelineInfo.pMultisampleState = nullptr;
+            graphicsPipelineInfo.pMultisampleState = &msState;
             graphicsPipelineInfo.pDepthStencilState = nullptr;
             graphicsPipelineInfo.pColorBlendState = &colorBlending;
             graphicsPipelineInfo.pDynamicState = &dynamicStateCreateInfo;
-            graphicsPipelineInfo.layout = *pipelineLayout;
+            graphicsPipelineInfo.layout = pipelineLayout;
             graphicsPipelineInfo.renderPass = renderPass;
             graphicsPipelineInfo.subpass = 0;
             graphicsPipelineInfo.basePipelineHandle = nullptr;
             graphicsPipelineInfo.basePipelineIndex = 0;
 
-            result = vkCreateGraphicsPipelines(logicalDevice, nullptr, 1,
+            VkResult result = vkCreateGraphicsPipelines(logicalDevice, nullptr, 1,
                 &graphicsPipelineInfo, nullptr, pipeline);
 
             VK_CHECK_RESULT(result);
@@ -172,6 +124,68 @@ namespace psm
         void DestroyPipelineLayout(VkDevice device, VkPipelineLayout layout)
         {
             vkDestroyPipelineLayout(device, layout, nullptr);
+        }
+
+        void GetInputAssembly(VkPrimitiveTopology topology, 
+            bool restartPrimitives, 
+            VkPipelineInputAssemblyStateCreateInfo* info)
+        {
+            info->sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+            info->pNext = nullptr;
+            info->flags = 0;
+            info->primitiveRestartEnable = restartPrimitives;
+            info->topology = topology;
+        }
+
+        void GetPipelineShaderStages(const vk::ShaderModuleInfo* pShadersInfo,
+            uint32_t shadersStagesSize,
+            VkPipelineShaderStageCreateInfo* pipelineShaderStages)
+        {
+            for (int i = 0; i < shadersStagesSize; i++)
+            {
+                pipelineShaderStages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                pipelineShaderStages[i].pNext = nullptr;
+                pipelineShaderStages[i].flags = 0;
+                pipelineShaderStages[i].pName = pShadersInfo[i].Name.c_str();
+                pipelineShaderStages[i].stage = pShadersInfo[i].Stage;
+                pipelineShaderStages[i].pSpecializationInfo = nullptr;
+                pipelineShaderStages[i].module = pShadersInfo[i].Module;
+            }
+        }
+
+        void GetVertexInputInfo(const VkVertexInputAttributeDescription* pVertexInputAttribs,
+            uint32_t vertexInputAttribsSize,
+            const VkVertexInputBindingDescription* pVertexInputBindings,
+            uint32_t vertexInputBindingsSize,
+            VkPipelineVertexInputStateCreateInfo* info)
+        {
+            info->sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+            info->pNext = nullptr;
+            info->flags = 0;
+            info->vertexAttributeDescriptionCount = vertexInputAttribsSize;
+            info->pVertexAttributeDescriptions = pVertexInputAttribs;
+            info->vertexBindingDescriptionCount = vertexInputBindingsSize;
+            info->pVertexBindingDescriptions = pVertexInputBindings;
+        }
+
+        void CreatePipelineLayout(VkDevice device,
+            const VkDescriptorSetLayout* pLayouts,
+            const uint32_t layoutsSize,
+            const VkPushConstantRange* pPushConstants,
+            const uint32_t pushConstantsSize,
+            VkPipelineLayout* pipelineLayout)
+        {
+            VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+            pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            pipelineLayoutInfo.pNext = nullptr;
+            pipelineLayoutInfo.setLayoutCount = layoutsSize;
+            pipelineLayoutInfo.pSetLayouts = pLayouts;
+            pipelineLayoutInfo.flags = 0;
+            pipelineLayoutInfo.pushConstantRangeCount = pushConstantsSize;
+            pipelineLayoutInfo.pPushConstantRanges = pPushConstants;
+
+            VkResult result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr,
+                pipelineLayout);
         }
     }
 }

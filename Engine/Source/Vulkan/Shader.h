@@ -11,6 +11,13 @@ namespace psm
 {
     namespace vk
     {
+        struct ShaderModuleInfo
+        {
+            VkShaderModule Module;
+            VkShaderStageFlagBits Stage;
+            std::string Name;
+        };
+
         void CreateShaderModule(VkDevice logicalDevice, const std::string& path, VkShaderModule* module);
         void DestroyShaderModule(VkDevice device, VkShaderModule module);
     }

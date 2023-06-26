@@ -33,7 +33,7 @@ namespace psm
 
             vk::CreateInstance(m_ValidationLayers, m_InstanceExtensions, debugMessengerInfo, &m_Instance);
             vk::CreateDebugUtilsMessenger(m_Instance, DebugMessengerCallback, &m_DebugMessenger);
-            vk::SelectPhysicalDevice(m_Instance, &m_PhysicalDeviceFeatures, &m_PhysicalDeviceProperties, &m_PhysicalDevice);
+             vk::SelectPhysicalDevice(m_Instance, &m_PhysicalDeviceFeatures, &m_PhysicalDeviceProperties, &m_PhysicalDevice);
 
             vk::CreateSurface(hInstance, hWnd, m_Instance, &m_Surface);
             vk::PopulateSurfaceData(m_Instance, m_PhysicalDevice, m_Surface, &m_SurfaceData);
