@@ -26,7 +26,46 @@ namespace psm
         vk::CreateVkSemaphore(vk::Device, 0, &m_RenderFinishedSemaphore);
         vk::CreateImageViews(vk::Device, m_SwapChainImages, m_SwapChainImageFormat,
             VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, &m_SwapchainImageViews);
-        vk::CreateRenderPass(vk::Device, m_SwapChainImageFormat, &m_RenderPass);
+
+        //render pass creation
+        constexpr uint32_t colorAttachmentDescriptionCount = 1;
+        VkAttachmentDescription colorAttachmentDescriptions[] =
+        {
+            0,                                //flags
+            m_SwapChainImageFormat,           //attachment format
+            VK_SAMPLE_COUNT_1_BIT,            //samples number
+            VK_ATTACHMENT_LOAD_OP_CLEAR,      //load op
+            VK_ATTACHMENT_STORE_OP_STORE,     //store op
+            VK_ATTACHMENT_LOAD_OP_DONT_CARE,  //stencil load op
+            VK_ATTACHMENT_STORE_OP_DONT_CARE, //stencilStoreOp
+            VK_IMAGE_LAYOUT_UNDEFINED,        //initialLayout
+            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR   //final layout
+        };
+
+        constexpr uint32_t colorAttachmentRefCount = 1;
+        VkAttachmentReference colorAttachmentReferences[colorAttachmentRefCount] =
+        {
+            0,                                        //attachment
+            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, //layout
+        };
+
+        constexpr uint32_t subpassDescrCount = 1;
+        VkSubpassDescription subpassDescr[subpassDescrCount] =
+        {
+             0,                               // flags
+             VK_PIPELINE_BIND_POINT_GRAPHICS, //pipeline bind point
+             0,                               // input attachment count
+             nullptr,                         //pInput attachments
+             colorAttachmentRefCount,         // ColorAttachments Count
+             colorAttachmentReferences,       //pColorAttachments
+             nullptr,                         //pResolveAttachments
+             nullptr,                         //pDepthStencilAttachment
+             0,                               //preserveAttachmentCount
+             nullptr                          //pPreserveAttachments
+        };
+
+        vk::CreateRenderPass(vk::Device, colorAttachmentDescriptions, colorAttachmentDescriptionCount,
+            subpassDescr, subpassDescrCount, &m_RenderPass);
 
         vk::CreateFramebuffers(vk::Device, m_SwapchainImageViews, m_SwapChainExtent, m_SwapchainImageViews.size(),
             m_RenderPass, &m_Framebuffers);
@@ -97,30 +136,29 @@ namespace psm
         vk::CreateShaderModule(vk::Device, "../Engine/Shaders/triangle.vert.txt", &vertexShader);
         vk::CreateShaderModule(vk::Device, "../Engine/Shaders/triangle.frag.txt", &fragmentShader);
 
+        //pipeline layout
+        constexpr uint32_t pushConstantsSize = 1;
+        VkPushConstantRange pushConstants[pushConstantsSize] =
         {
-            constexpr uint32_t pushConstantsSize = 1;
-            VkPushConstantRange pushConstants[pushConstantsSize] =
             {
-                {
-                    VK_SHADER_STAGE_FRAGMENT_BIT, // stage flags
-                    0,                            // offset
-                    sizeof(float),                // size
-                },
-            };
+                VK_SHADER_STAGE_FRAGMENT_BIT, // stage flags
+                0,                            // offset
+                sizeof(float),                // size
+            },
+        };
 
-            constexpr uint32_t descriptorSetLayoutsSize = 1;
-            VkDescriptorSetLayout descriptorSetLayouts[descriptorSetLayoutsSize] =
-            {
-                ShaderDescriptorSetLayout
-            };
+        constexpr uint32_t descriptorSetLayoutsSize = 1;
+        VkDescriptorSetLayout descriptorSetLayouts[descriptorSetLayoutsSize] =
+        {
+            ShaderDescriptorSetLayout
+        };
 
-            vk::CreatePipelineLayout(vk::Device,
-                descriptorSetLayouts,
-                descriptorSetLayoutsSize,
-                pushConstants,
-                pushConstantsSize,
-                &PipelineLayout);
-        }
+        vk::CreatePipelineLayout(vk::Device,
+            descriptorSetLayouts,
+            descriptorSetLayoutsSize,
+            pushConstants,
+            pushConstantsSize,
+            &PipelineLayout);
 
         //shader stages
         constexpr size_t modulesSize = 2;
@@ -170,12 +208,14 @@ namespace psm
         };
 
         VkPipelineVertexInputStateCreateInfo vertexInputState{};
-        vk::GetVertexInputInfo(vertexAttribDescr, attribsSize, bindingDescriptions, bindingsSize, &vertexInputState);
+        vk::GetVertexInputInfo(vertexAttribDescr, attribsSize, 
+            bindingDescriptions, bindingsSize, &vertexInputState);
 
         //input assembly
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
         vk::GetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false, &inputAssemblyInfo);
 
+        //create graphics pipeline (a lot of default things)
         vk::CreateGraphicsPipeline(vk::Device, m_SwapChainExtent,
             m_RenderPass, PipelineLayout, stages, modulesSize,
             vertexInputState, inputAssemblyInfo, &Pipeline);

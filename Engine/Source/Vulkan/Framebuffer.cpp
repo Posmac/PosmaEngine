@@ -4,9 +4,12 @@ namespace psm
 {
     namespace vk
     {
-        void CreateFramebuffers(VkDevice device, const std::vector<VkImageView>& swapchainImageViews, 
-            const VkExtent2D extent, uint32_t size,
-            VkRenderPass renderPas, std::vector<VkFramebuffer>* framebuffers)
+        void CreateFramebuffers(VkDevice device, 
+            const std::vector<VkImageView>& swapchainImageViews, 
+            const VkExtent2D extent, 
+            uint32_t size,
+            VkRenderPass renderPas, 
+            std::vector<VkFramebuffer>* framebuffers)
         {
             framebuffers->resize(size);
 
@@ -26,10 +29,7 @@ namespace psm
                 VkResult result = vkCreateFramebuffer(device, &framebufferInfo, nullptr,
                     &(*framebuffers)[i]);
 
-                if (result != VK_SUCCESS)
-                {
-                    std::cout << "Failed to create framebuffer" << std::endl;
-                }
+                VK_CHECK_RESULT(result);
             }
         }
 

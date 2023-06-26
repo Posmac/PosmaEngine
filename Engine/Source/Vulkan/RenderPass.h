@@ -7,8 +7,13 @@ namespace psm
 {
     namespace vk
     {
-        void CreateRenderPass(VkDevice logicalDevice, VkFormat imageFormat,
+        void CreateRenderPass(VkDevice logicalDevice,
+            const VkAttachmentDescription* pAttachments,
+            uint32_t attachmentsCount,
+            const VkSubpassDescription* pSubpassDescriptions,
+            uint32_t subpassDescCount,
             VkRenderPass* renderPass);
+
         void DestroyRenderPass(VkDevice device, VkRenderPass renderpass);
     }
 }
