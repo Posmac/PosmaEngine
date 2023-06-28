@@ -74,7 +74,16 @@ namespace psm
             copyRegion.size = size;
             copyRegion.srcOffset = 0;
             copyRegion.dstOffset = 0;
+
+           /* vk::InsertBufferMemoryBarrier(commandBuffer, srcBuffer, size,
+                VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+                VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);*/
+
             vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+            //vk::InsertBufferMemoryBarrier(commandBuffer, dstBuffer, size,
+            //    VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+            //    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);
 
             putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, graphicsQueue);
         }
@@ -103,7 +112,7 @@ namespace psm
             vkCmdCopyBufferToImage(commandBuffer, srcBuffer, dstImage,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 
-                        putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, graphicsQueue);
+            putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, graphicsQueue);
         }
 
         void UnmapMemory(VkDevice device, VkDeviceMemory memory)

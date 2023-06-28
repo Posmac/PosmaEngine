@@ -25,8 +25,7 @@
 #include "Vulkan/Synchronization.h"
 #include "Vulkan/Descriptors.h"
 #include "Vulkan/VulkanImGui.h"
-
-#include "Mesh/Mesh.h"
+#include "Vulkan/Sampler.h"
 
 namespace psm
 {
@@ -45,6 +44,9 @@ namespace psm
         //surface
         extern VkSurfaceKHR Surface;
         extern SurfaceData SurfData;
+
+        //global samplers
+        extern VkSampler Sampler;
 
         class Vk
         {
@@ -77,6 +79,9 @@ namespace psm
 
             //debug
             VkDebugUtilsMessengerEXT m_DebugMessenger;
+
+            //samplers
+            VkSampler m_Sampler;
 
             //extensions and layers
             std::vector<const char*> m_ValidationLayers =

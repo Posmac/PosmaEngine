@@ -90,17 +90,27 @@ namespace psm
             VkResult result = vkEndCommandBuffer(commandBuffer);
             VK_CHECK_RESULT(result);
 
-            VkSubmitInfo submitInfo{};
+            VkSubmitInfo submitInfo = {};
             submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
             submitInfo.commandBufferCount = 1;
             submitInfo.pCommandBuffers = &commandBuffer;
 
-            result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+            // Create fence to ensure that the command buffer has finished executing
+            VkFenceCreateInfo fenceCreateInfo = {};
+            fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+            fenceCreateInfo.flags = 0;
+            VkFence fence;
+            result = vkCreateFence(device, &fenceCreateInfo, nullptr, &fence);
             VK_CHECK_RESULT(result);
 
-            result = vkQueueWaitIdle(graphicsQueue);
+            // Submit to the queue
+            result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence);
+            VK_CHECK_RESULT(result);
+            // Wait for the fence to signal that command buffer has finished executing
+            result = vkWaitForFences(device, 1, &fence, VK_TRUE, 100000000000);
             VK_CHECK_RESULT(result);
 
+            vkDestroyFence(device, fence, nullptr);
             vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
         }
     }

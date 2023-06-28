@@ -14,6 +14,9 @@ namespace psm
         VkSurfaceKHR Surface = VK_NULL_HANDLE;
         SurfaceData SurfData = {};
 
+        //samplers
+        VkSampler Sampler = VK_NULL_HANDLE;
+
         Vk* Vk::s_Instance = nullptr;;
 
         Vk* Vk::GetInstance()
@@ -54,12 +57,21 @@ namespace psm
             //surface
             Surface = m_Surface;
             SurfData = m_SurfaceData;
+
+            //create image sampler
+            vk::CreateTextureSampler(m_Device, VK_FILTER_LINEAR,
+                VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                VK_SAMPLER_ADDRESS_MODE_REPEAT, false, 0.0f, VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+                false, VK_COMPARE_OP_ALWAYS, 0, 0.0, 0.0, 0.0, VK_SAMPLER_MIPMAP_MODE_LINEAR, false, &m_Sampler);
+
+            Sampler = m_Sampler;
         }
 
         void Vk::Deinit()
         {
             vk::DestroySurface(m_Instance, m_Surface);
             vk::DestroyDebugUtilsMessenger(m_Instance, m_DebugMessenger);
+            vk::DestroySampler(m_Device, m_Sampler);
             vk::DestroyDevice(m_Device);
             vk::DestroyInstance(m_Instance);
         }

@@ -3,8 +3,8 @@
 #include <vector>
 
 #include "Render/Renderer.h"
-
-#include "Mesh/Mesh.h"
+#include "Utilities/ModelLoader.h"
+#include "Utilities/TextureLoader.h"
 
 namespace psm
 {
@@ -15,9 +15,7 @@ namespace psm
         void Init();
         void Update();
         void Deinit();
-        void LoadModelData();
     private:
         float time = 0;
-  
     };
 }

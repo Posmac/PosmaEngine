@@ -25,5 +25,7 @@ namespace psm
             VkSamplerMipmapMode mipmapMode,
             bool unnormalizedCoords,
             VkSampler* sampler);
+
+        void DestroySampler(VkDevice device, VkSampler sampler);
     }
 }

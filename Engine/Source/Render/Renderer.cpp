@@ -1,8 +1,11 @@
 #include "Renderer.h"
 
+#include <iostream>
+#include <fstream>
+
 namespace psm
 {
-    Renderer* Renderer::s_Instance = nullptr;;
+    Renderer* Renderer::s_Instance = nullptr;
 
     Renderer* Renderer::Instance()
     {
@@ -76,12 +79,6 @@ namespace psm
         vk::CreateCommandBuffers(vk::Device, m_CommandPool, m_SwapChainImages.size(), &m_CommandBuffers);
 
         {
-            //create buffer for both shaders uniform buffers
-            vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice, sizeof(ShaderUBO),
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                &shaderBuffer, &shaderBufferMemory, &shaderBufferMapping);
-
             //image creation
             putils::RawTextureData textureData{ putils::RGB_Type::Rgb_alpha };
             putils::LoadRawTextureData("Textures/texture.jpg", &textureData);
@@ -102,12 +99,6 @@ namespace psm
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &image);
 
             putils::CleanRawTextureData(textureData.Data);
-
-            //create image sampler
-            vk::CreateTextureSampler(vk::Device, VK_FILTER_LINEAR,
-                VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                VK_SAMPLER_ADDRESS_MODE_REPEAT, false, 0.0f, VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
-                false, VK_COMPARE_OP_ALWAYS, 0, 0.0, 0.0, 0.0, VK_SAMPLER_MIPMAP_MODE_LINEAR, false, &sampler);
 
             //load another texture
             putils::RawTextureData cobbleData{ putils::RGB_Type::Rgb_alpha };
@@ -131,116 +122,17 @@ namespace psm
             putils::CleanRawTextureData(cobbleData.Data);
         }
 
-        PrepareDescriptorSets();
+        putils::LoadModel("../Engine/Models/Skull/Skull.obj", &model);
+        model.Init(m_CommandPool);
 
-        VkShaderModule vertexShader;
-        VkShaderModule fragmentShader;
-        vk::CreateShaderModule(vk::Device, "../Engine/Shaders/triangle.vert.txt", &vertexShader);
-        vk::CreateShaderModule(vk::Device, "../Engine/Shaders/triangle.frag.txt", &fragmentShader);
+        OpaqueInstances::Instance()->Init(&model, m_RenderPass, m_SwapChainExtent);
+        OpaqueInstances::Instance()->AddInstance(glm::mat4(1.0));
 
-        //pipeline layout
-        constexpr uint32_t pushConstantsSize = 1;
-        VkPushConstantRange pushConstants[pushConstantsSize] =
-        {
-            {
-                VK_SHADER_STAGE_FRAGMENT_BIT, // stage flags
-                0,                            // offset
-                sizeof(float),                // size
-            },
-        };
-
-        constexpr uint32_t descriptorSetLayoutsSize = 1;
-        VkDescriptorSetLayout descriptorSetLayouts[descriptorSetLayoutsSize] =
-        {
-            ShaderDescriptorSetLayout
-        };
-
-        vk::CreatePipelineLayout(vk::Device,
-            descriptorSetLayouts,
-            descriptorSetLayoutsSize,
-            pushConstants,
-            pushConstantsSize,
-            &PipelineLayout);
-
-        //shader stages
-        constexpr size_t modulesSize = 2;
-        vk::ShaderModuleInfo modules[modulesSize] =
-        {
-            {
-                vertexShader,                 // shader module 
-                VK_SHADER_STAGE_VERTEX_BIT,   // VkShaderStageFlag
-                "main"                        // entry point
-            },
-            {
-                fragmentShader,               // shader module 
-                VK_SHADER_STAGE_FRAGMENT_BIT, // VkShaderStageFlag
-                "main"                        // entry point
-            },
-        };
-
-        VkPipelineShaderStageCreateInfo stages[modulesSize];
-        vk::GetPipelineShaderStages(modules, modulesSize, stages);
-
-        //vertex input
-        constexpr size_t attribsSize = 2;
-        VkVertexInputAttributeDescription vertexAttribDescr[attribsSize] =
-        {
-            {
-                0,                              // location
-                0,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                offsetof(Vertex, Position)      // offset
-            },
-            {
-                1,                              // location
-                0,                              // binding
-                VK_FORMAT_R32G32_SFLOAT,        // format
-                offsetof(Vertex, TexCoord)      // offset
-            },
-        };
-
-        constexpr size_t bindingsSize = 1;
-        VkVertexInputBindingDescription bindingDescriptions[bindingsSize] =
-        {
-            {
-                0,                          // binding
-                sizeof(Vertex),             // string
-                VK_VERTEX_INPUT_RATE_VERTEX // input rate
-            },
-        };
-
-        VkPipelineVertexInputStateCreateInfo vertexInputState{};
-        vk::GetVertexInputInfo(vertexAttribDescr, attribsSize, 
-            bindingDescriptions, bindingsSize, &vertexInputState);
-
-        //input assembly
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
-        vk::GetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false, &inputAssemblyInfo);
-
-        //create graphics pipeline (a lot of default things)
-        vk::CreateGraphicsPipeline(vk::Device, m_SwapChainExtent,
-            m_RenderPass, PipelineLayout, stages, modulesSize,
-            vertexInputState, inputAssemblyInfo, &Pipeline);
-
-        vk::DestroyShaderModule(vk::Device, vertexShader);
-        vk::DestroyShaderModule(vk::Device, fragmentShader);
+        OpaqueInstances::Instance()->UpdateDescriptorSets(imageView, cobbleImageView);
     }
 
     void Renderer::Deinit()
     {
-        vk::DestroyBuffer(vk::Device, m_VertexBuffer);
-        vk::FreeMemory(vk::Device, m_VertexBufferMemory);
-
-        vk::DestroyPipeline(vk::Device, Pipeline);
-        vk::DestroyPipelineLayout(vk::Device, PipelineLayout);
-
-        //vk::DestroyDescriptorPool(*vk::Device, m_ImGuiDescriptorsPool);
-
-        vk::DestroyBuffer(vk::Device, shaderBuffer);
-        vk::UnmapMemory(vk::Device, shaderBufferMemory);
-        vk::FreeMemory(vk::Device, shaderBufferMemory);
-        vk::DestroyDescriptorPool(vk::Device, shaderUniformPool);
-
         //m_VkImgui.Deinit();
 
         vk::DestroyFramebuffers(vk::Device, m_Framebuffers);
@@ -255,16 +147,11 @@ namespace psm
 
     void Renderer::Render(float deltaTime)
     {
+        //basic
         uint32_t imageIndex;
         VkResult result = vkAcquireNextImageKHR(vk::Device, m_SwapChain, UINT64_MAX,
             m_ImageAvailableSemaphore, nullptr, &imageIndex);
         VK_CHECK_RESULT(result);
-
-        ShaderUBO ubo{};
-        ubo.Offset = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-        ubo.Color = glm::vec4(1, 0, 0, 1);
-        ShaderUBO* dataPtr = reinterpret_cast<ShaderUBO*>(shaderBufferMapping);
-        *dataPtr = ubo;
 
         result = vkResetCommandBuffer(m_CommandBuffers[imageIndex], 0);
         VK_CHECK_RESULT(result);
@@ -279,26 +166,13 @@ namespace psm
             {0, 0}, m_SwapChainExtent, clearColor.data(), clearColor.size(), 
             m_CommandBuffers[imageIndex], VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(m_CommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline);
-
-        vkCmdPushConstants(m_CommandBuffers[imageIndex],
-            PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &deltaTime);
-
-        VkBuffer vertexBuffers[] = { m_VertexBuffer };
-        VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers(m_CommandBuffers[imageIndex], 0, 1, vertexBuffers, offsets);
-        //vkCmdBindIndexBuffer(buffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
         vk::SetViewPortAndScissors(m_CommandBuffers[imageIndex],
-            0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width), 
+            0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width),
             static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f,
-            {0, 0}, m_SwapChainExtent);
+            { 0, 0 }, m_SwapChainExtent);
 
-        vk::BindDescriptorSets(m_CommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
-            PipelineLayout, { shaderUniformDescriptorSet });
-
-        vkCmdDraw(m_CommandBuffers[imageIndex], static_cast<uint32_t>(m_Vertices.size()), 1, 0, 0);
-        //vkCmdDrawIndexed(m_CommandBuffers[imageIndex], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+        //related to specific pipeline
+        OpaqueInstances::Instance()->Render(m_CommandBuffers[imageIndex]);
 
         //render IMGui
         //m_VkImgui.Render(m_CommandBuffers[imageIndex]);
@@ -316,154 +190,5 @@ namespace psm
             &m_SwapChain, 1, &imageIndex);
 
         vkDeviceWaitIdle(vk::Device);
-    }
-
-    void Renderer::LoadDataIntoBuffer()
-    {
-        m_Vertices.reserve(6);
-        m_Vertices.push_back({ glm::vec4(-1, -1, 0, 1), glm::vec2(0, 0) });
-        m_Vertices.push_back({ glm::vec4(-1, 1, 0, 1), glm::vec2(0, 1) });
-        m_Vertices.push_back({ glm::vec4(1, 1, 0, 1), glm::vec2(1, 1) });
-
-        m_Vertices.push_back({ glm::vec4(-1, -1, 0, 1), glm::vec2(0, 0) });
-        m_Vertices.push_back({ glm::vec4(1, 1, 0, 1), glm::vec2(1, 1) });
-        m_Vertices.push_back({ glm::vec4(1, -1, 0, 1), glm::vec2(1, 0) });
-
-        VkDeviceSize bufferSize = sizeof(Vertex) * m_Vertices.size();
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, bufferSize,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &stagingBuffer, &stagingBufferMemory);
-
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, bufferSize,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            &m_VertexBuffer, &m_VertexBufferMemory);
-
-        void* data;
-        vkMapMemory(vk::Device, stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, m_Vertices.data(), (size_t)bufferSize);
-        vkUnmapMemory(vk::Device, stagingBufferMemory);
-
-        vk::CopyBuffer(vk::Device, m_CommandPool, vk::Queues.GraphicsQueue,
-            stagingBuffer, m_VertexBuffer, bufferSize);
-
-        vk::DestroyBuffer(vk::Device, stagingBuffer);
-        vk::FreeMemory(vk::Device, stagingBufferMemory);
-    }
-
-    void Renderer::PrepareDescriptorSets()
-    {
-        {
-            std::vector<vk::DescriptorPoolSize> shaderDescriptors =
-            {
-                {
-                    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    2
-                },
-                {
-                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                    2
-                }
-            };
-
-            vk::CreateDescriptorPool(vk::Device, shaderDescriptors, 1, 0, &shaderUniformPool);
-        }
-
-        {
-            std::vector<vk::DescriptorLayoutInfo> shaderDescriptorInfo =
-            {
-                {
-                    0,
-                    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    1,
-                    VK_SHADER_STAGE_VERTEX_BIT
-                },
-                {
-                    1,
-                    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    1,
-                    VK_SHADER_STAGE_FRAGMENT_BIT
-                },
-                {
-                    2,
-                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                    1,
-                    VK_SHADER_STAGE_FRAGMENT_BIT
-                },
-                {
-                    3,
-                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                    1,
-                    VK_SHADER_STAGE_FRAGMENT_BIT
-                }
-            };
-
-            vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo }, 0, &ShaderDescriptorSetLayout);
-
-            vk::AllocateDescriptorSets(vk::Device, shaderUniformPool, { ShaderDescriptorSetLayout },
-                1, &shaderUniformDescriptorSet);
-        }
-
-        {
-            std::vector<vk::UpdateBuffersInfo> buffersInfo =
-            {
-                 {
-                     {
-                         //VkDescriptorBufferInfo
-                         shaderBuffer,                // buffer
-                         offsetof(ShaderUBO, Offset), // offset
-                         sizeof(glm::vec4),           // range
-                      },
-
-                      0,                                 // binding
-                      VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
-                 },
-                 {
-                     {
-                         //VkDescriptorBufferInfo
-                         shaderBuffer,               // buffer
-                         offsetof(ShaderUBO, Color), // offset
-                         sizeof(glm::vec4),          // range
-                     },
-
-                      1,                                 // binding
-                      VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
-                 },
-            };
-
-            std::vector<vk::UpdateTextureInfo> imagesInfo =
-            {
-                {
-                    {
-                        //VkDescriptorImageInfo
-                        sampler,                                    // sampler
-                        imageView,                                  // image view
-                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,   // image layout
-                    },
-
-                    2,                                              // binding
-                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,      // descriptor type
-                },
-
-                {
-                    {
-                        //VkDescriptorImageInfo
-                        sampler,                                    // sampler
-                        cobbleImageView,                            // image view
-                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,   // image layout
-                    },
-
-                    3,                                              // binding
-                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,      // descriptor type
-                },
-            };
-
-            vk::UpdateDescriptorSets(vk::Device, shaderUniformDescriptorSet, buffersInfo, imagesInfo,
-                buffersInfo.size() + imagesInfo.size());
-        }
     }
 }

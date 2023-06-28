@@ -45,5 +45,10 @@ namespace psm
             VkResult result = vkCreateSampler(device, &info, nullptr, sampler);
             VK_CHECK_RESULT(result);
         }
+
+        void DestroySampler(VkDevice device, VkSampler sampler)
+        {
+            vkDestroySampler(device, sampler, nullptr);
+        }
     }
 }

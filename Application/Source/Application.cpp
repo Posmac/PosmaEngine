@@ -4,7 +4,7 @@ namespace psm
 {
     void Application::Init()
     {
-        LoadModelData();
+       
     }
 
     void Application::Update()
@@ -16,10 +16,5 @@ namespace psm
     void Application::Deinit()
     {
 
-    }
-
-    void Application::LoadModelData()
-    {
-        Renderer::Instance()->LoadDataIntoBuffer();
     }
 }

@@ -1,7 +1,8 @@
 #version 450 core
 
 layout(location = 0) in vec4 localPosition;
-layout(location = 1) in vec2 texCoord;
+layout(location = 1) in vec4 normal;
+layout(location = 2) in vec2 texCoord;
 
 layout(set = 0, binding = 0) uniform VertexBuffer
 {

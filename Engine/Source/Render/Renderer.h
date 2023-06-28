@@ -4,10 +4,14 @@
 
 #include "Vk.h"
 #include "Include/vulkan/vulkan.hpp"
-#include "glm/glm.hpp"
 #include "Utilities/TextureLoader.h"
 #include "Vulkan/Descriptors.h"
 #include "Vulkan/Sampler.h"
+
+#include "Utilities/ModelLoader.h"
+#include "Instances/OpaqueInstances.h"
+
+#include "glm/glm.hpp"
 
 namespace psm
 {
@@ -26,11 +30,8 @@ namespace psm
         void Init(HINSTANCE hInstance, HWND hWnd);
         void Deinit();
         void Render(float deltaTime);
-        void LoadDataIntoBuffer();
-        void PrepareDescriptorSets();
 
     private:
-
         //swapchain (abstract info vulkan windows class maybe)
         VkSwapchainKHR m_SwapChain;
         std::vector<VkImage> m_SwapChainImages;
@@ -40,43 +41,15 @@ namespace psm
         VkSemaphore m_ImageAvailableSemaphore;
         VkSemaphore m_RenderFinishedSemaphore;
 
-        //render pass (should be simply to create)
+        //renderer related thing
         VkRenderPass m_RenderPass;
         std::vector<VkFramebuffer> m_Framebuffers;
 
-        //command buffers (should be simply to create)
+        //renderer related thing (maybe)
         VkCommandPool m_CommandPool;
         std::vector<VkCommandBuffer> m_CommandBuffers;
 
-        struct PushConstant
-        {
-            float Time;
-        } m_PushConstant;
-
-        //pipeline (should be simply to create)
-        VkPipelineLayout PipelineLayout;
-        VkPipeline Pipeline;
-        VkDescriptorSetLayout ShaderDescriptorSetLayout;
-
-        //uniform buffers for shaders (should be simply to create)
-        struct ShaderUBO
-        {
-            glm::vec4 Offset;
-            glm::vec4 Color;
-        } m_VertexUBO;
-
-        VkBuffer shaderBuffer;
-        VkDeviceMemory shaderBufferMemory;
-        void* shaderBufferMapping;
-        VkDescriptorPool shaderUniformPool;
-        VkDescriptorSet shaderUniformDescriptorSet;
-
-        //move to model class
-        VkBuffer m_VertexBuffer;
-        VkDeviceMemory m_VertexBufferMemory;
-        std::vector<Vertex> m_Vertices;
-
-        //sample for shaders
+        //sample for shaders (move to textures loader)
         VkImage image;
         VkDeviceMemory imageMemory;
         VkImageView imageView;
@@ -85,7 +58,7 @@ namespace psm
         VkDeviceMemory cobbleImageMemory;
         VkImageView cobbleImageView;
 
-        VkSampler sampler;
+        Model model;
 
         //Imgui
         //vk::VulkanImGui m_VkImgui;
