@@ -126,7 +126,13 @@ namespace psm
         model.Init(m_CommandPool);
 
         OpaqueInstances::Instance()->Init(&model, m_RenderPass, m_SwapChainExtent);
-        OpaqueInstances::Instance()->AddInstance(glm::mat4(1.0));
+
+        glm::mat4 instanceMatrix = glm::mat4(1.0);
+        instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0, 20, -50));
+        instanceMatrix = glm::rotate(instanceMatrix, glm::radians(180.0f), glm::vec3(0, 0, 1));
+        instanceMatrix = glm::rotate(instanceMatrix, glm::radians(90.0f), glm::vec3(-1, 0, 0));
+
+        OpaqueInstances::Instance()->AddInstance(instanceMatrix);
 
         OpaqueInstances::Instance()->UpdateDescriptorSets(imageView, cobbleImageView);
     }
@@ -145,8 +151,10 @@ namespace psm
         vk::Vk::GetInstance()->Deinit();
     }
 
-    void Renderer::Render(float deltaTime)
+    void Renderer::Render(const PerFrameData& data)
     {
+        vk::Vk::GetInstance()->UpdatePerFrameBuffer(data);
+
         //basic
         uint32_t imageIndex;
         VkResult result = vkAcquireNextImageKHR(vk::Device, m_SwapChain, UINT64_MAX,

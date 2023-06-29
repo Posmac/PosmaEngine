@@ -5,6 +5,8 @@
 #include "Render/Renderer.h"
 #include "Utilities/ModelLoader.h"
 #include "Utilities/TextureLoader.h"
+#include "Render/Camera.h"
+#include "Render/PerFrameData.h"
 
 namespace psm
 {
@@ -16,6 +18,7 @@ namespace psm
         void Update();
         void Deinit();
     private:
-        float time = 0;
+        float m_Time = 0;
+        Camera m_Camera;
     };
 }

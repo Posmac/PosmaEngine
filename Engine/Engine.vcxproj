@@ -170,6 +170,7 @@
     <ClInclude Include="Source\Model\Mesh.h" />
     <ClInclude Include="Source\Model\Model.h" />
     <ClInclude Include="Source\Model\Vertex.h" />
+    <ClInclude Include="Source\Render\Camera.h" />
     <ClInclude Include="Source\Render\Instances\OpaqueInstances.h" />
     <ClInclude Include="Source\Render\Renderer.h" />
     <ClInclude Include="Source\Render\Vk.h" />
@@ -211,7 +212,9 @@
     <ClCompile Include="Source\Model\Mesh.cpp" />
     <ClCompile Include="Source\Model\Model.cpp" />
     <ClCompile Include="Source\Model\Vertex.cpp" />
+    <ClCompile Include="Source\Render\Camera.cpp" />
     <ClCompile Include="Source\Render\Instances\OpaqueInstances.cpp" />
+    <ClCompile Include="Source\Render\PerFrameData.h" />
     <ClCompile Include="Source\Render\Renderer.cpp" />
     <ClCompile Include="Source\Render\Vk.cpp" />
     <ClCompile Include="Source\Utilities\ModelLoader.cpp" />

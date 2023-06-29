@@ -26,6 +26,7 @@
 #include "Vulkan/Descriptors.h"
 #include "Vulkan/VulkanImGui.h"
 #include "Vulkan/Sampler.h"
+#include "PerFrameData.h"
 
 namespace psm
 {
@@ -48,6 +49,9 @@ namespace psm
         //global samplers
         extern VkSampler Sampler;
 
+        //global buffer
+        extern VkBuffer PerFrameBuffer;
+
         class Vk
         {
             //singleton realization
@@ -60,6 +64,7 @@ namespace psm
             static Vk* s_Instance;
         public:
             void Init(HINSTANCE hInstance, HWND hWnd);
+            void UpdatePerFrameBuffer(const PerFrameData& data);
             void Deinit();
         private:
 
@@ -82,6 +87,11 @@ namespace psm
 
             //samplers
             VkSampler m_Sampler;
+
+            //per frame buffer
+            VkBuffer m_PerFrameBuffer;
+            VkDeviceMemory m_PerFrameBufferMemory;
+            void* m_PerFrameMapping;
 
             //extensions and layers
             std::vector<const char*> m_ValidationLayers =

@@ -10,6 +10,7 @@
 
 #include "Utilities/ModelLoader.h"
 #include "Instances/OpaqueInstances.h"
+#include "PerFrameData.h"
 
 #include "glm/glm.hpp"
 
@@ -29,7 +30,7 @@ namespace psm
     public:
         void Init(HINSTANCE hInstance, HWND hWnd);
         void Deinit();
-        void Render(float deltaTime);
+        void Render(const PerFrameData& data);
 
     private:
         //swapchain (abstract info vulkan windows class maybe)

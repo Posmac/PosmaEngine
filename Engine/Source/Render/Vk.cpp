@@ -13,6 +13,7 @@ namespace psm
         QueueFamilyIndices Queues = {};
         VkSurfaceKHR Surface = VK_NULL_HANDLE;
         SurfaceData SurfData = {};
+        VkBuffer PerFrameBuffer = VK_NULL_HANDLE;
 
         //samplers
         VkSampler Sampler = VK_NULL_HANDLE;
@@ -65,6 +66,19 @@ namespace psm
                 false, VK_COMPARE_OP_ALWAYS, 0, 0.0, 0.0, 0.0, VK_SAMPLER_MIPMAP_MODE_LINEAR, false, &m_Sampler);
 
             Sampler = m_Sampler;
+
+            vk::CreateBufferAndMapMemory(m_Device, m_PhysicalDevice,
+                sizeof(PerFrameData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                &m_PerFrameBuffer, &m_PerFrameBufferMemory, &m_PerFrameMapping);
+
+            PerFrameBuffer = m_PerFrameBuffer;
+        }
+
+        void Vk::UpdatePerFrameBuffer(const PerFrameData& data)
+        {
+            PerFrameData* pData = reinterpret_cast<PerFrameData*>(m_PerFrameMapping);
+            *pData = data;
         }
 
         void Vk::Deinit()

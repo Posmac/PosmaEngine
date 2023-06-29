@@ -48,12 +48,9 @@ namespace psm
 
         void UpdateDescriptorSets(VkImageView albedo, VkImageView emission);
     private:
-        void UpdateBuffers(VkCommandBuffer commandBuffer);
-        void Bind(VkCommandBuffer commandBuffer);
         void PrepareDescriptorSets();
         void PreparePipelineLayout(VkRenderPass renderPass,
             VkExtent2D extent);
-        void InitBuffers();
 
     private:
         Model* m_pModel;
@@ -64,10 +61,10 @@ namespace psm
         VkPipeline m_Pipeline;
         VkDescriptorSetLayout m_DescriptorSetLayout;
 
-        //shaders data
-        VkBuffer m_ShaderBuffer;
-        VkDeviceMemory m_ShaderBufferMemory;
-        void* m_ShaderBufferMapping;
+        //instance buffer
+        VkBuffer m_InstanceBuffer;
+        VkDeviceMemory m_InstanceBufferMemory;
+        void* m_InstanceBufferMapping;
 
         //descriptos
         VkDescriptorPool m_DescriptorPool;
