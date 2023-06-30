@@ -65,11 +65,9 @@ namespace psm
                 size, 0, mapping);
         }
 
-        void CopyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue,
+        void CopyBuffer(VkDevice device, VkCommandBuffer commandBuffer, VkQueue graphicsQueue,
             VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
         {
-            VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(device, commandPool);
-
             VkBufferCopy copyRegion{};
             copyRegion.size = size;
             copyRegion.srcOffset = 0;
@@ -84,8 +82,6 @@ namespace psm
             //vk::InsertBufferMemoryBarrier(commandBuffer, dstBuffer, size,
             //    VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
             //    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);
-
-            putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, graphicsQueue);
         }
 
         void CopyBufferToImage(VkDevice device,

@@ -9,6 +9,8 @@ namespace psm
             uint32_t attachmentsCount,
             const VkSubpassDescription* pSubpassDescriptions,
             uint32_t subpassDescCount,
+            const VkSubpassDependency* dependencies,
+            uint32_t dependenciesCount,
             VkRenderPass* renderPass)
         {
             VkRenderPassCreateInfo renderPassInfo{};
@@ -19,8 +21,8 @@ namespace psm
             renderPassInfo.pAttachments = pAttachments;
             renderPassInfo.subpassCount = subpassDescCount;
             renderPassInfo.pSubpasses = pSubpassDescriptions;
-            renderPassInfo.dependencyCount = 0;
-            renderPassInfo.pDependencies = nullptr;
+            renderPassInfo.dependencyCount = dependenciesCount;
+            renderPassInfo.pDependencies = dependencies;
 
             VkResult result = vkCreateRenderPass(logicalDevice, &renderPassInfo, nullptr,
                 renderPass);

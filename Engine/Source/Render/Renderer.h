@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include <cassert>
 
 #include "Vk.h"
 #include "Include/vulkan/vulkan.hpp"
@@ -29,8 +30,13 @@ namespace psm
     //class specific
     public:
         void Init(HINSTANCE hInstance, HWND hWnd);
+        void CreateDepthImage();
+        VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, 
+            VkImageTiling tiling,
+            VkFormatFeatureFlags features);
         void Deinit();
         void Render(const PerFrameData& data);
+        void LoadTextureIntoMemory(const RawTextureData& textureData, Texture* texture);
 
     private:
         //swapchain (abstract info vulkan windows class maybe)
@@ -50,16 +56,11 @@ namespace psm
         VkCommandPool m_CommandPool;
         std::vector<VkCommandBuffer> m_CommandBuffers;
 
-        //sample for shaders (move to textures loader)
-        VkImage image;
-        VkDeviceMemory imageMemory;
-        VkImageView imageView;
-
-        VkImage cobbleImage;
-        VkDeviceMemory cobbleImageMemory;
-        VkImageView cobbleImageView;
-
-        Model model;
+        //depth image
+        VkImage m_DepthImage;
+        VkDeviceMemory m_DepthImageMemory;
+        VkImageView m_DepthImageView;
+        VkFormat m_DepthFormat;
 
         //Imgui
         //vk::VulkanImGui m_VkImgui;

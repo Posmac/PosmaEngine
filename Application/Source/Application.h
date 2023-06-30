@@ -20,5 +20,7 @@ namespace psm
     private:
         float m_Time = 0;
         Camera m_Camera;
+        Model m_SkullModel;
+        Texture m_SkullTexture;
     };
 }

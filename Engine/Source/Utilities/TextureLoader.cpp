@@ -5,29 +5,39 @@
 
 namespace psm
 {
-    namespace putils
+
+    TextureLoader* TextureLoader::s_Instance = nullptr;
+
+    TextureLoader* TextureLoader::Instance()
     {
-        void LoadRawTextureData(const std::string& path, RawTextureData* data)
+        if (s_Instance == nullptr)
         {
-            data->Data = stbi_load(path.c_str(), &data->Width, &data->Height,
-                &data->NrChannels, data->Type);
-
-            if (!data->Data)
-            {
-                throw std::runtime_error("Failed to load texture with path:" + path);
-            }
+            s_Instance = new TextureLoader();
         }
 
-        void CleanRawTextureData(void* data)
-        {
-            stbi_image_free(data);
-        }
+        return s_Instance;
+    }
 
-        RawTextureData::RawTextureData(RGB_Type type)
+    void TextureLoader::LoadRawTextureData(const std::string& path, RawTextureData* data)
+    {
+        data->Data = stbi_load(path.c_str(), &data->Width, &data->Height,
+            &data->NrChannels, data->Type);
+
+        if (!data->Data)
         {
-            Width = Height = NrChannels = 0;
-            Data = nullptr;
-            Type = type;
+            throw std::runtime_error("Failed to load texture with path:" + path);
         }
+    }
+
+    void TextureLoader::CleanRawTextureData(void* data)
+    {
+        stbi_image_free(data);
+    }
+
+    RawTextureData::RawTextureData(RGB_Type type)
+    {
+        Width = Height = NrChannels = 0;
+        Data = nullptr;
+        Type = type;
     }
 }

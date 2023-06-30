@@ -106,11 +106,15 @@ namespace psm
             indexOffset += currentIndicesSize;
         };
 
-        vk::CopyBuffer(vk::Device, commandPool, vk::Queues.GraphicsQueue,
+        VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(vk::Device, commandPool);
+
+        vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
             vertexStagingBuffer, m_VertexBuffer, vertexBufferSize);
 
-        vk::CopyBuffer(vk::Device, commandPool, vk::Queues.GraphicsQueue,
+        vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
             indexStagingBuffer, m_IndexBuffer, indexBufferSize);
+
+        putils::EndSingleTimeCommandBuffer(vk::Device, commandPool, commandBuffer, vk::Queues.GraphicsQueue);
 
         vk::DestroyBuffer(vk::Device, vertexStagingBuffer);
         vk::FreeMemory(vk::Device, vertexStagingBufferMemory);

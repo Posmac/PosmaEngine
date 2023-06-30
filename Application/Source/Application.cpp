@@ -5,6 +5,21 @@ namespace psm
     void Application::Init()
     {
         m_Camera = Camera(60.0f, 1.77f, 0.1f, 100.0f);
+
+        ModelLoader::Instance()->LoadModel("../Engine/Models/Skull/Skull.obj", &m_SkullModel);
+
+        glm::mat4 instanceMatrix = glm::mat4(1.0);
+        instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0, 10, -50));
+        instanceMatrix = glm::rotate(instanceMatrix, glm::radians(180.0f), glm::vec3(0, 0, 1));
+        instanceMatrix = glm::rotate(instanceMatrix, glm::radians(90.0f), glm::vec3(-1, 0, 0));
+
+        RawTextureData rawData{ Rgb_alpha };
+        TextureLoader::Instance()->LoadRawTextureData("../Engine/Models/Skull/Skull.jpg", &rawData);
+
+        Renderer::Instance()->LoadTextureIntoMemory(rawData, &m_SkullTexture);
+
+        OpaqueInstances::Instance()->AddModel(&m_SkullModel, &m_SkullTexture);
+        OpaqueInstances::Instance()->AddInstance(instanceMatrix);
     }
 
     void Application::Update()

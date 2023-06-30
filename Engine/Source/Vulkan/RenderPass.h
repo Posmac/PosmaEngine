@@ -12,6 +12,8 @@ namespace psm
             uint32_t attachmentsCount,
             const VkSubpassDescription* pSubpassDescriptions,
             uint32_t subpassDescCount,
+            const VkSubpassDependency* dependencies,
+            uint32_t dependenciesCount,
             VkRenderPass* renderPass);
 
         void DestroyRenderPass(VkDevice device, VkRenderPass renderpass);

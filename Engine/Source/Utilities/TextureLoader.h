@@ -3,33 +3,59 @@
 #include <string>
 #include <stdexcept>
 
+#include "Include/vulkan/vulkan.h"
 #include "stb_image.h"
 
 namespace psm
 {
-    namespace putils
+
+    struct Texture
     {
-        enum RGB_Type
-        {
-            Default = 0, // only used for desired_channels
-            Grey = 1,
-            Grey_alpha = 2,
-            Rgb = 3,
-            Rgb_alpha = 4
-        };
+        VkImage Image;
+        VkDeviceMemory ImageMemory;
+        VkImageView ImageView;
+    };
 
-        struct RawTextureData
-        {
-            explicit RawTextureData(RGB_Type type);
+    struct TextureParameters
+    {
 
-            int Width;
-            int Height;
-            int NrChannels;
-            RGB_Type Type;
-            stbi_uc* Data;
-        };
+    };
 
+    enum RGB_Type
+    {
+        Default = 0, // only used for desired_channels
+        Grey = 1,
+        Grey_alpha = 2,
+        Rgb = 3,
+        Rgb_alpha = 4
+    };
+
+    struct RawTextureData
+    {
+        explicit RawTextureData(RGB_Type type);
+
+        int Width;
+        int Height;
+        int NrChannels;
+        RGB_Type Type;
+        stbi_uc* Data;
+    };
+
+    class TextureLoader
+    {
+        //singleton realization
+    public:
+        TextureLoader(TextureLoader&) = delete;
+        void operator=(const TextureLoader&) = delete;
+        static TextureLoader* Instance();
+    private:
+        TextureLoader() = default;
+        static TextureLoader* s_Instance;
+        //class specific
+    public:
         void LoadRawTextureData(const std::string& path, RawTextureData* data);
         void CleanRawTextureData(void* data);
-    }
+    private:
+
+    };
 }

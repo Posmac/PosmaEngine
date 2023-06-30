@@ -31,7 +31,7 @@ namespace psm
             void** mapping);
 
         void CopyBuffer(VkDevice device, 
-            VkCommandPool commandPool, 
+            VkCommandBuffer commandBuffer, 
             VkQueue graphicsQueue,
             VkBuffer srcBuffer, 
             VkBuffer dstBuffer, 

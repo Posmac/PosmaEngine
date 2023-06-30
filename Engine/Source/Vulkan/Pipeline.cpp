@@ -43,7 +43,7 @@ namespace psm
             rasterizationStateInfo.rasterizerDiscardEnable = VK_FALSE;
             rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
             rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-            rasterizationStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+            rasterizationStateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
             rasterizationStateInfo.depthBiasEnable = VK_FALSE;
             rasterizationStateInfo.depthBiasConstantFactor = 0;
             rasterizationStateInfo.depthBiasClamp = 1.0f;
@@ -89,6 +89,20 @@ namespace psm
             colorBlending.blendConstants[2] = 0.0f; // Optional
             colorBlending.blendConstants[3] = 0.0f; // Optional
 
+            VkPipelineDepthStencilStateCreateInfo depthInfo{};
+            depthInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+            depthInfo.pNext = nullptr;
+            depthInfo.flags = 0;
+            depthInfo.depthTestEnable = VK_TRUE;
+            depthInfo.depthWriteEnable = VK_TRUE;
+            depthInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+            depthInfo.depthBoundsTestEnable = VK_FALSE;
+            depthInfo.minDepthBounds = 0.0f; // Optional
+            depthInfo.maxDepthBounds = 1.0f; // Optional
+            depthInfo.stencilTestEnable = VK_FALSE;
+            depthInfo.front = {}; // Optional
+            depthInfo.back = {}; // Optional
+
             VkGraphicsPipelineCreateInfo graphicsPipelineInfo{};
             graphicsPipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             graphicsPipelineInfo.flags = 0;
@@ -101,7 +115,7 @@ namespace psm
             graphicsPipelineInfo.pViewportState = &viewPortInfo;
             graphicsPipelineInfo.pRasterizationState = &rasterizationStateInfo;
             graphicsPipelineInfo.pMultisampleState = &msState;
-            graphicsPipelineInfo.pDepthStencilState = nullptr;
+            graphicsPipelineInfo.pDepthStencilState = &depthInfo;
             graphicsPipelineInfo.pColorBlendState = &colorBlending;
             graphicsPipelineInfo.pDynamicState = &dynamicStateCreateInfo;
             graphicsPipelineInfo.layout = pipelineLayout;

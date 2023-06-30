@@ -16,8 +16,22 @@
 
 namespace psm
 {
-    namespace putils
+    class ModelLoader
     {
+        //singleton realization
+    public:
+        ModelLoader(ModelLoader&) = delete;
+        void operator=(const ModelLoader&) = delete;
+        static ModelLoader* Instance();
+    private:
+        ModelLoader() = default;
+        static ModelLoader* s_Instance;
+        //class specific
+    public:
+        void Init(VkCommandPool commandPool);
+
         void LoadModel(const std::string& path, Model* model);
-    }
+    private:
+        VkCommandPool m_CommandPool;
+    };
 }

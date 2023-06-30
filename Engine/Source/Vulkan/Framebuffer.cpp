@@ -5,15 +5,16 @@ namespace psm
     namespace vk
     {
         void CreateFramebuffers(VkDevice device, 
-            const std::vector<VkImageView>& swapchainImageViews, 
+            const std::vector<FramebufferAttachment>& attachments,
+            uint32_t oneAttachmentSize, 
             const VkExtent2D extent, 
-            uint32_t size,
+            uint32_t frameBuffersSize,
             VkRenderPass renderPas, 
             std::vector<VkFramebuffer>* framebuffers)
         {
-            framebuffers->resize(size);
+            framebuffers->resize(frameBuffersSize);
 
-            for (int i = 0; i < swapchainImageViews.size(); i++)
+            for (int i = 0; i < attachments.size(); i++)
             {
                 VkFramebufferCreateInfo framebufferInfo{};
                 framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -21,8 +22,8 @@ namespace psm
                 framebufferInfo.flags = 0;
                 framebufferInfo.width = extent.width;
                 framebufferInfo.height = extent.height;
-                framebufferInfo.attachmentCount = 1;
-                framebufferInfo.pAttachments = &swapchainImageViews[i];
+                framebufferInfo.attachmentCount = oneAttachmentSize;
+                framebufferInfo.pAttachments = attachments[i].Attachments.data();
                 framebufferInfo.renderPass = renderPas;
                 framebufferInfo.layers = 1;
 

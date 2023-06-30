@@ -39,21 +39,22 @@ namespace psm
         OpaqueInstances() = default;
         static OpaqueInstances* s_Instance;
     public:
-        void Init(Model* pModel,
-            VkRenderPass renderPass, 
+        void Init(VkRenderPass renderPass, 
             VkExtent2D windowSize);
         void Deinit();
         void Render(VkCommandBuffer commandBuffer);
         void AddInstance(const glm::mat4& instance);
+        void AddModel(Model* model, Texture* modelTexture);
 
-        void UpdateDescriptorSets(VkImageView albedo, VkImageView emission);
+        void UpdateDescriptorSets();
     private:
         void PrepareDescriptorSets();
         void PreparePipelineLayout(VkRenderPass renderPass,
             VkExtent2D extent);
 
     private:
-        Model* m_pModel;
+        Model* m_Model;
+        Texture* m_ModelTexture;
         std::vector<glm::mat4> m_Instances;
 
         //pipeline data

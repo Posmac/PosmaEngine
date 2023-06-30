@@ -14,17 +14,9 @@ namespace psm
         return s_Instance;
     }
 
-    void OpaqueInstances::Init(Model* pModel,
-        VkRenderPass renderPass, 
+    void OpaqueInstances::Init(VkRenderPass renderPass, 
         VkExtent2D windowSize)
     {
-        if (pModel == nullptr)
-        {
-            LOG_ERROR("Model pointer is null");
-        }
-
-        m_pModel = pModel;
-
         PrepareDescriptorSets();
         PreparePipelineLayout(renderPass, windowSize);
 
@@ -47,7 +39,7 @@ namespace psm
 
     void OpaqueInstances::Render(VkCommandBuffer commandBuffer)
     {
-        if (m_pModel == nullptr)
+        if (m_Model == nullptr)
         {
             LOG_ERROR("Model pointer is null");
             return;
@@ -62,7 +54,7 @@ namespace psm
         //(pipeline, descriptor sets, push constants, uniform buffers)
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 
-        m_pModel->BindBuffers(commandBuffer);
+        m_Model->BindBuffers(commandBuffer);
 
         vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
             m_PipelineLayout, { m_DescriptorSet });
@@ -70,9 +62,9 @@ namespace psm
         uint32_t totalInstances = m_Instances.size();
         uint32_t firstInstance = 0;
 
-        for (int i = 0; i < m_pModel->Meshes.size(); i++)
+        for (int i = 0; i < m_Model->Meshes.size(); i++)
         {
-            MeshRange range = m_pModel->Meshes[i].Range;
+            MeshRange range = m_Model->Meshes[i].Range;
             vkCmdDrawIndexed(commandBuffer, range.IndicesCount, totalInstances,
                 range.IndicesOffset, range.VerticesOffset, firstInstance);
         }
@@ -81,6 +73,12 @@ namespace psm
     void OpaqueInstances::AddInstance(const glm::mat4& instance)
     {
         m_Instances.push_back(instance);
+    }
+
+    void OpaqueInstances::AddModel(Model* model, Texture* modelTexture)
+    {
+        m_Model = model;
+        m_ModelTexture = modelTexture;
     }
 
     void OpaqueInstances::PreparePipelineLayout(VkRenderPass renderPass,
@@ -185,8 +183,10 @@ namespace psm
         vk::DestroyShaderModule(vk::Device, fragmentShader);
     }
 
-    void OpaqueInstances::UpdateDescriptorSets(VkImageView albedo, VkImageView emission)
+    void OpaqueInstances::UpdateDescriptorSets()
     {
+        m_Instances[0] = glm::rotate(m_Instances[0], glm::radians(0.5f), glm::vec3(0, 0, 1));
+
         glm::mat4* instance = reinterpret_cast<glm::mat4*>(m_InstanceBufferMapping);
         *instance = m_Instances[0];
 
@@ -224,7 +224,7 @@ namespace psm
                 {
                     //VkDescriptorImageInfo
                     vk::Sampler,                                // sampler
-                    albedo,                                     // image view
+                    m_ModelTexture->ImageView,                  // image view
                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,   // image layout
                 },
 
