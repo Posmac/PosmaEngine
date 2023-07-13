@@ -19,7 +19,7 @@ namespace psm
 {
     class Renderer
     {
-    //singleton realization
+        //singleton realization
     public:
         Renderer(Renderer&) = delete;
         void operator=(const Renderer&) = delete;
@@ -27,13 +27,14 @@ namespace psm
     private:
         Renderer() = default;
         static Renderer* s_Instance;
-    //class specific
+        //class specific
     public:
         void Init(HINSTANCE hInstance, HWND hWnd);
         void CreateDepthImage();
-        VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, 
-            VkImageTiling tiling,
-            VkFormatFeatureFlags features);
+        void CreateMsaaImage();
+        VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates,
+                                     VkImageTiling tiling,
+                                     VkFormatFeatureFlags features);
         void Deinit();
         void Render(const PerFrameData& data);
         void LoadTextureIntoMemory(const RawTextureData& textureData, Texture* texture);
@@ -61,6 +62,11 @@ namespace psm
         VkDeviceMemory m_DepthImageMemory;
         VkImageView m_DepthImageView;
         VkFormat m_DepthFormat;
+
+        //msaa image
+        VkImage m_MsaaImage;
+        VkDeviceMemory m_MsaaImageMemory;
+        VkImageView m_MsaaImageView;
 
         //Imgui
         //vk::VulkanImGui m_VkImgui;

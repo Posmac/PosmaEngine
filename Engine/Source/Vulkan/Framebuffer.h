@@ -15,12 +15,12 @@ namespace psm
         };
 
         void CreateFramebuffers(VkDevice device,
-            const std::vector<FramebufferAttachment>& attachments,
-            uint32_t oneAttachmentSize,
-            const VkExtent2D extent,
-            uint32_t frameBuffersSize,
-            VkRenderPass renderPas,
-            std::vector<VkFramebuffer>* framebuffers);
+                                const std::vector<FramebufferAttachment>& attachments,
+                                uint32_t oneAttachmentSize,
+                                const VkExtent2D extent,
+                                uint32_t frameBuffersSize,
+                                VkRenderPass renderPas,
+                                std::vector<VkFramebuffer>* framebuffers);
         void DestroyFramebuffers(VkDevice device, const std::vector<VkFramebuffer>& framebuffers);
     }
 }

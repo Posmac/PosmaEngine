@@ -20,6 +20,8 @@ FILE* pCout;
 void CreateConsole();
 void CloseConsole();
 
+psm::Application app;
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
     CreateConsole();
@@ -60,7 +62,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     ShowWindow(hWnd, nCmdShow);
 
     psm::Engine::Instance()->Init(hWnd, hInstance);
-    psm::Application app;
     app.Init();
 
     bool isAppRuning = true;
@@ -103,6 +104,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
+        break;
+    case WM_SIZE:
+        app.ResizeWindow(hWnd);
         break;
     }
     return DefWindowProc(hWnd, uMsg, wParam, lParam);

@@ -10,6 +10,7 @@ namespace psm
             VkPipelineLayout pipelineLayout,
             const VkPipelineShaderStageCreateInfo* pShaderStages,
             uint32_t shaderStagesCount,
+            VkPipelineMultisampleStateCreateInfo msaa,
             VkPipelineVertexInputStateCreateInfo vertexInput,
             VkPipelineInputAssemblyStateCreateInfo inputAssembly,
             VkPipeline* pipeline)
@@ -49,16 +50,6 @@ namespace psm
             rasterizationStateInfo.depthBiasClamp = 1.0f;
             rasterizationStateInfo.depthBiasSlopeFactor = 0;
             rasterizationStateInfo.lineWidth = 1;
-
-            VkPipelineMultisampleStateCreateInfo msState{};
-            msState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-            msState.pNext = nullptr;
-            msState.alphaToCoverageEnable = false;
-            msState.alphaToOneEnable = false;
-            msState.flags = 0;
-            msState.minSampleShading = 1;
-            msState.pSampleMask = 0;
-            msState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
             std::vector<VkDynamicState> dynamicStates = 
             {
@@ -114,7 +105,7 @@ namespace psm
             graphicsPipelineInfo.pTessellationState = nullptr;
             graphicsPipelineInfo.pViewportState = &viewPortInfo;
             graphicsPipelineInfo.pRasterizationState = &rasterizationStateInfo;
-            graphicsPipelineInfo.pMultisampleState = &msState;
+            graphicsPipelineInfo.pMultisampleState = &msaa;
             graphicsPipelineInfo.pDepthStencilState = &depthInfo;
             graphicsPipelineInfo.pColorBlendState = &colorBlending;
             graphicsPipelineInfo.pDynamicState = &dynamicStateCreateInfo;

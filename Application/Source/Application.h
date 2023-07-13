@@ -17,6 +17,7 @@ namespace psm
         void Init();
         void Update();
         void Deinit();
+        void ResizeWindow(HWND hWnd);
     private:
         float m_Time = 0;
         Camera m_Camera;

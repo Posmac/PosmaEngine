@@ -52,6 +52,9 @@ namespace psm
         //global buffer
         extern VkBuffer PerFrameBuffer;
 
+        //MSAA
+        extern VkSampleCountFlagBits MaxMsaaSamples;
+
         class Vk
         {
             //singleton realization
@@ -92,6 +95,9 @@ namespace psm
             VkBuffer m_PerFrameBuffer;
             VkDeviceMemory m_PerFrameBufferMemory;
             void* m_PerFrameMapping;
+
+            //msaa
+            VkSampleCountFlagBits m_MaxMsaaSamples;
 
             //extensions and layers
             std::vector<const char*> m_ValidationLayers =

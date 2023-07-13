@@ -17,6 +17,7 @@ namespace psm
             VkPipelineLayout pipelineLayout,
             const VkPipelineShaderStageCreateInfo* pShaderStages,
             uint32_t shaderStagesCount,
+            VkPipelineMultisampleStateCreateInfo msaa,
             VkPipelineVertexInputStateCreateInfo vertexInput,
             VkPipelineInputAssemblyStateCreateInfo inputAssembly,
             VkPipeline* pipeline);

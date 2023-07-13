@@ -174,9 +174,19 @@ namespace psm
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
         vk::GetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false, &inputAssemblyInfo);
 
+        VkPipelineMultisampleStateCreateInfo msState{};
+        msState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        msState.pNext = nullptr;
+        msState.alphaToCoverageEnable = false;
+        msState.alphaToOneEnable = false;
+        msState.flags = 0;
+        msState.minSampleShading = 1;
+        msState.pSampleMask = 0;
+        msState.rasterizationSamples = vk::MaxMsaaSamples;
+
         //create graphics pipeline (a lot of default things)
         vk::CreateGraphicsPipeline(vk::Device, extent,
-            renderPass, m_PipelineLayout, stages, modulesSize,
+            renderPass, m_PipelineLayout, stages, modulesSize, msState,
             vertexInputState, inputAssemblyInfo, &m_Pipeline);
 
         vk::DestroyShaderModule(vk::Device, vertexShader);

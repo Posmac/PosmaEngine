@@ -36,7 +36,8 @@ namespace psm
     }
 
     void Application::Deinit()
-    {
+    {}
 
-    }
+    void Application::ResizeWindow(HWND hWnd)
+    {}
 }
