@@ -4,20 +4,20 @@ namespace psm
 {
     namespace vk
     {
-        void CreateImage(VkDevice device, 
-            VkPhysicalDevice physicalDevice, 
-            VkExtent3D extent, 
-            int mipLevels, 
-            int arrayLevels, 
-            VkImageType imageType, 
-            VkFormat imageFormat, 
-            VkImageTiling tiling, 
-            VkImageLayout initialLayout, 
-            VkImageUsageFlags usage, 
-            VkSharingMode sharingMode, 
-            VkSampleCountFlagBits samples, 
-            VkImageCreateFlags flags, 
-            VkImage* image, 
+        void CreateImage(VkDevice device,
+            VkPhysicalDevice physicalDevice,
+            VkExtent3D extent,
+            int mipLevels,
+            int arrayLevels,
+            VkImageType imageType,
+            VkFormat imageFormat,
+            VkImageTiling tiling,
+            VkImageLayout initialLayout,
+            VkImageUsageFlags usage,
+            VkSharingMode sharingMode,
+            VkSampleCountFlagBits samples,
+            VkImageCreateFlags flags,
+            VkImage* image,
             VkDeviceMemory* imageMemory)
         {
             VkImageCreateInfo icInfo{};
@@ -56,11 +56,12 @@ namespace psm
             VK_CHECK_RESULT(res);
         }
 
-        void CreateImageView(VkDevice device, 
-            VkImage image, 
+        void CreateImageView(VkDevice device,
+            VkImage image,
             VkFormat imageViewFormat,
-            VkImageViewType viewType, 
+            VkImageViewType viewType,
             VkImageAspectFlags aspectFlags,
+            uint32_t mipMaps,
             VkImageView* imageView)
         {
             VkImageViewCreateInfo createInfo{};
@@ -77,7 +78,7 @@ namespace psm
             createInfo.subresourceRange.aspectMask = aspectFlags;
             createInfo.subresourceRange.baseMipLevel = 0;
             createInfo.subresourceRange.baseArrayLayer = 0;
-            createInfo.subresourceRange.levelCount = 1;
+            createInfo.subresourceRange.levelCount = mipMaps;
             createInfo.subresourceRange.layerCount = 1;
 
             VkResult result = vkCreateImageView(device, &createInfo,
@@ -85,16 +86,16 @@ namespace psm
             VK_CHECK_RESULT(result);
         }
 
-        void CreateImageViews(VkDevice device, 
-            const std::vector<VkImage> images, 
-            VkFormat imageViewFormat, 
-            VkImageViewType viewType, 
-            VkImageAspectFlags aspectFlags, 
+        void CreateImageViews(VkDevice device,
+            const std::vector<VkImage> images,
+            VkFormat imageViewFormat,
+            VkImageViewType viewType,
+            VkImageAspectFlags aspectFlags,
             std::vector<VkImageView>* imageViews)
         {
             imageViews->resize(images.size());
 
-            for (int i = 0; i < images.size(); i++)
+            for(int i = 0; i < images.size(); i++)
             {
                 VkImageViewCreateInfo createInfo{};
                 createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -117,23 +118,21 @@ namespace psm
                     nullptr, &(*imageViews)[i]);
                 VK_CHECK_RESULT(result);
 
-                if (result != VK_SUCCESS)
+                if(result != VK_SUCCESS)
                 {
                     std::cout << "Failed to create swapchain image view" << std::endl;
                 }
             }
         }
 
-        void ImageLayoutTransition(VkDevice device, 
-            VkCommandPool commandPool,
-            VkQueue graphicsQueue,
-            VkImage image, 
-            VkFormat format, 
-            VkImageLayout oldLayout, 
-            VkImageLayout newLayout)
+        void ImageLayoutTransition(VkDevice device,
+            VkCommandBuffer commandBuffer,
+            VkImage image,
+            VkFormat format,
+            VkImageLayout oldLayout,
+            VkImageLayout newLayout,
+            uint32_t mipLevels)
         {
-            VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(device, commandPool);
-
             VkImageMemoryBarrier barrier{};
             barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
             barrier.pNext = nullptr;
@@ -145,14 +144,14 @@ namespace psm
             barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             barrier.subresourceRange.baseArrayLayer = 0;
             barrier.subresourceRange.baseMipLevel = 0;
-            barrier.subresourceRange.levelCount = 1;
+            barrier.subresourceRange.levelCount = mipLevels;
             barrier.subresourceRange.layerCount = 1;
 
             VkPipelineStageFlags sourceStage;
             VkPipelineStageFlags destinationStage;
 
-            if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && 
-                newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) 
+            if(oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+                newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
             {
                 barrier.srcAccessMask = 0;
                 barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -160,8 +159,8 @@ namespace psm
                 sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
                 destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             }
-            else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && 
-                newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) 
+            else if(oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+                newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
             {
                 barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
                 barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -169,20 +168,18 @@ namespace psm
                 sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                 destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
             }
-            else 
+            else
             {
                 throw std::invalid_argument("unsupported layout transition!");
             }
 
             vkCmdPipelineBarrier(commandBuffer,
-                sourceStage, 
+                sourceStage,
                 destinationStage,
                 0,
                 0, nullptr,
                 0, nullptr,
                 1, &barrier);
-
-            putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, graphicsQueue);
         }
 
         void CreateImageAndView(VkDevice device,
@@ -209,19 +206,20 @@ namespace psm
                 tiling, initialLayout, usage, sharingMode, samples, flags, image, imageMemory);
 
             CreateImageView(device, *image, imageViewFormat, imageViewType,
-                imageViewAspectFlags, imageView);
+                imageViewAspectFlags, mipLevels, imageView);
         }
 
-        void LoadDataIntoImageUsingBuffer(VkDevice device, 
+        void LoadDataIntoImageUsingBuffer(VkDevice device,
             VkPhysicalDevice physicalDevice,
             VkDeviceSize dataToLoadSize,
-            void* dataToLoad, 
-            VkCommandPool commandPool, 
-            VkQueue commandQueue, 
-            VkExtent3D size, 
-            VkFormat imageFormatBeforeTransition, 
-            VkImageLayout imageLayoutBeforeTransition, 
-            VkFormat imageFormatAfterTransition, 
+            void* dataToLoad,
+            VkCommandPool commandPool,
+            VkQueue commandQueue,
+            VkExtent3D size,
+            uint32_t mipLevels,
+            VkFormat imageFormatBeforeTransition,
+            VkImageLayout imageLayoutBeforeTransition,
+            VkFormat imageFormatAfterTransition,
             VkImageLayout imageLayoutAfterTransition,
             VkImage* dstImage)
         {
@@ -239,20 +237,132 @@ namespace psm
             memcpy(data, dataToLoad, static_cast<size_t>(dataToLoadSize));
             vkUnmapMemory(device, stagingBufferMemory);
 
+            VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(device, commandPool);
+
             //transfer image layout
             //from current one to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-            vk::ImageLayoutTransition(device, commandPool, commandQueue,
-                *dstImage, imageFormatBeforeTransition, imageLayoutBeforeTransition,
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            vk::ImageLayoutTransition(device, commandBuffer, *dstImage,
+                                      imageFormatBeforeTransition, imageLayoutBeforeTransition,
+                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
+
             //copy data to image with respective layout
-            vk::CopyBufferToImage(device, commandPool, commandQueue, stagingBuffer, *dstImage, size);
+            vk::CopyBufferToImage(device, commandBuffer, commandQueue, stagingBuffer, *dstImage, size);
+
+            putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, commandQueue);
             //from VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to final one
-            vk::ImageLayoutTransition(device, commandPool, commandQueue,
-                *dstImage, imageFormatAfterTransition, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                imageLayoutAfterTransition);
+
+            commandBuffer = putils::BeginSingleTimeCommandBuffer(device, commandPool);
+            if(mipLevels > 1)
+            {
+                GenerateMipMaps(physicalDevice, commandBuffer, *dstImage,
+                     VK_FORMAT_R8G8B8A8_SRGB, size.width, size.height, mipLevels);
+            }
+            else
+            {
+                vk::ImageLayoutTransition(device, commandBuffer, 
+                                          *dstImage, 
+                                          imageFormatAfterTransition, 
+                                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+                                          imageLayoutAfterTransition,
+                                          1);
+            }
 
             vk::FreeMemory(device, stagingBufferMemory);
             vk::DestroyBuffer(device, stagingBuffer);
+
+            putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, commandQueue);
+        }
+
+        void GenerateMipMaps(VkPhysicalDevice physicalDevice,
+                             VkCommandBuffer commandBuffer,
+                             VkImage image,
+                             VkFormat imageFormat,
+                             int32_t texWidth,
+                             int32_t texHeight,
+                             uint32_t mipLevels)
+        {
+            // Check if image format supports linear blitting
+            VkFormatProperties formatProperties;
+            vkGetPhysicalDeviceFormatProperties(physicalDevice, imageFormat, &formatProperties);
+
+            if(!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
+            {
+                throw std::runtime_error("texture image format does not support linear blitting!");
+            }
+
+            VkImageMemoryBarrier barrier{};
+            barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            barrier.image = image;
+            barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            barrier.subresourceRange.baseArrayLayer = 0;
+            barrier.subresourceRange.layerCount = 1;
+            barrier.subresourceRange.levelCount = 1;
+
+            int32_t mipWidth = texWidth;
+            int32_t mipHeight = texHeight;
+
+            for(uint32_t i = 1; i < mipLevels; i++)
+            {
+                barrier.subresourceRange.baseMipLevel = i - 1;
+                barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+                barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+                barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+                vkCmdPipelineBarrier(commandBuffer,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+                    0, nullptr,
+                    0, nullptr,
+                    1, &barrier);
+
+                VkImageBlit blit{};
+                blit.srcOffsets[0] = { 0, 0, 0 };
+                blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+                blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                blit.srcSubresource.mipLevel = i - 1;
+                blit.srcSubresource.baseArrayLayer = 0;
+                blit.srcSubresource.layerCount = 1;
+                blit.dstOffsets[0] = { 0, 0, 0 };
+                blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+                blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                blit.dstSubresource.mipLevel = i;
+                blit.dstSubresource.baseArrayLayer = 0;
+                blit.dstSubresource.layerCount = 1;
+
+                vkCmdBlitImage(commandBuffer,
+                    image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                    image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                    1, &blit,
+                    VK_FILTER_LINEAR);
+
+                barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+                barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+                barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+                vkCmdPipelineBarrier(commandBuffer,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+                    0, nullptr,
+                    0, nullptr,
+                    1, &barrier);
+
+                if(mipWidth > 1) mipWidth /= 2;
+                if(mipHeight > 1) mipHeight /= 2;
+            }
+
+            barrier.subresourceRange.baseMipLevel = mipLevels - 1;
+            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+            vkCmdPipelineBarrier(commandBuffer,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+                0, nullptr,
+                0, nullptr,
+                1, &barrier);
         }
 
         void DestroyImage(VkDevice device, VkImage image)
@@ -262,7 +372,7 @@ namespace psm
 
         void DestroyImageViews(VkDevice device, const std::vector<VkImageView>& imageViews)
         {
-            for (auto& view : imageViews)
+            for(auto& view : imageViews)
             {
                 vkDestroyImageView(device, view, nullptr);
             }

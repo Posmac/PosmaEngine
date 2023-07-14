@@ -85,14 +85,12 @@ namespace psm
         }
 
         void CopyBufferToImage(VkDevice device,
-            VkCommandPool commandPool,
+            VkCommandBuffer commandBuffer,
             VkQueue graphicsQueue,
             VkBuffer srcBuffer,
             VkImage dstImage,
             VkExtent3D imageExtent)
         {
-            VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(device, commandPool);
-
             VkBufferImageCopy copy{};
             copy.bufferOffset = 0;
             copy.bufferImageHeight = 0;
@@ -107,8 +105,6 @@ namespace psm
 
             vkCmdCopyBufferToImage(commandBuffer, srcBuffer, dstImage,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
-
-            putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, graphicsQueue);
         }
 
         void UnmapMemory(VkDevice device, VkDeviceMemory memory)

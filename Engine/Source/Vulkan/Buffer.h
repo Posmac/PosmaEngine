@@ -38,7 +38,7 @@ namespace psm
             VkDeviceSize size);
 
         void CopyBufferToImage(VkDevice device,
-            VkCommandPool commandPool,
+            VkCommandBuffer commandBuffer,
             VkQueue graphicsQueue,
             VkBuffer srcBuffer,
             VkImage dstImage,

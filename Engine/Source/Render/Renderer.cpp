@@ -163,9 +163,6 @@ namespace psm
                                VK_SHARING_MODE_EXCLUSIVE, vk::MaxMsaaSamples, 0, m_SwapChainImageFormat,
                                VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
                                &m_MsaaImage, &m_MsaaImageMemory, &m_MsaaImageView);
-        VkImage m_MsaaImage;
-        VkDeviceMemory m_MsaaImageMemory;
-        VkImageView m_MsaaImageView;
     }
 
     VkFormat Renderer::FindSupportedFormat(const std::vector<VkFormat>& candidates,
@@ -255,7 +252,9 @@ namespace psm
         vkDeviceWaitIdle(vk::Device);
     }
 
-    void Renderer::LoadTextureIntoMemory(const RawTextureData& textureData, Texture* texture)
+    void Renderer::LoadTextureIntoMemory(const RawTextureData& textureData, 
+                                         uint32_t mipLevels, 
+                                         Texture* texture)
     {
         if(texture == nullptr)
         {
@@ -267,10 +266,11 @@ namespace psm
             LOG_ERROR("Raw texture data pointer is null");
         }
 
+
         vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
-                               { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, 1, 1,
+                               { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,
                                VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                               VK_IMAGE_USAGE_TRANSFER_SRC_BIT  | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
                                VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
                                &texture->Image, &texture->ImageMemory, &texture->ImageView);
@@ -279,6 +279,7 @@ namespace psm
                                          textureData.Width * textureData.Height * textureData.Type,
                                          textureData.Data, m_CommandPool, vk::Queues.GraphicsQueue,
                                          { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
+                                         mipLevels,
                                          VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_FORMAT_R8G8B8A8_SRGB,
                                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &texture->Image);
     }

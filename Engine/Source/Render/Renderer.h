@@ -37,7 +37,9 @@ namespace psm
                                      VkFormatFeatureFlags features);
         void Deinit();
         void Render(const PerFrameData& data);
-        void LoadTextureIntoMemory(const RawTextureData& textureData, Texture* texture);
+        void LoadTextureIntoMemory(const RawTextureData& textureData, 
+                                   uint32_t mipLevels, 
+                                   Texture* texture);
 
     private:
         //swapchain (abstract info vulkan windows class maybe)

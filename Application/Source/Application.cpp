@@ -16,7 +16,9 @@ namespace psm
         RawTextureData rawData{ Rgb_alpha };
         TextureLoader::Instance()->LoadRawTextureData("../Engine/Models/Skull/Skull.jpg", &rawData);
 
-        Renderer::Instance()->LoadTextureIntoMemory(rawData, &m_SkullTexture);
+        uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(rawData.Height, rawData.Width)))) + 1;
+
+        Renderer::Instance()->LoadTextureIntoMemory(rawData, mipLevels , &m_SkullTexture);
 
         OpaqueInstances::Instance()->AddModel(&m_SkullModel, &m_SkullTexture);
         OpaqueInstances::Instance()->AddInstance(instanceMatrix);

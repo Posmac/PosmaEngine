@@ -66,7 +66,8 @@ namespace psm
             vk::CreateTextureSampler(m_Device, VK_FILTER_LINEAR,
                 VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT,
                 VK_SAMPLER_ADDRESS_MODE_REPEAT, false, 0.0f, VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
-                false, VK_COMPARE_OP_ALWAYS, 0, 0.0, 0.0, 0.0, VK_SAMPLER_MIPMAP_MODE_LINEAR, false, &m_Sampler);
+                false, VK_COMPARE_OP_ALWAYS, 0, m_MaxMsaaSamples, 0,
+                0.0, VK_SAMPLER_MIPMAP_MODE_LINEAR, false, &m_Sampler);
 
             Sampler = m_Sampler;
 
