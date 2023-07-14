@@ -12,6 +12,7 @@
 #include "Utilities/ModelLoader.h"
 #include "Instances/OpaqueInstances.h"
 #include "PerFrameData.h"
+#include "Vulkan/VulkanImGui.h"
 
 #include "glm/glm.hpp"
 
@@ -71,7 +72,7 @@ namespace psm
         VkImageView m_MsaaImageView;
 
         //Imgui
-        //vk::VulkanImGui m_VkImgui;
-        //VkDescriptorPool m_ImGuiDescriptorsPool;//used for imgui
+        vk::VulkanImGui m_VkImgui;
+        VkDescriptorPool m_ImGuiDescriptorsPool;
     };
 }

@@ -18,10 +18,15 @@ namespace psm
         class VulkanImGui
         {
         public:
-            void Init(HWND hWnd, uint32_t swapchainImagesCount,
-                VkDescriptorPool* descriptorPool, VkRenderPass renderPass,
-                VkQueue graphicsQueue, uint32_t queueFamily,
-                VkCommandPool cmdPool, VkCommandBuffer cmdBuf);
+            void Init(HWND hWnd, 
+                      uint32_t swapchainImagesCount, 
+                      VkDescriptorPool* descriptorPool, 
+                      VkRenderPass renderPass,
+                      VkQueue graphicsQueue, 
+                      uint32_t queueFamily, 
+                      VkCommandPool cmdPool, 
+                      VkCommandBuffer cmdBuf,
+                      VkSampleCountFlagBits samplesCount);
             void Deinit();
             void Render(VkCommandBuffer commandBuffer);
         };

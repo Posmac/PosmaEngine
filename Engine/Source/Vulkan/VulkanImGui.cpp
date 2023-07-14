@@ -7,7 +7,7 @@ namespace psm
         void VulkanImGui::Init(HWND hWnd, uint32_t swapchainImagesCount,
             VkDescriptorPool* descriptorPool, VkRenderPass renderPass, 
             VkQueue graphicsQueue, uint32_t queueFamily,
-            VkCommandPool cmdPool, VkCommandBuffer cmdBuf)
+            VkCommandPool cmdPool, VkCommandBuffer cmdBuf, VkSampleCountFlagBits samplesCount)
         {
             IMGUI_CHECKVERSION();
             ImGui::SetCurrentContext(ImGui::CreateContext());
@@ -54,7 +54,7 @@ namespace psm
             imguiInfo.Subpass = 0;
             imguiInfo.MinImageCount = swapchainImagesCount;
             imguiInfo.ImageCount = swapchainImagesCount;
-            imguiInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+            imguiInfo.MSAASamples = samplesCount;
             imguiInfo.Allocator = nullptr;
             imguiInfo.CheckVkResultFn = nullptr;
 

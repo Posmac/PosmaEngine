@@ -16,8 +16,6 @@ namespace psm
 
     void Renderer::Init(HINSTANCE hInstance, HWND hWnd)
     {
-        //m_VkImgui.Init(hWnd, m_SwapChainImages.size(), *this, &m_ImGuiDescriptorsPool);
-
         //later move into windows class
         vk::CreateSwapchain(vk::Device, vk::PhysicalDevice, vk::Surface, vk::SurfData, &m_SwapChain, &m_SwapChainImageFormat,
                             &m_SwapChainExtent);
@@ -138,6 +136,10 @@ namespace psm
         //init mesh systems
         OpaqueInstances::Instance()->Init(m_RenderPass, m_SwapChainExtent);
         ModelLoader::Instance()->Init(m_CommandPool);
+
+        m_VkImgui.Init(hWnd, m_SwapChainImages.size(), &m_ImGuiDescriptorsPool, m_RenderPass,
+                       vk::Queues.GraphicsQueue, vk::Queues.GraphicsFamily.value(),
+                       m_CommandPool, m_CommandBuffers[0], vk::MaxMsaaSamples);
     }
 
     void Renderer::CreateDepthImage()
@@ -235,7 +237,7 @@ namespace psm
         OpaqueInstances::Instance()->Render(m_CommandBuffers[imageIndex]);
 
         //render IMGui
-        //m_VkImgui.Render(m_CommandBuffers[imageIndex]);
+        m_VkImgui.Render(m_CommandBuffers[imageIndex]);
 
         //continue
         vkCmdEndRenderPass(m_CommandBuffers[imageIndex]);
