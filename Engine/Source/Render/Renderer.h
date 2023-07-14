@@ -72,7 +72,6 @@ namespace psm
         VkImageView m_MsaaImageView;
 
         //Imgui
-        vk::VulkanImGui m_VkImgui;
         VkDescriptorPool m_ImGuiDescriptorsPool;
     };
 }

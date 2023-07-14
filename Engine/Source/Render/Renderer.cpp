@@ -137,9 +137,9 @@ namespace psm
         OpaqueInstances::Instance()->Init(m_RenderPass, m_SwapChainExtent);
         ModelLoader::Instance()->Init(m_CommandPool);
 
-        m_VkImgui.Init(hWnd, m_SwapChainImages.size(), &m_ImGuiDescriptorsPool, m_RenderPass,
+        vkimgui::Init(hWnd, m_SwapChainImages.size(), m_RenderPass,
                        vk::Queues.GraphicsQueue, vk::Queues.GraphicsFamily.value(),
-                       m_CommandPool, m_CommandBuffers[0], vk::MaxMsaaSamples);
+                       m_CommandPool, m_CommandBuffers[0], vk::MaxMsaaSamples, &m_ImGuiDescriptorsPool);
     }
 
     void Renderer::CreateDepthImage()
@@ -237,7 +237,23 @@ namespace psm
         OpaqueInstances::Instance()->Render(m_CommandBuffers[imageIndex]);
 
         //render IMGui
-        m_VkImgui.Render(m_CommandBuffers[imageIndex]);
+        vkimgui::PrepareNewFrame();
+
+        {
+            ImGui::Begin("Test widget");
+            //ImGui::Text("This is some text.");
+            bool show_demo_window = false;
+            float f = 0;
+            glm::vec4 colorClear = glm::vec4(1.0);
+
+            ImGui::Checkbox("Demo Window", &show_demo_window);
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);// Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit4("clear color", &colorClear[0]);
+
+            ImGui::End();
+        }
+
+        vkimgui::Render(m_CommandBuffers[imageIndex]);
 
         //continue
         vkCmdEndRenderPass(m_CommandBuffers[imageIndex]);
@@ -254,8 +270,8 @@ namespace psm
         vkDeviceWaitIdle(vk::Device);
     }
 
-    void Renderer::LoadTextureIntoMemory(const RawTextureData& textureData, 
-                                         uint32_t mipLevels, 
+    void Renderer::LoadTextureIntoMemory(const RawTextureData& textureData,
+                                         uint32_t mipLevels,
                                          Texture* texture)
     {
         if(texture == nullptr)
@@ -272,7 +288,7 @@ namespace psm
         vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
                                { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,
                                VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_USAGE_TRANSFER_SRC_BIT  | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                               VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
                                VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
                                &texture->Image, &texture->ImageMemory, &texture->ImageView);

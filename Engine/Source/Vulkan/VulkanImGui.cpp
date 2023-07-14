@@ -2,12 +2,17 @@
 
 namespace psm
 {
-    namespace vk
+    namespace vkimgui
     {
-        void VulkanImGui::Init(HWND hWnd, uint32_t swapchainImagesCount,
-            VkDescriptorPool* descriptorPool, VkRenderPass renderPass, 
-            VkQueue graphicsQueue, uint32_t queueFamily,
-            VkCommandPool cmdPool, VkCommandBuffer cmdBuf, VkSampleCountFlagBits samplesCount)
+        void Init(HWND hWnd, 
+                  uint32_t swapchainImagesCount,
+                  VkRenderPass renderPass, 
+                  VkQueue graphicsQueue, 
+                  uint32_t queueFamily,
+                  VkCommandPool cmdPool, 
+                  VkCommandBuffer cmdBuf, 
+                  VkSampleCountFlagBits samplesCount,
+                  VkDescriptorPool* descriptorPool)
         {
             IMGUI_CHECKVERSION();
             ImGui::SetCurrentContext(ImGui::CreateContext());
@@ -85,37 +90,40 @@ namespace psm
             }
         }
 
-        void VulkanImGui::Deinit()
+        void Deinit()
         {
             ImGui_ImplVulkan_Shutdown();
             ImGui_ImplWin32_Shutdown();
             ImGui::DestroyContext();
         }
 
-        void VulkanImGui::Render(VkCommandBuffer commandBuffer)
+        void Render(VkCommandBuffer commandBuffer)
+        {
+            //{
+            //    ImGui::Begin("Test widget");
+            //    //ImGui::Text("This is some text.");
+            //    bool show_demo_window = false;
+            //    float f = 0;
+            //    glm::vec4 colorClear = glm::vec4(1.0);
+
+            //    ImGui::Checkbox("Demo Window", &show_demo_window);
+            //    ImGui::SliderFloat("float", &f, 0.0f, 1.0f);// Edit 1 float using a slider from 0.0f to 1.0f
+            //    ImGui::ColorEdit4("clear color", &colorClear[0]);
+
+            //    ImGui::End();
+            //}
+
+            // Integrate ImGUI into Vulkan rendering pipeline
+            ImGui::Render();
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+        }
+
+        void PrepareNewFrame()
         {
             // Render ImGUI widgets
             ImGui_ImplVulkan_NewFrame();
             ImGui_ImplWin32_NewFrame();
             ImGui::NewFrame();
-
-            {
-                ImGui::Begin("Test widget");
-                //ImGui::Text("This is some text.");
-                bool show_demo_window = false;
-                float f = 0;
-                glm::vec4 colorClear = glm::vec4(1.0);
-
-                ImGui::Checkbox("Demo Window", &show_demo_window);
-                ImGui::SliderFloat("float", &f, 0.0f, 1.0f);// Edit 1 float using a slider from 0.0f to 1.0f
-                ImGui::ColorEdit4("clear color", &colorClear[0]);
-
-                ImGui::End();
-                ImGui::Render();
-            }
-
-            // Integrate ImGUI into Vulkan rendering pipeline
-            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
         }
     }
 }
