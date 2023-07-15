@@ -37,7 +37,7 @@ namespace psm
             uint32_t signalSemaphoresCount,
             VkFence fence);
 
-        void Present(VkQueue queue,
+        VkResult Present(VkQueue queue,
             const VkSemaphore* pWaitSemaphores,
             uint32_t waitSemaphoresCount,
             VkSwapchainKHR* pSwapchains,

@@ -29,7 +29,7 @@ namespace psm
             vkQueueSubmit(queue, submitCount, &submitInfo, fence);
         }
 
-        void Present(VkQueue queue,
+        VkResult Present(VkQueue queue,
             const VkSemaphore* pWaitSemaphores,
             uint32_t waitSemaphoresCount, 
             VkSwapchainKHR* pSwapchains,
@@ -44,7 +44,7 @@ namespace psm
             presentInfo.pSwapchains = pSwapchains;
             presentInfo.pImageIndices = imageIndices;
 
-            vkQueuePresentKHR(queue, &presentInfo);
+            return vkQueuePresentKHR(queue, &presentInfo);
         }
     }
 }

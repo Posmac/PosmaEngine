@@ -106,7 +106,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
     case WM_SIZE:
-        app.ResizeWindow(hWnd);
+        UINT width = LOWORD(lParam);
+        UINT height = HIWORD(lParam);
+        app.ResizeWindow(hWnd, width, height);
         break;
     }
     return DefWindowProc(hWnd, uMsg, wParam, lParam);

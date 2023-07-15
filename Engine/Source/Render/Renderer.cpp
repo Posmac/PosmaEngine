@@ -16,15 +16,21 @@ namespace psm
 
     void Renderer::Init(HINSTANCE hInstance, HWND hWnd)
     {
-        //later move into windows class
-        vk::CreateSwapchain(vk::Device, vk::PhysicalDevice, vk::Surface, vk::SurfData, &m_SwapChain, &m_SwapChainImageFormat,
-                            &m_SwapChainExtent);
+        m_Hwnd = hWnd;
 
-        vk::QuerrySwapchainImages(vk::Device, m_SwapChain, m_SwapChainImageFormat, &m_SwapChainImages, &m_SwapchainImageViews);
-        vk::CreateVkSemaphore(vk::Device, 0, &m_ImageAvailableSemaphore);
-        vk::CreateVkSemaphore(vk::Device, 0, &m_RenderFinishedSemaphore);
-        vk::CreateImageViews(vk::Device, m_SwapChainImages, m_SwapChainImageFormat,
-                             VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, &m_SwapchainImageViews);
+        //swapchain creation
+        m_CurrentFrame = 0;
+        CreateSwapchain(hWnd);
+        m_ImageAvailableSemaphores.resize(m_SwapChainImages.size());
+        m_RenderFinishedSemaphores.resize(m_SwapChainImages.size());
+        m_FlightFences.resize(m_SwapChainImages.size());
+
+        for(int i = 0; i < m_SwapChainImages.size(); i++)
+        {
+            vk::CreateVkSemaphore(vk::Device, 0, &m_ImageAvailableSemaphores[i]);
+            vk::CreateVkSemaphore(vk::Device, 0, &m_RenderFinishedSemaphores[i]);
+            vk::CreateVkFence(vk::Device, 0, &m_FlightFences[i]);
+        }
 
         //create it before init render pass
         CreateDepthImage();
@@ -118,16 +124,7 @@ namespace psm
         vk::CreateRenderPass(vk::Device, attachmentsDescriptions, attachmentsDescriptionCount,
                              subpassDescr, subpassDescrCount, dependency, dependenciesCount, &m_RenderPass);
 
-        uint32_t frameBufferAttachmentCount = m_SwapChainImages.size();
-        std::vector<vk::FramebufferAttachment> frameBufferAttachment(frameBufferAttachmentCount);
-        for(int i = 0; i < frameBufferAttachmentCount; i++)
-        {
-            frameBufferAttachment[i].Attachments = { m_MsaaImageView, m_DepthImageView,
-                                                      m_SwapchainImageViews[i] };
-        };
-
-        vk::CreateFramebuffers(vk::Device, frameBufferAttachment, 3,
-                               m_SwapChainExtent, m_SwapchainImageViews.size(), m_RenderPass, &m_Framebuffers);
+        CreateFramebuffers();
 
         //command buffers
         vk::CreateCommandPool(vk::Device, vk::Queues.GraphicsFamily.value(), &m_CommandPool);
@@ -137,13 +134,19 @@ namespace psm
         OpaqueInstances::Instance()->Init(m_RenderPass, m_SwapChainExtent);
         ModelLoader::Instance()->Init(m_CommandPool);
 
-        vkimgui::Init(hWnd, m_SwapChainImages.size(), m_RenderPass,
-                       vk::Queues.GraphicsQueue, vk::Queues.GraphicsFamily.value(),
-                       m_CommandPool, m_CommandBuffers[0], vk::MaxMsaaSamples, &m_ImGuiDescriptorsPool);
+        InitImGui(hWnd);
     }
 
     void Renderer::CreateDepthImage()
     {
+        if(m_DepthImage != VK_NULL_HANDLE)
+        {
+            vkDeviceWaitIdle(vk::Device);
+            vk::DestroyImageViews(vk::Device, { m_DepthImageView });
+            vk::FreeMemory(vk::Device, m_DepthImageMemory);
+            vk::DestroyImage(vk::Device, m_DepthImage);
+        }
+
         m_DepthFormat = FindSupportedFormat(
             { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
             VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
@@ -157,6 +160,14 @@ namespace psm
 
     void Renderer::CreateMsaaImage()
     {
+        if(m_MsaaImage != VK_NULL_HANDLE)
+        {
+            vkDeviceWaitIdle(vk::Device);
+            vk::DestroyImageViews(vk::Device, { m_MsaaImageView });
+            vk::FreeMemory(vk::Device, m_MsaaImageMemory);
+            vk::DestroyImage(vk::Device, m_MsaaImage);
+        }
+
         vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
                                { m_SwapChainExtent.width, m_SwapChainExtent.height, 1 },
                                1, 1, VK_IMAGE_TYPE_2D, m_SwapChainImageFormat, VK_IMAGE_TILING_OPTIMAL,
@@ -192,33 +203,43 @@ namespace psm
 
     void Renderer::Deinit()
     {
-        //m_VkImgui.Deinit();
+        vkimgui::Deinit();
 
         vk::DestroyFramebuffers(vk::Device, m_Framebuffers);
         vk::DestroyRenderPass(vk::Device, m_RenderPass);
         vk::DestroyImageViews(vk::Device, m_SwapchainImageViews);
         vk::DestroySwapchain(vk::Device, m_SwapChain);
-        vk::DestroySemaphore(vk::Device, m_ImageAvailableSemaphore);
-        vk::DestroySemaphore(vk::Device, m_RenderFinishedSemaphore);
+
+        for(int i = 0; i < m_SwapChainImages.size(); i++)
+        {
+            vk::DestroySemaphore(vk::Device, m_ImageAvailableSemaphores[i]);
+            vk::DestroySemaphore(vk::Device, m_RenderFinishedSemaphores[i]);
+            vk::DestroyFence(vk::Device, m_FlightFences[i]);
+        }
 
         vk::Vk::GetInstance()->Deinit();
     }
 
     void Renderer::Render(const PerFrameData& data)
     {
+        vkWaitForFences(vk::Device, 1, &m_FlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
+
         vk::Vk::GetInstance()->UpdatePerFrameBuffer(data);
         OpaqueInstances::Instance()->UpdateDescriptorSets();
 
         //basic
         uint32_t imageIndex;
         VkResult result = vkAcquireNextImageKHR(vk::Device, m_SwapChain, UINT64_MAX,
-                                                m_ImageAvailableSemaphore, nullptr, &imageIndex);
+                                                m_ImageAvailableSemaphores[m_CurrentFrame],
+                                                nullptr, &imageIndex);
         VK_CHECK_RESULT(result);
 
-        result = vkResetCommandBuffer(m_CommandBuffers[imageIndex], 0);
+        vkResetFences(vk::Device, 1, &m_FlightFences[m_CurrentFrame]);
+
+        result = vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
         VK_CHECK_RESULT(result);
 
-        vk::BeginCommandBuffer(m_CommandBuffers[imageIndex], 0);
+        vk::BeginCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
 
         std::array<VkClearValue, 2> clearColor{};
         clearColor[0].color = { {0.2f, 0.2f, 0.2f, 1.0f} };
@@ -226,15 +247,15 @@ namespace psm
 
         vk::BeginRenderPass(m_RenderPass, m_Framebuffers[imageIndex],
                             { 0, 0 }, m_SwapChainExtent, clearColor.data(), clearColor.size(),
-                            m_CommandBuffers[imageIndex], VK_SUBPASS_CONTENTS_INLINE);
+                            m_CommandBuffers[m_CurrentFrame], VK_SUBPASS_CONTENTS_INLINE);
 
-        vk::SetViewPortAndScissors(m_CommandBuffers[imageIndex],
+        vk::SetViewPortAndScissors(m_CommandBuffers[m_CurrentFrame],
                                    0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width),
                                    static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f,
                                    { 0, 0 }, m_SwapChainExtent);
 
         //related to specific pipeline
-        OpaqueInstances::Instance()->Render(m_CommandBuffers[imageIndex]);
+        OpaqueInstances::Instance()->Render(m_CommandBuffers[m_CurrentFrame]);
 
         //render IMGui
         vkimgui::PrepareNewFrame();
@@ -253,20 +274,22 @@ namespace psm
             ImGui::End();
         }
 
-        vkimgui::Render(m_CommandBuffers[imageIndex]);
+        vkimgui::Render(m_CommandBuffers[m_CurrentFrame]);
 
         //continue
-        vkCmdEndRenderPass(m_CommandBuffers[imageIndex]);
+        vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
 
-        vk::EndCommandBuffer(m_CommandBuffers[imageIndex]);
+        vk::EndCommandBuffer(m_CommandBuffers[m_CurrentFrame]);
 
         vk::Submit(vk::Queues.GraphicsQueue, 1, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                   &m_ImageAvailableSemaphore, 1, &m_CommandBuffers[imageIndex], 1,
-                   &m_RenderFinishedSemaphore, 1, VK_NULL_HANDLE);
+                   &m_ImageAvailableSemaphores[m_CurrentFrame], 1, &m_CommandBuffers[m_CurrentFrame], 1,
+                   &m_RenderFinishedSemaphores[m_CurrentFrame], 1, m_FlightFences[m_CurrentFrame]);
 
-        vk::Present(vk::Queues.PresentQueue, &m_RenderFinishedSemaphore, 1,
+        result = vk::Present(vk::Queues.PresentQueue, &m_RenderFinishedSemaphores[m_CurrentFrame], 1,
                     &m_SwapChain, 1, &imageIndex);
+        VK_CHECK_RESULT(result);
 
+        m_CurrentFrame = (m_CurrentFrame + 1) % m_SwapChainImages.size();
         vkDeviceWaitIdle(vk::Device);
     }
 
@@ -300,5 +323,68 @@ namespace psm
                                          mipLevels,
                                          VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_FORMAT_R8G8B8A8_SRGB,
                                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &texture->Image);
+    }
+
+    void Renderer::ResizeWindow(HWND hWnd)
+    {
+        return;
+
+        if(vk::Device == VK_NULL_HANDLE)
+            return;
+
+        m_Hwnd = hWnd;
+        CreateSwapchain(hWnd);
+        CreateFramebuffers();
+        CreateMsaaImage();
+        CreateDepthImage();
+        InitImGui(hWnd);
+    }
+
+    void Renderer::CreateSwapchain(HWND hWnd)
+    {
+        if(m_SwapChain != VK_NULL_HANDLE)
+        {
+            vkDeviceWaitIdle(vk::Device);
+            vk::DestroyImageViews(vk::Device, m_SwapchainImageViews);
+            vk::DestroySwapchain(vk::Device, m_SwapChain);
+
+            vkimgui::Deinit();
+        }
+
+        vk::CreateSwapchain(vk::Device, vk::PhysicalDevice, vk::Surface, vk::SurfData,
+                            &m_SwapChain, &m_SwapChainImageFormat,
+                            &m_SwapChainExtent);
+        vk::QuerrySwapchainImages(vk::Device, m_SwapChain, m_SwapChainImageFormat,
+                                  &m_SwapChainImages, &m_SwapchainImageViews);
+        vk::CreateImageViews(vk::Device, m_SwapChainImages, m_SwapChainImageFormat,
+                             VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, &m_SwapchainImageViews);
+    }
+
+    void Renderer::CreateFramebuffers()
+    {
+        if(m_Framebuffers.size() != 0)
+        {
+            vkDeviceWaitIdle(vk::Device);
+            vk::DestroyFramebuffers(vk::Device, m_Framebuffers);
+        }
+
+        uint32_t frameBufferAttachmentCount = m_SwapChainImages.size();
+        std::vector<vk::FramebufferAttachment> frameBufferAttachment(frameBufferAttachmentCount);
+        for(int i = 0; i < frameBufferAttachmentCount; i++)
+        {
+            frameBufferAttachment[i].Attachments = { m_MsaaImageView, m_DepthImageView,
+                                                      m_SwapchainImageViews[i] };
+        };
+
+        vk::CreateFramebuffers(vk::Device, frameBufferAttachment, 3,
+                               m_SwapChainExtent, m_SwapchainImageViews.size(),
+                               m_RenderPass, &m_Framebuffers);
+    }
+
+    void Renderer::InitImGui(HWND hWnd)
+    {
+        vkimgui::Init(hWnd, m_SwapChainImages.size(), m_RenderPass,
+                      vk::Queues.GraphicsQueue, vk::Queues.GraphicsFamily.value(),
+                      m_CommandPool, m_CommandBuffers[0], vk::MaxMsaaSamples, &m_ImGuiDescriptorsPool);
     }
 }

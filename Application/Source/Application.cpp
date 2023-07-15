@@ -38,8 +38,12 @@ namespace psm
     }
 
     void Application::Deinit()
-    {}
+    {
 
-    void Application::ResizeWindow(HWND hWnd)
-    {}
+    }
+
+    void Application::ResizeWindow(HWND hWnd, uint32_t width, uint32_t height)
+    {
+        Renderer::Instance()->ResizeWindow(hWnd);
+    }
 }

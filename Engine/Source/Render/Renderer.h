@@ -41,16 +41,22 @@ namespace psm
         void LoadTextureIntoMemory(const RawTextureData& textureData, 
                                    uint32_t mipLevels, 
                                    Texture* texture);
-
+        void ResizeWindow(HWND hWnd);
+        void CreateSwapchain(HWND hWnd);
+        void CreateFramebuffers();
+        void InitImGui(HWND hWnd);
     private:
         //swapchain (abstract info vulkan windows class maybe)
+        HWND m_Hwnd;
         VkSwapchainKHR m_SwapChain;
         std::vector<VkImage> m_SwapChainImages;
         std::vector<VkImageView> m_SwapchainImageViews;
         VkFormat m_SwapChainImageFormat;
         VkExtent2D m_SwapChainExtent;
-        VkSemaphore m_ImageAvailableSemaphore;
-        VkSemaphore m_RenderFinishedSemaphore;
+        std::vector<VkSemaphore> m_ImageAvailableSemaphores;
+        std::vector<VkSemaphore> m_RenderFinishedSemaphores;
+        std::vector<VkFence> m_FlightFences;
+        uint32_t m_CurrentFrame;
 
         //renderer related thing
         VkRenderPass m_RenderPass;
