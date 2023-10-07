@@ -44,6 +44,13 @@ namespace psm
             VkImage dstImage,
             VkExtent3D imageExtent);
 
+        void MapMemory(VkDevice device,
+                       VkDeviceMemory bufferMemory,
+                       VkDeviceSize offset,
+                       VkDeviceSize size,
+                       VkMemoryMapFlags flags,
+                       void** mapping);
+
         void UnmapMemory(VkDevice device, VkDeviceMemory memory);
         void DestroyBuffer(VkDevice device, VkBuffer buffer);
         void FreeMemory(VkDevice device, VkDeviceMemory memory);

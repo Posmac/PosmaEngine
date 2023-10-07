@@ -14,6 +14,7 @@
 #include "PerFrameData.h"
 #include "Vulkan/VulkanImGui.h"
 
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm/glm.hpp"
 
 namespace psm
@@ -33,11 +34,12 @@ namespace psm
         void Init(HINSTANCE hInstance, HWND hWnd);
         void CreateDepthImage();
         void CreateMsaaImage();
+        void PrepareDirDepth();
         VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates,
                                      VkImageTiling tiling,
                                      VkFormatFeatureFlags features);
         void Deinit();
-        void Render(const PerFrameData& data);
+        void Render(PerFrameData& data);
         void LoadTextureIntoMemory(const RawTextureData& textureData, 
                                    uint32_t mipLevels, 
                                    Texture* texture);
@@ -45,6 +47,7 @@ namespace psm
         void CreateSwapchain(HWND hWnd);
         void CreateFramebuffers();
         void InitImGui(HWND hWnd);
+        void PrepareOffscreenRenderpass();
     private:
         //swapchain (abstract info vulkan windows class maybe)
         HWND m_Hwnd;
@@ -77,7 +80,38 @@ namespace psm
         VkDeviceMemory m_MsaaImageMemory;
         VkImageView m_MsaaImageView;
 
+        //dir light depth image
+        std::vector<VkImage> m_DirDepthImage;
+        std::vector<VkDeviceMemory> m_DirDepthImageMemory;
+        std::vector<VkImageView> m_DirDepthImageView;
+
+        VkFormat m_DirDepthFormat;
+        VkExtent3D m_DirDepthSize;
+
+        glm::mat4 m_DirViewProjMatrix;
+
+        //shadow buffer data
+        VkBuffer m_DirShadowBuffer;
+        VkDeviceMemory m_DirShadowBufferMemory;
+        void* m_DirShadowBufferMapping;
+
+        //renderer related thing
+        VkRenderPass m_ShadowRenderPass;
+        std::vector<VkFramebuffer> m_ShadowFramebuffers;
+
         //Imgui
         VkDescriptorPool m_ImGuiDescriptorsPool;
+
+        //imgui data
+        float range = 77;
+        float nearPlane = -70;
+        float farPlane = 70;
+        glm::vec3 position = glm::vec3(-1.0f, 1.0f, 0.0f);
+        glm::vec3 lookAt;
+        glm::vec3 up = glm::vec3(0.0f, 1.0f ,0.0f);
+
+        //shadow biasing
+        float depthBias = -1;
+        float depthSlope = -1;
     };
 }

@@ -241,6 +241,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\compile.bat" />
+    <None Include="Shaders\shadow2D.vert.glsl" />
     <None Include="Shaders\triangle.frag.glsl" />
     <None Include="Shaders\triangle.vert.glsl" />
   </ItemGroup>

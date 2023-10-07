@@ -99,7 +99,7 @@ namespace psm
             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
             void* pUserData)
         {
-            std::cout << pCallbackData->pMessage << std::endl;
+            std::cout << pCallbackData->pMessage << std::endl << std::endl;
             return VK_FALSE;
         }
     }

@@ -5,15 +5,18 @@ namespace psm
     namespace vk
     {
         void CreateGraphicsPipeline(VkDevice logicalDevice,
-            VkExtent2D viewPortExtent, 
-            VkRenderPass renderPass,
-            VkPipelineLayout pipelineLayout,
-            const VkPipelineShaderStageCreateInfo* pShaderStages,
-            uint32_t shaderStagesCount,
-            VkPipelineMultisampleStateCreateInfo msaa,
-            VkPipelineVertexInputStateCreateInfo vertexInput,
-            VkPipelineInputAssemblyStateCreateInfo inputAssembly,
-            VkPipeline* pipeline)
+                                    VkExtent2D viewPortExtent, 
+                                    VkRenderPass renderPass,
+                                    VkPipelineLayout pipelineLayout,
+                                    const VkPipelineShaderStageCreateInfo* pShaderStages,
+                                    uint32_t shaderStagesCount,
+                                    const VkDynamicState* pDynamicStates,
+                                    uint32_t dynamincStatesCount,
+                                    VkPipelineMultisampleStateCreateInfo* msaa,
+                                    VkPipelineVertexInputStateCreateInfo* vertexInput,
+                                    VkPipelineInputAssemblyStateCreateInfo* inputAssembly,
+                                    VkPipelineRasterizationStateCreateInfo* rasterizationState,
+                                    VkPipeline* pipeline)
         {
             VkViewport viewPort{};
             viewPort.x = 0;
@@ -36,33 +39,12 @@ namespace psm
             viewPortInfo.scissorCount = 1;
             viewPortInfo.pScissors = &scriccors;
 
-            VkPipelineRasterizationStateCreateInfo rasterizationStateInfo{};
-            rasterizationStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-            rasterizationStateInfo.pNext = nullptr;
-            rasterizationStateInfo.flags = 0;
-            rasterizationStateInfo.depthClampEnable = VK_FALSE;
-            rasterizationStateInfo.rasterizerDiscardEnable = VK_FALSE;
-            rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-            rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-            rasterizationStateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-            rasterizationStateInfo.depthBiasEnable = VK_FALSE;
-            rasterizationStateInfo.depthBiasConstantFactor = 0;
-            rasterizationStateInfo.depthBiasClamp = 1.0f;
-            rasterizationStateInfo.depthBiasSlopeFactor = 0;
-            rasterizationStateInfo.lineWidth = 1;
-
-            std::vector<VkDynamicState> dynamicStates = 
-            {
-                VK_DYNAMIC_STATE_VIEWPORT,
-                VK_DYNAMIC_STATE_SCISSOR
-            };
-
             VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{};
             dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
             dynamicStateCreateInfo.pNext = nullptr;
             dynamicStateCreateInfo.flags = 0;
-            dynamicStateCreateInfo.dynamicStateCount = 2;
-            dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
+            dynamicStateCreateInfo.dynamicStateCount = dynamincStatesCount;
+            dynamicStateCreateInfo.pDynamicStates = pDynamicStates;
 
             VkPipelineColorBlendAttachmentState colorBlendAttachment{};
             colorBlendAttachment.colorWriteMask =
@@ -100,12 +82,12 @@ namespace psm
             graphicsPipelineInfo.pNext = nullptr;
             graphicsPipelineInfo.stageCount = shaderStagesCount;
             graphicsPipelineInfo.pStages = pShaderStages;
-            graphicsPipelineInfo.pVertexInputState = &vertexInput;
-            graphicsPipelineInfo.pInputAssemblyState = &inputAssembly;
+            graphicsPipelineInfo.pVertexInputState = vertexInput;
+            graphicsPipelineInfo.pInputAssemblyState = inputAssembly;
             graphicsPipelineInfo.pTessellationState = nullptr;
             graphicsPipelineInfo.pViewportState = &viewPortInfo;
-            graphicsPipelineInfo.pRasterizationState = &rasterizationStateInfo;
-            graphicsPipelineInfo.pMultisampleState = &msaa;
+            graphicsPipelineInfo.pRasterizationState = rasterizationState;
+            graphicsPipelineInfo.pMultisampleState = msaa;
             graphicsPipelineInfo.pDepthStencilState = &depthInfo;
             graphicsPipelineInfo.pColorBlendState = &colorBlending;
             graphicsPipelineInfo.pDynamicState = &dynamicStateCreateInfo;
@@ -140,6 +122,50 @@ namespace psm
             info->flags = 0;
             info->primitiveRestartEnable = restartPrimitives;
             info->topology = topology;
+        }
+
+        void GetRasterizationStateInfo(VkBool32 depthClampEnable,
+                                       VkBool32 rasterizerDiscardEnable,
+                                       VkPolygonMode polygonMode,
+                                       VkCullModeFlags cullMode,
+                                       VkFrontFace frontFace,
+                                       VkBool32 depthBiasEnable,
+                                       float depthBiasConstantFactor,
+                                       float depthBiasClamp,
+                                       float depthBiasSlopeFactor,
+                                       float lineWidth,
+                                       VkPipelineRasterizationStateCreateInfo* rasterizationStateInfo)
+        {
+            rasterizationStateInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+            rasterizationStateInfo->pNext = nullptr;
+            rasterizationStateInfo->flags = 0;
+            rasterizationStateInfo->depthClampEnable = depthClampEnable;
+            rasterizationStateInfo->rasterizerDiscardEnable = rasterizerDiscardEnable;
+            rasterizationStateInfo->polygonMode = polygonMode;
+            rasterizationStateInfo->cullMode = cullMode;
+            rasterizationStateInfo->frontFace = frontFace;
+            rasterizationStateInfo->depthBiasEnable = depthBiasEnable;
+            rasterizationStateInfo->depthBiasConstantFactor = depthBiasConstantFactor;
+            rasterizationStateInfo->depthBiasClamp = depthBiasClamp;
+            rasterizationStateInfo->depthBiasSlopeFactor = depthBiasSlopeFactor;
+            rasterizationStateInfo->lineWidth = lineWidth;
+        }
+
+        void GetPipelineMultisampleState(VkBool32 alphaToCoverageEnable, 
+                                         VkBool32 alphaToOneEnable, 
+                                         float minSampleShading,
+                                         VkSampleMask* pSampleMask,
+                                         VkSampleCountFlagBits rasterizationSamples,
+                                         VkPipelineMultisampleStateCreateInfo* multisamplesState)
+        {
+            multisamplesState->sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+            multisamplesState->pNext = nullptr;
+            multisamplesState->alphaToCoverageEnable = alphaToCoverageEnable;
+            multisamplesState->alphaToOneEnable = alphaToOneEnable;
+            multisamplesState->flags = 0;
+            multisamplesState->minSampleShading = minSampleShading;
+            multisamplesState->pSampleMask = pSampleMask;
+            multisamplesState->rasterizationSamples = rasterizationSamples;
         }
 
         void GetPipelineShaderStages(const vk::ShaderModuleInfo* pShadersInfo,

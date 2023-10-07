@@ -7,6 +7,7 @@
 #include "Utilities/TextureLoader.h"
 #include "Render/Camera.h"
 #include "Render/PerFrameData.h"
+#include "Render/Instances/OpaqueInstances.h"
 
 namespace psm
 {
@@ -21,7 +22,5 @@ namespace psm
     private:
         float m_Time = 0;
         Camera m_Camera;
-        Model m_SkullModel;
-        Texture m_SkullTexture;
     };
 }

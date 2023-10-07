@@ -107,6 +107,16 @@ namespace psm
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
         }
 
+        void MapMemory(VkDevice device, 
+                       VkDeviceMemory bufferMemory, 
+                       VkDeviceSize offset, 
+                       VkDeviceSize size, 
+                       VkMemoryMapFlags flags, 
+                       void** mapping)
+        {
+            vkMapMemory(device, bufferMemory, offset, size, size, mapping);
+        }
+
         void UnmapMemory(VkDevice device, VkDeviceMemory memory)
         {
             vkUnmapMemory(device, memory);

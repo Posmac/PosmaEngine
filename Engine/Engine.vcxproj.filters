@@ -267,6 +267,7 @@
     <None Include="Shaders\compile.bat">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="Shaders\shadow2D.vert.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Shaders\triangle.frag.txt" />

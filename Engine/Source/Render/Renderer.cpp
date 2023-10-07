@@ -103,7 +103,7 @@ namespace psm
              nullptr,                         //pInput attachments
              colorAttachmentRefCount,         //ColorAttachments Count
              colorAttachmentReferences,       //pColorAttachments
-             &resolveAttachments,          //pResolveAttachments
+             &resolveAttachments,             //pResolveAttachments
              &depthReference,                 //pDepthStencilAttachment
              0,                               //preserveAttachmentCount
              nullptr                          //pPreserveAttachments
@@ -130,8 +130,11 @@ namespace psm
         vk::CreateCommandPool(vk::Device, vk::Queues.GraphicsFamily.value(), &m_CommandPool);
         vk::CreateCommandBuffers(vk::Device, m_CommandPool, m_SwapChainImages.size(), &m_CommandBuffers);
 
+        PrepareDirDepth();
+        PrepareOffscreenRenderpass();
+
         //init mesh systems
-        OpaqueInstances::Instance()->Init(m_RenderPass, m_SwapChainExtent);
+        OpaqueInstances::GetInstance()->Init(m_RenderPass, m_ShadowRenderPass, m_SwapChainExtent);
         ModelLoader::Instance()->Init(m_CommandPool);
 
         InitImGui(hWnd);
@@ -178,6 +181,58 @@ namespace psm
                                &m_MsaaImage, &m_MsaaImageMemory, &m_MsaaImageView);
     }
 
+    void Renderer::PrepareDirDepth()
+    {
+        m_DirDepthSize = { 1024, 1024, 1 };
+        m_DirDepthFormat = FindSupportedFormat(
+            { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+            VK_IMAGE_TILING_OPTIMAL, 
+            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT /*| VK_IMAGE_USAGE_SAMPLED_BIT*/);
+
+        m_DirDepthImage.resize(m_SwapChainImages.size());
+        m_DirDepthImageMemory.resize(m_SwapChainImages.size());
+        m_DirDepthImageView.resize(m_SwapChainImages.size());
+
+        for(int i = 0; i < m_SwapChainImages.size(); i++)
+        {
+            vk::CreateImageAndView(vk::Device, vk::PhysicalDevice, m_DirDepthSize, 1, 1, VK_IMAGE_TYPE_2D, m_DirDepthFormat,
+                       VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
+                       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                       VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
+                       m_DirDepthFormat, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT,
+                       &m_DirDepthImage[i], &m_DirDepthImageMemory[i], &m_DirDepthImageView[i]);
+        }
+
+        glm::mat4 lightView = glm::lookAt(glm::vec3(10.0f, 0.0f, 0.0f),
+                                   glm::vec3(0.0f, 0.0f, 0.0f),
+                                   glm::vec3(0.0f, 1.0f, 0.0f));
+
+        float nearFarPlanes = 100.0f;
+        glm::mat4 lightProjection = glm::orthoRH_ZO(-100.0f, 100.0f, -100.0f, 100.0f, -nearFarPlanes, nearFarPlanes);
+        m_DirViewProjMatrix = lightProjection * lightView;
+
+        //auto logVec = [](const glm::mat4& mat)
+        //{
+        //    std::cout << mat[0][0] << ' ' << mat[0][1] << ' ' << mat[0][2] << ' ' << mat[0][3] << ' ' << '\n'
+        //        << mat[1][0] << ' ' << mat[1][1] << ' ' << mat[1][2] << ' ' << mat[1][3] << ' ' << '\n'
+        //        << mat[2][0] << ' ' << mat[2][1] << ' ' << mat[2][2] << ' ' << mat[2][3] << ' ' << '\n'
+        //        << mat[3][0] << ' ' << mat[3][1] << ' ' << mat[3][2] << ' ' << mat[3][3] << ' ' << std::endl;
+        //    std::cout << std::endl;
+        //};
+
+        //logVec(lightView);
+        //logVec(lightProjection);
+        //logVec(m_DirViewProjMatrix);
+
+        vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice,
+                                     sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                     &m_DirShadowBuffer, &m_DirShadowBufferMemory, &m_DirShadowBufferMapping);
+
+        glm::mat4* mat = reinterpret_cast<glm::mat4*>(m_DirShadowBufferMapping);
+        *mat = m_DirViewProjMatrix;
+    }
+
     VkFormat Renderer::FindSupportedFormat(const std::vector<VkFormat>& candidates,
                                            VkImageTiling tiling,
                                            VkFormatFeatureFlags features)
@@ -197,8 +252,7 @@ namespace psm
             }
         }
 
-        LOG_CRITICAL("Unsupported format");
-        assert(true);
+        //LOG_ERROR("Unsupported format");
     }
 
     void Renderer::Deinit()
@@ -220,12 +274,22 @@ namespace psm
         vk::Vk::GetInstance()->Deinit();
     }
 
-    void Renderer::Render(const PerFrameData& data)
+    void Renderer::Render(PerFrameData& data)
     {
         vkWaitForFences(vk::Device, 1, &m_FlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
+        glm::mat4 lightView = glm::lookAt(position,
+                                 lookAt,
+                                 up);
+
+        glm::mat4 lightProjection = glm::orthoRH_ZO(-range, range, -range, range, nearPlane, farPlane);
+        m_DirViewProjMatrix = lightProjection * lightView;
+
+        glm::mat4* mat = reinterpret_cast<glm::mat4*>(m_DirShadowBufferMapping);
+        *mat = m_DirViewProjMatrix;
+
         vk::Vk::GetInstance()->UpdatePerFrameBuffer(data);
-        OpaqueInstances::Instance()->UpdateDescriptorSets();
+        OpaqueInstances::GetInstance()->UpdateShadowDescriptors(m_DirShadowBuffer);
 
         //basic
         uint32_t imageIndex;
@@ -241,9 +305,42 @@ namespace psm
 
         vk::BeginCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //offscreen rendering pass
+        VkClearValue depthClearColor{};
+        depthClearColor.depthStencil = { 1.0f, 0 };
+        vk::BeginRenderPass(m_ShadowRenderPass, m_ShadowFramebuffers[imageIndex], { 0,0 },
+                            { m_DirDepthSize.width, m_DirDepthSize.height }, &depthClearColor, 1, m_CommandBuffers[m_CurrentFrame],
+                            VK_SUBPASS_CONTENTS_INLINE);
+
+        vk::SetViewPortAndScissors(m_CommandBuffers[m_CurrentFrame],
+                                 0.0f, 0.0f, static_cast<float>(m_DirDepthSize.width),
+                                 static_cast<float>(m_DirDepthSize.height), 0.0f, 1.0f,
+                                 { 0, 0 }, { m_DirDepthSize.width, m_DirDepthSize.height });
+
+        //related to specific pipeline
+        OpaqueInstances::GetInstance()->RenderDepth2D(m_CommandBuffers[m_CurrentFrame], depthBias, depthSlope);
+
+        vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //default pass
         std::array<VkClearValue, 2> clearColor{};
         clearColor[0].color = { {0.2f, 0.2f, 0.2f, 1.0f} };
         clearColor[1].depthStencil = { 1.0f, 0 };
+        
+        vk::ImageLayoutTransition(vk::Device,
+                                  m_CommandBuffers[m_CurrentFrame],
+                                  m_DirDepthImage[m_CurrentFrame],
+                                  m_DirDepthFormat,
+                                  VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                  VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                                  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                  VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                                  VK_ACCESS_SHADER_READ_BIT,
+                                  VK_IMAGE_ASPECT_DEPTH_BIT,
+                                  1);
 
         vk::BeginRenderPass(m_RenderPass, m_Framebuffers[imageIndex],
                             { 0, 0 }, m_SwapChainExtent, clearColor.data(), clearColor.size(),
@@ -254,22 +351,27 @@ namespace psm
                                    static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f,
                                    { 0, 0 }, m_SwapChainExtent);
 
-        //related to specific pipeline
-        OpaqueInstances::Instance()->Render(m_CommandBuffers[m_CurrentFrame]);
+        //render default
+        OpaqueInstances::GetInstance()->Render(m_CommandBuffers[m_CurrentFrame]);
 
         //render IMGui
         vkimgui::PrepareNewFrame();
 
         {
-            ImGui::Begin("Test widget");
-            //ImGui::Text("This is some text.");
-            bool show_demo_window = false;
-            float f = 0;
-            glm::vec4 colorClear = glm::vec4(1.0);
+            ImGui::Begin("Data");
 
-            ImGui::Checkbox("Demo Window", &show_demo_window);
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);// Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit4("clear color", &colorClear[0]);
+            //ImGui::Text("This is some text.");
+
+            ImGui::SliderFloat("range", &range, -1000.0f, 1000.0f);
+            ImGui::SliderFloat("nearPlane", &nearPlane, -1000.0f, 1000.0f);
+            ImGui::SliderFloat("farPlane", &farPlane, -1000.0f, 1000.0f);
+
+            ImGui::SliderFloat3("position", &position[0], -10, 10);
+            ImGui::SliderFloat3("lookAt", &lookAt[0], -10, 10);
+            ImGui::SliderFloat3("up", &up[0], -10, 10);
+
+            ImGui::SliderFloat("Bias", &depthBias, -10, 10);
+            ImGui::SliderFloat("Slope", &depthSlope, -10, 10);
 
             ImGui::End();
         }
@@ -279,8 +381,20 @@ namespace psm
         //continue
         vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
 
+        vk::ImageLayoutTransition(vk::Device, m_CommandBuffers[m_CurrentFrame],
+                                  m_DirDepthImage[m_CurrentFrame], m_DirDepthFormat,
+                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                  VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+                                  VK_ACCESS_SHADER_READ_BIT,
+                                  VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                                  VK_IMAGE_ASPECT_DEPTH_BIT,
+                                  1);
+
         vk::EndCommandBuffer(m_CommandBuffers[m_CurrentFrame]);
 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         vk::Submit(vk::Queues.GraphicsQueue, 1, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                    &m_ImageAvailableSemaphores[m_CurrentFrame], 1, &m_CommandBuffers[m_CurrentFrame], 1,
                    &m_RenderFinishedSemaphores[m_CurrentFrame], 1, m_FlightFences[m_CurrentFrame]);
@@ -386,5 +500,86 @@ namespace psm
         vkimgui::Init(hWnd, m_SwapChainImages.size(), m_RenderPass,
                       vk::Queues.GraphicsQueue, vk::Queues.GraphicsFamily.value(),
                       m_CommandPool, m_CommandBuffers[0], vk::MaxMsaaSamples, &m_ImGuiDescriptorsPool);
+    }
+
+    void Renderer::PrepareOffscreenRenderpass()
+    {
+        //render pass creation
+        constexpr uint32_t attachmentsDescriptionCount = 1;
+        VkAttachmentDescription attachmentsDescriptions[attachmentsDescriptionCount] =
+        {
+            {
+                 0,                                         //flags
+                 m_DepthFormat,                    //attachment format
+                 VK_SAMPLE_COUNT_1_BIT,                        //samples number
+                 VK_ATTACHMENT_LOAD_OP_CLEAR,               //load op
+                 VK_ATTACHMENT_STORE_OP_STORE,              //store op
+                 VK_ATTACHMENT_LOAD_OP_DONT_CARE,           //stencil load op
+                 VK_ATTACHMENT_STORE_OP_DONT_CARE,          //stencilStoreOp
+                 VK_IMAGE_LAYOUT_UNDEFINED,                 //initialLayout
+                 VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL   //final layout
+            },
+        };
+
+        VkAttachmentReference depthReference =
+        {
+            0,                                                //attachment
+            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL  //layout
+        };
+
+        constexpr uint32_t subpassDescrCount = 1;
+        VkSubpassDescription subpassDescr[subpassDescrCount] =
+        {
+             0,                               //flags
+             VK_PIPELINE_BIND_POINT_GRAPHICS, //pipeline bind point
+             0,                               //input attachment count
+             nullptr,                         //pInput attachments
+             0,         //ColorAttachments Count
+             nullptr,       //pColorAttachments
+             nullptr,             //pResolveAttachments
+             &depthReference,                 //pDepthStencilAttachment
+             0,                               //preserveAttachmentCount
+             nullptr                          //pPreserveAttachments
+        };
+
+        constexpr uint32_t dependenciesCount = 2;
+        VkSubpassDependency dependency[dependenciesCount] =
+        {
+            {
+                VK_SUBPASS_EXTERNAL,                                                                        //src subpass
+                0,                                                                                          //dst subpass
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, //src stage mask
+                VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, //dst stage mask
+                VK_ACCESS_SHADER_READ_BIT,                                                                                          //src access mask
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,        //dst access mask
+                VK_DEPENDENCY_BY_REGION_BIT, //dependency flags
+            },
+            {
+                0,                                                                        //src subpass
+                VK_SUBPASS_EXTERNAL,                                                                                          //dst subpass
+                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, //src stage mask
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, //dst stage mask
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,                                                                                          //src access mask
+                VK_ACCESS_SHADER_READ_BIT,        //dst access mask
+                VK_DEPENDENCY_BY_REGION_BIT,   //dependency flags
+            },
+        };
+
+        vk::CreateRenderPass(vk::Device, attachmentsDescriptions, attachmentsDescriptionCount,
+                             subpassDescr, subpassDescrCount, dependency, dependenciesCount, &m_ShadowRenderPass);
+
+        //frame buffers
+        uint32_t frameBufferAttachmentCount = m_SwapChainImages.size();
+        std::vector<vk::FramebufferAttachment> frameBufferAttachment(frameBufferAttachmentCount);
+        for(int i = 0; i < frameBufferAttachmentCount; i++)
+        {
+            frameBufferAttachment[i].Attachments = { m_DirDepthImageView[i] };
+        };
+
+        vk::CreateFramebuffers(vk::Device, frameBufferAttachment, 1,
+                               { m_DirDepthSize.width, m_DirDepthSize.height }, 
+                               m_SwapchainImageViews.size(),
+                               m_ShadowRenderPass, 
+                               &m_ShadowFramebuffers);
     }
 }

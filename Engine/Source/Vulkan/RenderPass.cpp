@@ -36,13 +36,13 @@ namespace psm
         }
 
         void BeginRenderPass(VkRenderPass renderPass, 
-            VkFramebuffer framebuffer, 
-            VkOffset2D offset,
-            VkExtent2D extent, 
-            VkClearValue* clearValues, 
-            uint32_t clearValuesCount, 
-            VkCommandBuffer commandBuffer, 
-            VkSubpassContents subpassContents)
+                             VkFramebuffer framebuffer, 
+                             VkOffset2D offset,
+                             VkExtent2D extent, 
+                             VkClearValue* clearValues, 
+                             uint32_t clearValuesCount, 
+                             VkCommandBuffer commandBuffer, 
+                             VkSubpassContents subpassContents)
         {
             VkRenderPassBeginInfo renderPassInfo{};
             renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -57,11 +57,14 @@ namespace psm
         }
 
         void SetViewPortAndScissors(VkCommandBuffer commandBuffer, 
-            float viewPortX, float viewPortY,
-            float viewPortWidth, float viewPortHeight, 
-            float viewPortMinDepth, float viewPortMaxDepth, 
-            VkOffset2D scissorsOffet,
-            VkExtent2D scissorsExtent)
+                                    float viewPortX, 
+                                    float viewPortY,
+                                    float viewPortWidth, 
+                                    float viewPortHeight, 
+                                    float viewPortMinDepth, 
+                                    float viewPortMaxDepth, 
+                                    VkOffset2D scissorsOffet,
+                                    VkExtent2D scissorsExtent)
         {
             VkViewport viewport{};
             viewport.x = viewPortX;
