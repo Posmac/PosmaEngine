@@ -26,7 +26,7 @@ namespace psm
             submitInfo.signalSemaphoreCount = signalSemaphoresCount;
             submitInfo.pSignalSemaphores = pSignalSemaphores;
 
-            vkQueueSubmit(queue, submitCount, &submitInfo, fence);
+            VkResult result = vkQueueSubmit(queue, submitCount, &submitInfo, fence);
         }
 
         VkResult Present(VkQueue queue,

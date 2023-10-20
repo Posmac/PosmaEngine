@@ -7,7 +7,7 @@ namespace psm
         m_Camera = Camera(60.0f, 1.77f, 0.1f, 100.0f);
         m_Time = 0.0f;
 
-        std::shared_ptr<Model> m_SkullModel;
+        std::shared_ptr<Model> m_SkullModel = std::make_shared<Model>();
         ModelLoader::Instance()->LoadModel("../Engine/Models/untitled.obj", m_SkullModel.get());
 
         glm::mat4 instanceMatrix = glm::mat4(1.0);
@@ -21,8 +21,8 @@ namespace psm
 
         uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(rawData.Height, rawData.Width)))) + 1;
 
-        std::shared_ptr<Texture> m_SkullTexture;
-        Renderer::Instance()->LoadTextureIntoMemory(rawData, mipLevels , m_SkullTexture.get());
+        std::shared_ptr<Texture> m_SkullTexture = std::make_shared<Texture>();
+        Renderer::Instance()->LoadTextureIntoMemory(rawData, mipLevels, m_SkullTexture.get());
 
         OpaqueInstances::Material material {};
         material.Tex = m_SkullTexture;

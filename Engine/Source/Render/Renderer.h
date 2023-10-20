@@ -27,7 +27,7 @@ namespace psm
         void operator=(const Renderer&) = delete;
         static Renderer* Instance();
     private:
-        Renderer() = default;
+        Renderer();
         static Renderer* s_Instance;
         //class specific
     public:
@@ -49,6 +49,8 @@ namespace psm
         void InitImGui(HWND hWnd);
         void PrepareOffscreenRenderpass();
     private:
+        bool isInit;
+
         //swapchain (abstract info vulkan windows class maybe)
         HWND m_Hwnd;
         VkSwapchainKHR m_SwapChain;

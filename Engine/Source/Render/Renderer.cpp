@@ -14,6 +14,11 @@ namespace psm
         return s_Instance;
     }
 
+    Renderer::Renderer()
+    {
+        isInit = false;
+    }
+
     void Renderer::Init(HINSTANCE hInstance, HWND hWnd)
     {
         m_Hwnd = hWnd;
@@ -138,6 +143,8 @@ namespace psm
         ModelLoader::Instance()->Init(m_CommandPool);
 
         InitImGui(hWnd);
+
+        isInit = true;
     }
 
     void Renderer::CreateDepthImage()
@@ -276,11 +283,14 @@ namespace psm
 
     void Renderer::Render(PerFrameData& data)
     {
+        if(!isInit)
+        {
+            return;
+        }
+
         vkWaitForFences(vk::Device, 1, &m_FlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
-        glm::mat4 lightView = glm::lookAt(position,
-                                 lookAt,
-                                 up);
+        glm::mat4 lightView = glm::lookAt(position, lookAt, up);
 
         glm::mat4 lightProjection = glm::orthoRH_ZO(-range, range, -range, range, nearPlane, farPlane);
         m_DirViewProjMatrix = lightProjection * lightView;
@@ -352,6 +362,7 @@ namespace psm
                                    { 0, 0 }, m_SwapChainExtent);
 
         //render default
+        OpaqueInstances::GetInstance()->UpdateDescriptorSets(m_DirDepthImageView[0], m_DirShadowBuffer);
         OpaqueInstances::GetInstance()->Render(m_CommandBuffers[m_CurrentFrame]);
 
         //render IMGui
@@ -359,7 +370,6 @@ namespace psm
 
         {
             ImGui::Begin("Data");
-
             //ImGui::Text("This is some text.");
 
             ImGui::SliderFloat("range", &range, -1000.0f, 1000.0f);
@@ -381,8 +391,9 @@ namespace psm
         //continue
         vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
 
-        vk::ImageLayoutTransition(vk::Device, m_CommandBuffers[m_CurrentFrame],
-                                  m_DirDepthImage[m_CurrentFrame], m_DirDepthFormat,
+        /*vk::ImageLayoutTransition(vk::Device, m_CommandBuffers[m_CurrentFrame],
+                                  m_DirDepthImage[m_CurrentFrame], 
+                                  m_DirDepthFormat,
                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                   VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                                   VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -390,15 +401,15 @@ namespace psm
                                   VK_ACCESS_SHADER_READ_BIT,
                                   VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
                                   VK_IMAGE_ASPECT_DEPTH_BIT,
-                                  1);
+                                  1);*/
 
         vk::EndCommandBuffer(m_CommandBuffers[m_CurrentFrame]);
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         vk::Submit(vk::Queues.GraphicsQueue, 1, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                    &m_ImageAvailableSemaphores[m_CurrentFrame], 1, &m_CommandBuffers[m_CurrentFrame], 1,
                    &m_RenderFinishedSemaphores[m_CurrentFrame], 1, m_FlightFences[m_CurrentFrame]);
 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         result = vk::Present(vk::Queues.PresentQueue, &m_RenderFinishedSemaphores[m_CurrentFrame], 1,
                     &m_SwapChain, 1, &imageIndex);
         VK_CHECK_RESULT(result);
@@ -420,7 +431,6 @@ namespace psm
         {
             LOG_ERROR("Raw texture data pointer is null");
         }
-
 
         vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
                                { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,

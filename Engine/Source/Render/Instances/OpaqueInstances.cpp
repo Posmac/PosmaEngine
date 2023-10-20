@@ -22,7 +22,7 @@ namespace psm
         constexpr uint32_t maxCombinedImageSamples = 50;
         constexpr uint32_t maxDescriptorSets = 50;
 
-        //create descriptor pool
+        //create descriptor pool for everything
         std::vector<vk::DescriptorPoolSize> shaderDescriptors =
         {
             {
@@ -41,13 +41,13 @@ namespace psm
                                  0, //flags
                                  &m_DescriptorPool);
 
+        CreateMaterialDescriptors();
+
         CreateInstanceDescriptorSets();
         CreateInstancePipelineLayout(defaultRenderPass, windowSize);
 
         CreateShadowDescriptorSets();
         CreateShadowPipeline(windowSize, shadowRenderPass);
-
-        CreateMaterialDescriptors();
     }
 
     void OpaqueInstances::Deinit()
@@ -72,10 +72,10 @@ namespace psm
         //(pipeline, descriptor sets, push constants, uniform buffers)
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_InstancedPipeline);
         VkDeviceSize offset = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer, 
+        vkCmdBindVertexBuffers(commandBuffer,
                                1, //first binding 
                                1, //binding count
-                               &m_InstanceBuffer, 
+                               &m_InstanceBuffer,
                                &offset);
 
         for(auto& perModel : m_PerModels)
@@ -138,8 +138,7 @@ namespace psm
                 uint32_t totalInstances = perModel.PerMaterials[i].Instances.size();
 
                 vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                           m_ShadowPipelineLayout, { m_ShadowDescriptorSet,
-                                           perModel.PerMaterials[i].MaterialDescriptorSet });
+                                           m_ShadowPipelineLayout, { m_ShadowDescriptorSet });
 
                 for(int i = 0; i < perModel.Model->Meshes.size(); i++)
                 {
@@ -162,7 +161,7 @@ namespace psm
             PerMaterial perMat = {};
             perMat.Material = material;
             perMat.Instances.push_back(instance);
-            AllocateAndUpdateDescriptors(&perMat.MaterialDescriptorSet, material);
+            AllocateAndUpdateDescriptors(&perMat.MaterialDescriptorSet, perMat.Material);
 
             m_Models.insert({ model, index });
 
@@ -194,6 +193,7 @@ namespace psm
                 perModel.PerMaterials[matIndex].Instances.push_back(instance);
             }
         }
+        CreateInstanceBuffer();
     }
 
     void OpaqueInstances::CreateInstancePipelineLayout(VkRenderPass renderPass,
@@ -215,10 +215,11 @@ namespace psm
         //    },
         //};
 
-        constexpr uint32_t descriptorSetLayoutsSize = 1;
+        constexpr uint32_t descriptorSetLayoutsSize = 2;
         VkDescriptorSetLayout descriptorSetLayouts[descriptorSetLayoutsSize] =
         {
-            m_InstanceDescriptorSetLayout
+            m_InstanceDescriptorSetLayout,
+            m_MaterialSetLayout
         };
 
         vk::CreatePipelineLayout(vk::Device,
@@ -228,7 +229,7 @@ namespace psm
             0, //push constants size 
             &m_InstancedPipelineLayout);
 
-        //shader stages
+        //shader stages (describe all shader stages used in pipeline)
         constexpr size_t modulesSize = 2;
         vk::ShaderModuleInfo modules[modulesSize] =
         {
@@ -247,10 +248,10 @@ namespace psm
         VkPipelineShaderStageCreateInfo stages[modulesSize];
         vk::GetPipelineShaderStages(modules, modulesSize, stages);
 
-        //vertex attribs input
-        constexpr size_t attribsSize = 3;
-        VkVertexInputAttributeDescription vertexAttribDescr[attribsSize] =
+        constexpr size_t perVertexAttribsSize = 7;
+        VkVertexInputAttributeDescription vertexAttribDescr[perVertexAttribsSize] =
         {
+            //vertex attribs input (per vertex input data)
             {
                 0,                              // location
                 0,                              // binding
@@ -269,35 +270,31 @@ namespace psm
                 VK_FORMAT_R32G32_SFLOAT,        // format
                 offsetof(Vertex, TexCoord)      // offset
             },
-        };
 
-        //instance attribs input
-        constexpr size_t instanceAttribsSize = 4;
-        VkVertexInputAttributeDescription instanceVertexAttribDescr[instanceAttribsSize] =
-        {
+            //instance attribs input (per instance input data)
             {
                 3,                              // location
                 1,                              // binding
                 VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4)      // offset
+                sizeof(glm::vec4) * 0               // offset
             },
             {
                 4,                              // location
                 1,                              // binding
                 VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4)        // offset
+                sizeof(glm::vec4) * 1              // offset
             },
             {
                 5,                              // location
                 1,                              // binding
                 VK_FORMAT_R32G32_SFLOAT,        // format
-                sizeof(glm::vec4)      // offset
+                sizeof(glm::vec4) * 2     // offset
             },
             {
                 6,                              // location
                 1,                              // binding
                 VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4)      // offset
+                sizeof(glm::vec4) * 3     // offset
             },
         };
 
@@ -306,18 +303,20 @@ namespace psm
         {
             {
                 0,                          // binding
-                sizeof(Vertex),             // string
+                sizeof(Vertex),             // stride
                 VK_VERTEX_INPUT_RATE_VERTEX // input rate
             },
             {
                 1,                          // binding
-                sizeof(glm::mat4),             // string
+                sizeof(glm::mat4),             // stride
                 VK_VERTEX_INPUT_RATE_INSTANCE // input rate
             },
         };
 
+
+
         VkPipelineVertexInputStateCreateInfo vertexInputState{};
-        vk::GetVertexInputInfo(vertexAttribDescr, attribsSize,
+        vk::GetVertexInputInfo(vertexAttribDescr, perVertexAttribsSize,
             bindingDescriptions, bindingsSize, &vertexInputState);
 
         //input assembly
@@ -424,22 +423,17 @@ namespace psm
         VkPipelineMultisampleStateCreateInfo msState{};
         vk::GetPipelineMultisampleState(false, false, 1, nullptr, VK_SAMPLE_COUNT_1_BIT, &msState);
 
-        //vertex input
-        constexpr size_t attribsSize = 1;
+        constexpr size_t attribsSize = 5;
         VkVertexInputAttributeDescription vertexAttribDescr[attribsSize] =
         {
+            //vertex input (per vertex)
             {
                 0,                              // location
                 0,                              // binding
                 VK_FORMAT_R32G32B32A32_SFLOAT,  // format
                 offsetof(Vertex, Position)      // offset
             },
-        };
-
-        //instance attribs input
-        constexpr size_t instanceAttribsSize = 4;
-        VkVertexInputAttributeDescription instanceVertexAttribDescr[instanceAttribsSize] =
-        {
+            //instance attribs input (per instance)
             {
                 1,                              // location
                 1,                              // binding
@@ -526,7 +520,7 @@ namespace psm
                 0, //binding
                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, //descriptor type
                 1, //count
-                VK_SHADER_STAGE_VERTEX_BIT //vertex stage
+                VK_SHADER_STAGE_FRAGMENT_BIT //vertex stage
             }
         };
 
@@ -622,7 +616,7 @@ namespace psm
         void* instanceBufferMapping = nullptr;
 
         vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice,
-            bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             &m_InstanceBuffer, &m_InstanceBufferMemory, &instanceBufferMapping);
 
@@ -638,6 +632,9 @@ namespace psm
                 }
             }
         }
+        vk::UnmapMemory(vk::Device, m_InstanceBufferMemory);
+
+
     }
 
     void OpaqueInstances::UpdateDescriptorSets(VkImageView shadowMapView,
@@ -657,7 +654,6 @@ namespace psm
                   0,                                 // binding
                   VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
              },
-
              //{
              //    {
              //        //VkDescriptorBufferInfo
@@ -722,19 +718,19 @@ namespace psm
                 1, //count
                 VK_SHADER_STAGE_FRAGMENT_BIT //vertex stage
             },
-           /* {
-                2,
-                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                1,
-                VK_SHADER_STAGE_FRAGMENT_BIT
-            },*/
-            
-            /*{
-                4,
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                1,
-                VK_SHADER_STAGE_FRAGMENT_BIT
-            }*/
+            /* {
+                 2,
+                 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                 1,
+                 VK_SHADER_STAGE_FRAGMENT_BIT
+             },*/
+
+             /*{
+                 4,
+                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                 1,
+                 VK_SHADER_STAGE_FRAGMENT_BIT
+             }*/
         };
 
         vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo },

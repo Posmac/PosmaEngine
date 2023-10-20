@@ -19,11 +19,6 @@ layout(set = 0, binding = 0) uniform PerFrameBuffer
     float Time;
 } perFrameBuffer;
 
-//layout(set = 0, binding = 1) uniform MeshBuffer
-//{
-//	mat4 ModelMatrix;
-//} meshBuffer;
-
 layout (location = 0) out vec4 WorldPosition;
 layout (location = 1) out vec2 TexCoord;
 

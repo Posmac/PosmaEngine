@@ -96,7 +96,7 @@ namespace psm
                              VkFormat imageFormat,
                              int32_t texWidth,
                              int32_t texHeight,
-                             uint32_t mipLevels);
+                             int32_t mipLevels);
 
         void DestroyImage(VkDevice device, VkImage image);
 
