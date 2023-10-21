@@ -287,7 +287,7 @@ namespace psm
             {
                 5,                              // location
                 1,                              // binding
-                VK_FORMAT_R32G32_SFLOAT,        // format
+                VK_FORMAT_R32G32B32A32_SFLOAT,        // format
                 sizeof(glm::vec4) * 2     // offset
             },
             {
@@ -338,7 +338,7 @@ namespace psm
                                       VK_FALSE,
                                       VK_POLYGON_MODE_FILL,
                                       VK_CULL_MODE_BACK_BIT,
-                                      VK_FRONT_FACE_CLOCKWISE,
+                                      VK_FRONT_FACE_COUNTER_CLOCKWISE,
                                       VK_FALSE,
                                       0.0f,
                                       0.0f,
@@ -629,6 +629,7 @@ namespace psm
                 for(int i = 0; i < material.Instances.size(); i++)
                 {
                     *perInstance = material.Instances[i];
+                    perInstance++;
                 }
             }
         }

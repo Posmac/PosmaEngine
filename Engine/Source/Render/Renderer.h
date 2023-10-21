@@ -105,15 +105,15 @@ namespace psm
         VkDescriptorPool m_ImGuiDescriptorsPool;
 
         //imgui data
-        float range = 77;
-        float nearPlane = -70;
-        float farPlane = 70;
-        glm::vec3 position = glm::vec3(-1.0f, 1.0f, 0.0f);
+        float range = 0;
+        float nearPlane = 0;
+        float farPlane = 0;
+        glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 lookAt;
-        glm::vec3 up = glm::vec3(0.0f, 1.0f ,0.0f);
+        glm::vec3 up = glm::vec3(0.0f, 0.0f ,0.0f);
 
         //shadow biasing
-        float depthBias = -1;
-        float depthSlope = -1;
+        float depthBias = 0;
+        float depthSlope = 0;
     };
 }
