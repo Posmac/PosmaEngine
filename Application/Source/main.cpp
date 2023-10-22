@@ -8,6 +8,7 @@
 #include "Application.h"
 #include "Engine.h"
 #include "Core/Log.h"
+#include "Systems/InputSystem.h"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
@@ -43,7 +44,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     wndClassDescr.lpszClassName = windowClassName;
     wndClassDescr.lpszMenuName = NULL;
 
-    if (!RegisterClassEx(&wndClassDescr))
+    if(!RegisterClassEx(&wndClassDescr))
     {
         std::cout << "Failed to register class" << std::endl;
         return -1;
@@ -53,7 +54,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         windowClassName, windowName, WS_OVERLAPPEDWINDOW,
         320, 180, 1280, 720, NULL, NULL, hInstance, NULL);
 
-    if (hWnd == NULL)
+    if(hWnd == NULL)
     {
         std::cout << "Failed to create window" << std::endl;
         return -1;
@@ -65,12 +66,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     app.Init();
 
     bool isAppRuning = true;
-    while (isAppRuning)
+    while(isAppRuning)
     {
         MSG message;
-        while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE))
+        while(PeekMessage(&message, NULL, 0, 0, PM_REMOVE))
         {
-            if (message.message == WM_QUIT)
+            if(message.message == WM_QUIT)
             {
                 isAppRuning = false;
                 break;
@@ -80,7 +81,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             DispatchMessage(&message);
         }
 
-        if (isAppRuning)
+        if(isAppRuning)
         {
             app.Update();
         }
@@ -94,22 +95,34 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
+    if(ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
         return true;
 
-    switch (uMsg)
+    switch(uMsg)
     {
-    case WM_CLOSE:
-        DestroyWindow(hWnd);
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    case WM_SIZE:
-        UINT width = LOWORD(lParam);
-        UINT height = HIWORD(lParam);
-        app.ResizeWindow(hWnd, width, height);
-        break;
+        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+        {
+            uint32_t controlCode = wParam;
+            bool wasDown = (lParam & (1 << 30)) != 0;
+            bool isDown = (lParam & (1 << 31)) == 0;
+
+            psm::InputSystem::Instance()->ListenControlsKeyPressed(controlCode, wasDown, isDown);
+            break;
+        }
+        case WM_CLOSE:
+            DestroyWindow(hWnd);
+            break;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            break;
+        case WM_SIZE:
+            UINT width = LOWORD(lParam);
+            UINT height = HIWORD(lParam);
+            app.ResizeWindow(hWnd, width, height);
+            break;
     }
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }

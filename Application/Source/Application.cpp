@@ -1,5 +1,7 @@
 #include "Application.h"
 
+#include "Systems/InputSystem.h"
+
 namespace psm
 {
     void Application::Init()
@@ -71,6 +73,26 @@ namespace psm
         data.ViewProjectionMatrix = m_Camera.GetViewProjectionMatrix();
 
         Renderer::Instance()->Render(data);
+
+        if(InputSystem::Instance()->IsKeyDown(KEY_A))
+        {
+            //std::cout << "Key A is Down" << std::endl;
+        }
+
+        if(InputSystem::Instance()->IsKeyUp(KEY_A))
+        {
+            //std::cout << "Key A is Up" << std::endl;
+        }
+
+        if(InputSystem::Instance()->IsKeyPressed(KEY_A))
+        {
+            //std::cout << "Key A is Pressed" << std::endl;
+        }
+
+        if(InputSystem::Instance()->IsKeyReleased(KEY_A))
+        {
+            std::cout << "Key A is Released" << std::endl;
+        }
     }
 
     void Application::Deinit()

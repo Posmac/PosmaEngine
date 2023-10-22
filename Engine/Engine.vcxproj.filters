@@ -138,6 +138,12 @@
     <ClInclude Include="Source\Render\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Systems\InputSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Systems\Keys.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine.cpp">
@@ -260,6 +266,9 @@
     <ClCompile Include="Source\Render\PerFrameData.h">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Systems\InputSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\triangle.vert.glsl" />
@@ -268,6 +277,7 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="Shaders\shadow2D.vert.glsl" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Shaders\triangle.frag.txt" />
