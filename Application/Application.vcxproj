@@ -129,7 +129,8 @@ XCOPY  /s /i /y "$(SolutionDir)Engine\Shaders" "$(SolutionDir)x64/Engine/Shaders
     <PostBuildEvent>
       <Command>
 XCOPY  /s /i /y "$(SolutionDir)Engine\Shaders" "$(SolutionDir)x64/Engine/Shaders"
-XCOPY  /s /i /y "$(SolutionDir)Application\Textures" "$(SolutionDir)x64/Engine/Shaders"</Command>
+XCOPY  /s /i /y "$(SolutionDir)Application\Textures" "$(SolutionDir)x64/Engine/Textures"
+XCOPY  /s /i /y "$(SolutionDir)Engine\Models" "$(SolutionDir)x64/Engine/Models"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

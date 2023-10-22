@@ -438,25 +438,25 @@ namespace psm
                 1,                              // location
                 1,                              // binding
                 VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4)      // offset
+                sizeof(glm::vec4) * 0     // offset
             },
             {
                 2,                              // location
                 1,                              // binding
                 VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4)        // offset
+                sizeof(glm::vec4) * 1       // offset
             },
             {
                 3,                              // location
                 1,                              // binding
-                VK_FORMAT_R32G32_SFLOAT,        // format
-                sizeof(glm::vec4)      // offset
+                VK_FORMAT_R32G32B32A32_SFLOAT,        // format
+                sizeof(glm::vec4) * 2     // offset
             },
-            {
+            {   
                 4,                              // location
                 1,                              // binding
                 VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4)      // offset
+                sizeof(glm::vec4) * 3     // offset
             },
         };
 
@@ -496,7 +496,7 @@ namespace psm
                                       VK_FALSE,
                                       VK_POLYGON_MODE_FILL,
                                       VK_CULL_MODE_FRONT_BIT,//for depth only rendering it is better
-                                      VK_FRONT_FACE_CLOCKWISE,
+                                      VK_FRONT_FACE_COUNTER_CLOCKWISE,
                                       VK_TRUE,
                                       0.0f,
                                       1.0f,

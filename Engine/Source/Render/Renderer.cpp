@@ -190,7 +190,7 @@ namespace psm
 
     void Renderer::PrepareDirDepth()
     {
-        m_DirDepthSize = { 1024, 1024, 1 };
+        m_DirDepthSize = { 2048, 2048, 1 };
         m_DirDepthFormat = FindSupportedFormat(
             { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
             VK_IMAGE_TILING_OPTIMAL, 
@@ -291,12 +291,13 @@ namespace psm
         vkWaitForFences(vk::Device, 1, &m_FlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
         glm::mat4 lightView = glm::lookAt(position, lookAt, up);
-
-        glm::mat4 lightProjection = glm::orthoRH_ZO(-range, range, -range, range, nearPlane, farPlane);
+        glm::mat4 lightProjection = glm::orthoZO(-range, range, -range, range, nearPlane, farPlane);
         m_DirViewProjMatrix = lightProjection * lightView;
 
         glm::mat4* mat = reinterpret_cast<glm::mat4*>(m_DirShadowBufferMapping);
         *mat = m_DirViewProjMatrix;
+
+        //data.ViewProjectionMatrix = m_DirViewProjMatrix;
 
         vk::Vk::GetInstance()->UpdatePerFrameBuffer(data);
         OpaqueInstances::GetInstance()->UpdateShadowDescriptors(m_DirShadowBuffer);
