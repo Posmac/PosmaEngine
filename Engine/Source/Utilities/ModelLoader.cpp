@@ -80,6 +80,7 @@ namespace psm
         mesh.Range.IndicesOffset = 0;
         mesh.Range.VerticesOffset = 0;
 
+        model->Name = path;
         model->Meshes.push_back(mesh);
 
         model->Init(m_CommandPool);

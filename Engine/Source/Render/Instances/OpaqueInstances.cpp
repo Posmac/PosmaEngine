@@ -78,11 +78,11 @@ namespace psm
                                &m_InstanceBuffer,
                                &offset);
 
+        uint32_t firstInstance = 0;
+
         for(auto& perModel : m_PerModels)
         {
             perModel.Model->BindBuffers(commandBuffer);
-
-            uint32_t firstInstance = 0;
 
             for(int i = 0; i < perModel.PerMaterials.size(); i++)
             {
@@ -98,6 +98,7 @@ namespace psm
                     vkCmdDrawIndexed(commandBuffer, range.IndicesCount, totalInstances,
                         range.IndicesOffset, range.VerticesOffset, firstInstance);
                 }
+                firstInstance += totalInstances;
             }
         }
     }
@@ -127,11 +128,11 @@ namespace psm
                                &m_InstanceBuffer,
                                &offset);
 
+        uint32_t firstInstance = 0;
+
         for(auto& perModel : m_PerModels)
         {
             perModel.Model->BindBuffers(commandBuffer);
-
-            uint32_t firstInstance = 0;
 
             for(int i = 0; i < perModel.PerMaterials.size(); i++)
             {
@@ -146,6 +147,7 @@ namespace psm
                     vkCmdDrawIndexed(commandBuffer, range.IndicesCount, totalInstances,
                         range.IndicesOffset, range.VerticesOffset, firstInstance);
                 }
+                firstInstance += totalInstances;
             }
         }
     }
@@ -170,8 +172,7 @@ namespace psm
             perModel.PerMaterials = { perMat };
             perModel.MaterialsData.insert({ material, 0 });
 
-            m_PerModels.emplace_back(perModel);
-
+            m_PerModels.push_back(perModel);
         }
         else
         {
@@ -193,7 +194,7 @@ namespace psm
                 perModel.PerMaterials[matIndex].Instances.push_back(instance);
             }
         }
-        CreateInstanceBuffer();
+        //CreateInstanceBuffer();
     }
 
     void OpaqueInstances::CreateInstancePipelineLayout(VkRenderPass renderPass,
@@ -588,7 +589,7 @@ namespace psm
             buffersInfo.size() /*+ imagesInfo.size()*/);
     }
 
-    void OpaqueInstances::CreateInstanceBuffer()
+    void OpaqueInstances::PrepareInstances()
     {
         if(m_Models.size() == 0)
         {
@@ -634,8 +635,6 @@ namespace psm
             }
         }
         vk::UnmapMemory(vk::Device, m_InstanceBufferMemory);
-
-
     }
 
     void OpaqueInstances::UpdateDescriptorSets(VkImageView shadowMapView,

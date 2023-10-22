@@ -95,7 +95,7 @@ namespace psm
                                   VkBuffer lightsBuffer);
         void UpdateShadowDescriptors(VkBuffer lightsBuffer);
 
-        void CreateInstanceBuffer();
+        void PrepareInstances();
     private:
         void CreateInstanceDescriptorSets();
         void CreateInstancePipelineLayout(VkRenderPass renderPass, 

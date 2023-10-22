@@ -21,8 +21,10 @@ namespace psm
         void Init(VkCommandPool commandPool);
         void Deinit();
     public:
+        std::string Name;
         std::vector<Mesh> Meshes;
     private:
+
         VkBuffer m_VertexBuffer; //contains all geometry data of all meshes
         VkDeviceMemory m_VertexBufferMemory;
 
