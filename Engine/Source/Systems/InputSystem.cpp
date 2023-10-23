@@ -76,13 +76,11 @@ namespace psm
             ControlKeys dewcinKeycode = static_cast<ControlKeys>(keyCode - 'A');
             m_ControlKeys[dewcinKeycode].IsDown = IsDown;
             m_ControlKeys[dewcinKeycode].WasDown = WasDown;
-
-            std::cout << keyCode << " " << WasDown << " " << IsDown << std::endl;
         }
-        /*else if(keyCode == VK_UP)
+        else if(keyCode == VK_UP)
         {
             m_ControlKeys[KEY_UP].IsDown = IsDown;
-            m_ControlKeys[KEY_UP].IsDown = WasDown;
+            m_ControlKeys[KEY_UP].WasDown = WasDown;
         }
         else if(keyCode == VK_DOWN)
         {
@@ -164,7 +162,7 @@ namespace psm
         {
             m_ControlKeys[KEY_TILDE].IsDown = IsDown;
             m_ControlKeys[KEY_TILDE].WasDown = WasDown;
-        }*/
+        }
     }
 
     void InputSystem::ListenMouseButtonsPressed()

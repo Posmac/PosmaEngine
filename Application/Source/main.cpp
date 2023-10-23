@@ -81,10 +81,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             DispatchMessage(&message);
         }
 
-        if(isAppRuning)
-        {
-            app.Update();
-        }
+        app.Update();
     }
 
     psm::Engine::Instance()->Dispose();

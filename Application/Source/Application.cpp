@@ -1,13 +1,14 @@
 #include "Application.h"
 
 #include "Systems/InputSystem.h"
+#include "Systems/TimeSystem.h"
 
 namespace psm
 {
     void Application::Init()
     {
         m_Camera = Camera(60.0f, 1280.0f / 720.0f, 0.1f, 1000.0f);
-        m_Time = 0.0f;
+        m_CameraDefaultSpeed = 20.0f;
 
         std::shared_ptr<Model> cubeModel = std::make_shared<Model>();
         ModelLoader::Instance()->LoadModel("../Engine/Models/untitled.obj", cubeModel.get());
@@ -60,48 +61,91 @@ namespace psm
 
         OpaqueInstances::GetInstance()->AddInstance(skullModel, material, instance);
         OpaqueInstances::GetInstance()->PrepareInstances();
+
+        GlobalTimer::Instance()->Init(60);
     }
 
     void Application::Update()
     {
-        m_Time += 0.01f;
+        GlobalTimer::Instance()->IsTimeElapsed();
+
+        ProcessInput();
 
         PerFrameData data{};
-        data.Time = m_Time;
+        data.Time = GlobalTimer::Instance()->TotalTime();
         data.ViewMatrix = m_Camera.GetViewMatrix();
         data.ProjectionMatrix = m_Camera.GetProjectionMatrix();
         data.ViewProjectionMatrix = m_Camera.GetViewProjectionMatrix();
 
         Renderer::Instance()->Render(data);
-
-        if(InputSystem::Instance()->IsKeyDown(KEY_A))
-        {
-            //std::cout << "Key A is Down" << std::endl;
-        }
-
-        if(InputSystem::Instance()->IsKeyUp(KEY_A))
-        {
-            //std::cout << "Key A is Up" << std::endl;
-        }
-
-        if(InputSystem::Instance()->IsKeyPressed(KEY_A))
-        {
-            //std::cout << "Key A is Pressed" << std::endl;
-        }
-
-        if(InputSystem::Instance()->IsKeyReleased(KEY_A))
-        {
-            std::cout << "Key A is Released" << std::endl;
-        }
     }
 
     void Application::Deinit()
     {
-
+        //TODO: Implement some resource deinitialization (Memory Allocator)
     }
 
     void Application::ResizeWindow(HWND hWnd, uint32_t width, uint32_t height)
     {
+        //TODO: not working ang the moment
         Renderer::Instance()->ResizeWindow(hWnd);
+    }
+
+    void Application::ProcessInput()
+    {
+        float deltaTime = GlobalTimer::Instance()->DeltaTime();
+
+        //camera movement
+        glm::vec4 offset = glm::vec4(0);
+        bool cameraMoved = false;
+        if(InputSystem::Instance()->IsKeyDown(KEY_W))
+        {
+            offset += glm::vec4(0, 0, -1, 0);
+            cameraMoved = true;
+        }
+        if(InputSystem::Instance()->IsKeyDown(KEY_A))
+        {
+            offset += glm::vec4(-1, 0, 0, 0);
+            cameraMoved = true;
+        }
+        if(InputSystem::Instance()->IsKeyDown(KEY_S))
+        {
+            offset += glm::vec4(0, 0, 1, 0);
+            cameraMoved = true;
+        }
+        if(InputSystem::Instance()->IsKeyDown(KEY_D))
+        {
+            offset += glm::vec4(1, 0, 0, 0);
+            cameraMoved = true;
+        }
+        if(InputSystem::Instance()->IsKeyDown(KEY_SPACE))
+        {
+            offset += glm::vec4(0, 1, 0, 0);
+            cameraMoved = true;
+        }
+        if(InputSystem::Instance()->IsKeyDown(KEY_SHIFT))
+        {
+            offset += glm::vec4(0, -1, 0, 0);
+            cameraMoved = true;
+        }
+
+        bool resetCamera = false;
+        if(InputSystem::Instance()->IsKeyPressed(KEY_R))
+        {
+            resetCamera = true;
+        }
+
+        if(cameraMoved)
+        {
+            m_Camera.TranslateWorld(offset * deltaTime * m_CameraDefaultSpeed);
+        }
+        if(resetCamera)
+        {
+            m_Camera.SetWorldPosition(glm::vec4(0, 0, 0, 1));
+        }
+        if(cameraMoved || resetCamera)
+        {
+            m_Camera.RecalculateFromWorld();
+        }
     }
 }

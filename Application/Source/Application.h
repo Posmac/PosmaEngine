@@ -19,8 +19,11 @@ namespace psm
         void Update();
         void Deinit();
         void ResizeWindow(HWND hWnd, uint32_t width, uint32_t height);
+
+        //TODO:: should be moved to another class later
+        void ProcessInput();
     private:
-        float m_Time = 0;
         Camera m_Camera;
+        float m_CameraDefaultSpeed;
     };
 }
