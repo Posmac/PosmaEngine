@@ -24,6 +24,7 @@ namespace psm
         void ProcessInput();
     private:
         Camera m_Camera;
-        float m_CameraDefaultSpeed;
+        float m_CameraDefaultMoveSpeed;
+        float m_CameraDefaultRotateSpeed;
     };
 }

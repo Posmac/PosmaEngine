@@ -8,7 +8,8 @@ namespace psm
     void Application::Init()
     {
         m_Camera = Camera(60.0f, 1280.0f / 720.0f, 0.1f, 1000.0f);
-        m_CameraDefaultSpeed = 20.0f;
+        m_CameraDefaultMoveSpeed = 20.0f;
+        m_CameraDefaultRotateSpeed = 150.0f;
 
         std::shared_ptr<Model> cubeModel = std::make_shared<Model>();
         ModelLoader::Instance()->LoadModel("../Engine/Models/untitled.obj", cubeModel.get());
@@ -98,34 +99,43 @@ namespace psm
         //camera movement
         glm::vec4 offset = glm::vec4(0);
         bool cameraMoved = false;
+        //Z
         if(InputSystem::Instance()->IsKeyDown(KEY_W))
         {
-            offset += glm::vec4(0, 0, -1, 0);
-            cameraMoved = true;
-        }
-        if(InputSystem::Instance()->IsKeyDown(KEY_A))
-        {
-            offset += glm::vec4(-1, 0, 0, 0);
+            offset -= m_Camera.GetForwardWorld();
+            //offset -= glm::vec4(0, 0, 1, 0);
             cameraMoved = true;
         }
         if(InputSystem::Instance()->IsKeyDown(KEY_S))
         {
-            offset += glm::vec4(0, 0, 1, 0);
+            offset += m_Camera.GetForwardWorld();
+            //offset += glm::vec4(0, 0, 1, 0);
+            cameraMoved = true;
+        }
+        //X
+        if(InputSystem::Instance()->IsKeyDown(KEY_A))
+        {
+            //offset -= m_Camera.GetRightWorld();
+            offset -= glm::vec4(1, 0, 0, 0);
             cameraMoved = true;
         }
         if(InputSystem::Instance()->IsKeyDown(KEY_D))
         {
+            //offset += m_Camera.GetRightWorld();
             offset += glm::vec4(1, 0, 0, 0);
             cameraMoved = true;
         }
+        //Y
         if(InputSystem::Instance()->IsKeyDown(KEY_SPACE))
         {
+            //offset += m_Camera.GetUpWorld();
             offset += glm::vec4(0, 1, 0, 0);
             cameraMoved = true;
         }
         if(InputSystem::Instance()->IsKeyDown(KEY_SHIFT))
         {
-            offset += glm::vec4(0, -1, 0, 0);
+            //offset -= m_Camera.GetUpWorld();
+            offset -= glm::vec4(0, 1, 0, 0);
             cameraMoved = true;
         }
 
@@ -135,15 +145,57 @@ namespace psm
             resetCamera = true;
         }
 
+        bool cameraRotated = false;
+        glm::vec3 eulerRotation = glm::vec3(0);
+        //Y
+        if(InputSystem::Instance()->IsKeyDown(KEY_Q))
+        {
+            cameraRotated = true;
+            eulerRotation += glm::vec3(0, 1, 0);
+        }
+        if(InputSystem::Instance()->IsKeyDown(KEY_E))
+        {
+            cameraRotated = true;
+            eulerRotation += glm::vec3(0, -1, 0);
+        }
+        //X
+        if(InputSystem::Instance()->IsKeyDown(KEY_UP))
+        {
+            cameraRotated = true;
+            eulerRotation += glm::vec3(1, 0, 0);
+        }
+        if(InputSystem::Instance()->IsKeyDown(KEY_DOWN))
+        {
+            cameraRotated = true;
+            eulerRotation += glm::vec3(-1, 0, 0);
+        }
+        //Z
+        if(InputSystem::Instance()->IsKeyDown(KEY_LEFT))
+        {
+            cameraRotated = true;
+            eulerRotation += glm::vec3(0, 0, -1);
+        }
+        if(InputSystem::Instance()->IsKeyDown(KEY_RIGHT))
+        {
+            cameraRotated = true;
+            eulerRotation += glm::vec3(0, 0, 1);
+        }
+
+        if(cameraRotated)
+        {
+            //m_Camera.RotateWorldEuler(eulerRotation * deltaTime * m_CameraDefaultRotateSpeed);
+            m_Camera.RotateWorldEulerZConstrained(eulerRotation * deltaTime * m_CameraDefaultRotateSpeed);
+        }
         if(cameraMoved)
         {
-            m_Camera.TranslateWorld(offset * deltaTime * m_CameraDefaultSpeed);
+            m_Camera.TranslateWorld(offset * deltaTime * m_CameraDefaultMoveSpeed);
         }
         if(resetCamera)
         {
             m_Camera.SetWorldPosition(glm::vec4(0, 0, 0, 1));
+            m_Camera.SetWorldRotationEuler(glm::vec3(0, 0, 0));
         }
-        if(cameraMoved || resetCamera)
+        if(cameraMoved || resetCamera || cameraRotated)
         {
             m_Camera.RecalculateFromWorld();
         }
