@@ -16,6 +16,16 @@ namespace psm
         return s_Instance;
     }
 
+    InputSystem::InputSystem()
+    {
+        for(uint32_t key = 0; key < MAX; key++)
+        {
+            m_MouseKeys[static_cast<MouseKeys>(key)].IsDown = false;
+            m_MouseKeys[static_cast<MouseKeys>(key)].WasDown = true;
+        }
+        m_CurrentFrameScroll = 0;
+    }
+
     bool InputSystem::IsKeyPressed(ControlKeys key)
     {
         if(m_ControlKeys[key].WasDown == false &&
@@ -56,21 +66,56 @@ namespace psm
 
     bool InputSystem::IsMouseButtonDown(MouseKeys key)
     {
-        return false;
+        return m_MouseKeys[key].IsDown;
     }
 
     bool InputSystem::IsMouseButtonUp(MouseKeys key)
     {
-        return false;
+        return !m_MouseKeys[key].IsDown;
     }
 
     bool InputSystem::IsMouseButtonPressed(MouseKeys key)
     {
+        if(m_MouseKeys[key].IsDown && m_MouseKeys[key].WasDown)
+        {
+            m_MouseKeys[key].WasDown = false;
+            return true;
+        }
         return false;
     }
 
-    void InputSystem::ListenControlsKeyPressed(uint32_t keyCode, bool WasDown, bool IsDown)
+    bool InputSystem::IsMouseButtonReleased(MouseKeys key)
     {
+        if(!m_MouseKeys[LEFT].IsDown && !m_MouseKeys[key].WasDown)
+        {
+            m_MouseKeys[key].WasDown = true;
+            return true;
+        }
+        return false;
+    }
+
+    glm::vec2 InputSystem::GetMousePosition()
+    {
+        POINT point{};
+        if(!GetCursorPos(&point))
+        {
+            DebugBreak();
+        }
+
+        return glm::vec2(point.x, point.y);
+    }
+
+    void InputSystem::Update()
+    {
+        m_CurrentFrameScroll = 0;
+    }
+
+    void InputSystem::ListenControlsKeyPressed(LPARAM lParam, WPARAM wParam)
+    {
+        uint32_t keyCode = wParam;
+        bool WasDown = (lParam & (1 << 30)) != 0;
+        bool IsDown = (lParam & (1 << 31)) == 0;
+
         if(keyCode >= 'A' && keyCode <= 'Z')
         {
             ControlKeys dewcinKeycode = static_cast<ControlKeys>(keyCode - 'A');
@@ -165,8 +210,30 @@ namespace psm
         }
     }
 
-    void InputSystem::ListenMouseButtonsPressed()
+    void InputSystem::ListenMouseButtonsPressed(LPARAM lParam, WPARAM wParam)
     {
+        bool lmb = MK_LBUTTON & wParam;
+        if(lmb && !m_MouseKeys[LEFT].IsDown)
+            m_MouseKeys[LEFT].WasDown = true;
 
+        bool rmb = MK_RBUTTON & wParam;
+        if(rmb && !m_MouseKeys[RIGHT].IsDown)
+            m_MouseKeys[RIGHT].WasDown = true;
+
+        bool mmb = MK_MBUTTON & wParam;
+        if(mmb && !m_MouseKeys[MIDDLE].IsDown)
+            m_MouseKeys[MIDDLE].WasDown = true;
+
+        m_MouseKeys[LEFT].IsDown = lmb;
+        m_MouseKeys[RIGHT].IsDown = rmb;
+        m_MouseKeys[MIDDLE].IsDown = mmb;
+    }
+
+    void InputSystem::ListenScroll(WPARAM wParam)
+    {
+        short zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+        m_CurrentFrameScroll += zDelta;
+        m_CurrentFrameScroll /= 120;
+        std::cout << m_CurrentFrameScroll << std::endl;
     }
 }

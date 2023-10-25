@@ -4,7 +4,10 @@ namespace psm
 {
     enum MouseKeys
     {
-
+        LEFT    = 0u,
+        RIGHT   = 1u, 
+        MIDDLE  = 2u,
+        MAX     = 3u,
     };
 
     enum ControlKeys
