@@ -97,18 +97,25 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch(uMsg)
     {
+        case WM_MOUSEWHEEL:
+            psm::InputSystem::Instance()->ListenScroll(wParam);
+            break;
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
+        case WM_XBUTTONDOWN:
+        case WM_XBUTTONUP:
+            psm::InputSystem::Instance()->ListenMouseButtonsPressed(lParam, wParam);
+            break;
         case WM_SYSKEYDOWN:
         case WM_SYSKEYUP:
         case WM_KEYDOWN:
         case WM_KEYUP:
-        {
-            uint32_t controlCode = wParam;
-            bool wasDown = (lParam & (1 << 30)) != 0;
-            bool isDown = (lParam & (1 << 31)) == 0;
-
-            psm::InputSystem::Instance()->ListenControlsKeyPressed(controlCode, wasDown, isDown);
+            psm::InputSystem::Instance()->ListenControlsKeyPressed(lParam, wParam);
             break;
-        }
         case WM_CLOSE:
             DestroyWindow(hWnd);
             break;

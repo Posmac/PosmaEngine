@@ -69,6 +69,7 @@ namespace psm
     void Application::Update()
     {
         GlobalTimer::Instance()->IsTimeElapsed();
+        InputSystem::Instance()->Update();
 
         ProcessInput();
 
