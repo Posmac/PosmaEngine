@@ -116,27 +116,27 @@ namespace psm
         //X
         if(InputSystem::Instance()->IsKeyDown(KEY_A))
         {
-            //offset -= m_Camera.GetRightWorld();
-            offset -= glm::vec4(1, 0, 0, 0);
+            offset -= m_Camera.GetRightWorld();
+            //offset -= glm::vec4(1, 0, 0, 0);
             cameraMoved = true;
         }
         if(InputSystem::Instance()->IsKeyDown(KEY_D))
         {
-            //offset += m_Camera.GetRightWorld();
-            offset += glm::vec4(1, 0, 0, 0);
+            offset += m_Camera.GetRightWorld();
+            //offset += glm::vec4(1, 0, 0, 0);
             cameraMoved = true;
         }
         //Y
         if(InputSystem::Instance()->IsKeyDown(KEY_SPACE))
         {
-            //offset += m_Camera.GetUpWorld();
-            offset += glm::vec4(0, 1, 0, 0);
+            offset += m_Camera.GetUpWorld();
+            //offset += glm::vec4(0, 1, 0, 0);
             cameraMoved = true;
         }
         if(InputSystem::Instance()->IsKeyDown(KEY_SHIFT))
         {
-            //offset -= m_Camera.GetUpWorld();
-            offset -= glm::vec4(0, 1, 0, 0);
+            offset -= m_Camera.GetUpWorld();
+            //offset -= glm::vec4(0, 1, 0, 0);
             cameraMoved = true;
         }
 

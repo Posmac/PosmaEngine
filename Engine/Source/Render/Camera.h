@@ -36,17 +36,9 @@ namespace psm
         void TranslateLocal(const glm::vec4& offset);
         void SetLocalPosition(const glm::vec4& localPosition);
 
-        //orientation
-        //glm::vec3 GetWorldRotationEuler();
-        //glm::vec3 GetLocalRotationEuler();
-        //glm::vec4& GetWorldRotationQuat();
-        //glm::vec4& GetLocalRotationQuat();
-
         void RotateWorldEuler(const glm::vec3& offset);
         void SetWorldRotationEuler(const glm::vec3& rotation);
         void RotateWorldEulerZConstrained(const glm::vec3& offset);
-        //void RotateLocalEuler(const glm::vec3& offset);
-        //void SetLocalRotationEuler(const glm::vec3& rotation);
 
         //basis vectors
         glm::vec4& GetUpWorld();
@@ -59,7 +51,6 @@ namespace psm
         glm::vec4& GetRightLocal();
 
         void RecalculateFromWorld();
-        //void RecalculateFromLocal();
 
         void LogCameraInfo();
 

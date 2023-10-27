@@ -111,22 +111,6 @@ namespace psm
         m_ViewMatrix[3] = localPosition[0] * GetRightWorld() + localPosition[1] * GetUpWorld() + localPosition[2] * GetForwardWorld();;
     }
 
-    /*glm::vec3 Camera::GetWorldRotationEuler()
-    {
-        return glm::vec3(0);
-    }*/
-
-    //void Camera::RecalculateFromLocal()
-    //{
-    //    glm::mat4 viewMatrix = glm::mat4_cast(m_CameraRotation);
-    //    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0), glm::vec3(m_ViewMatrix[3]));
-    //    m_ViewMatrix = viewMatrix * translationMatrix;
-    //    m_InvViewMatrix = glm::inverse(m_ViewMatrix);
-
-    //    m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
-    //    m_InvViewProjectionMatrix = glm::inverse(m_ViewProjectionMatrix);
-    //}
-
     void Camera::RecalculateFromWorld()
     {
         glm::mat4 rotation = glm::mat4_cast(m_CameraRotation);
@@ -137,7 +121,7 @@ namespace psm
         m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
         m_InvViewProjectionMatrix = glm::inverse(m_ViewProjectionMatrix);
 
-        LogCameraInfo();
+        //LogCameraInfo();
     }
 
     void Camera::LogCameraInfo()
@@ -177,15 +161,6 @@ namespace psm
         glm::normalize(m_CameraRotation);
     }
 
-    //void Camera::RotateLocalEuler(const glm::vec3& offset)
-    //{
-    //    //multiplication order: Yaw -> Pitch -> Roll
-    //    glm::vec3 radiansOffset = glm::radians(offset); //roll pitch yaw
-    //    m_CameraRotation = glm::angleAxis(radiansOffset.y, glm::vec3(GetUpLocal()));
-    //    m_CameraRotation *= glm::angleAxis(radiansOffset.x, glm::vec3(GetRightLocal()));
-    //    m_CameraRotation *= glm::angleAxis(radiansOffset.z, glm::vec3(GetForwardLocal()));
-    //}
-
     void Camera::SetWorldRotationEuler(const glm::vec3& rotation)
     {
         glm::vec3 radiansOffset = glm::radians(rotation);
@@ -195,15 +170,6 @@ namespace psm
         m_CameraRotation *= glm::angleAxis(radiansOffset.x, glm::vec3(1, 0, 0));
         m_CameraRotation *= glm::angleAxis(radiansOffset.z, glm::vec3(0, 0, 1));
     }
-
-    //void Camera::SetLocalRotationEuler(const glm::vec3& rotation)
-    //{
-    //    //multiplication order: Yaw -> Pitch -> Roll
-    //    glm::vec3 radiansOffset = glm::radians(rotation); //roll pitch yaw
-    //    m_CameraRotation = glm::angleAxis(radiansOffset.y, glm::vec3(GetUpLocal()));
-    //    m_CameraRotation *= glm::angleAxis(radiansOffset.x, glm::vec3(GetRightLocal()));
-    //    m_CameraRotation *= glm::angleAxis(radiansOffset.z, glm::vec3(GetForwardLocal()));
-    //}
 
     glm::vec4& Camera::GetUpWorld()
     {
