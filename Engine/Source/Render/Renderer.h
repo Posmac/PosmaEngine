@@ -2,17 +2,15 @@
 
 #include <Windows.h>
 #include <cassert>
+#include <array>
 
-#include "Vk.h"
-#include "Include/vulkan/vulkan.hpp"
 #include "Utilities/TextureLoader.h"
-#include "Vulkan/Descriptors.h"
-#include "Vulkan/Sampler.h"
-
 #include "Utilities/ModelLoader.h"
+
 #include "Instances/OpaqueInstances.h"
+
 #include "PerFrameData.h"
-#include "Vulkan/VulkanImGui.h"
+#include "Shadows.h"
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm/glm.hpp"
@@ -35,9 +33,6 @@ namespace psm
         void CreateDepthImage();
         void CreateMsaaImage();
         void PrepareDirDepth();
-        VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates,
-                                     VkImageTiling tiling,
-                                     VkFormatFeatureFlags features);
         void Deinit();
         void Render(PerFrameData& data);
         void LoadTextureIntoMemory(const RawTextureData& textureData, 
@@ -51,16 +46,6 @@ namespace psm
     private:
         bool isInit;
 
-        //swapchain (abstract info vulkan windows class maybe)
-        HWND m_Hwnd;
-        VkSwapchainKHR m_SwapChain;
-        std::vector<VkImage> m_SwapChainImages;
-        std::vector<VkImageView> m_SwapchainImageViews;
-        VkFormat m_SwapChainImageFormat;
-        VkExtent2D m_SwapChainExtent;
-        std::vector<VkSemaphore> m_ImageAvailableSemaphores;
-        std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-        std::vector<VkFence> m_FlightFences;
         uint32_t m_CurrentFrame;
 
         //renderer related thing
@@ -82,38 +67,7 @@ namespace psm
         VkDeviceMemory m_MsaaImageMemory;
         VkImageView m_MsaaImageView;
 
-        //dir light depth image
-        std::vector<VkImage> m_DirDepthImage;
-        std::vector<VkDeviceMemory> m_DirDepthImageMemory;
-        std::vector<VkImageView> m_DirDepthImageView;
-
-        VkFormat m_DirDepthFormat;
-        VkExtent3D m_DirDepthSize;
-
-        glm::mat4 m_DirViewProjMatrix;
-
-        //shadow buffer data
-        VkBuffer m_DirShadowBuffer;
-        VkDeviceMemory m_DirShadowBufferMemory;
-        void* m_DirShadowBufferMapping;
-
-        //renderer related thing
-        VkRenderPass m_ShadowRenderPass;
-        std::vector<VkFramebuffer> m_ShadowFramebuffers;
-
         //Imgui
         VkDescriptorPool m_ImGuiDescriptorsPool;
-
-        //imgui data
-        float range = 100;
-        float nearPlane = -200;
-        float farPlane = 200;
-        glm::vec3 position = glm::vec3(10.0f, 10.0f, 0.0f);
-        glm::vec3 lookAt;
-        glm::vec3 up = glm::vec3(0.0f, 0.0f ,1.0f);
-
-        //shadow biasing
-        float depthBias = 1;
-        float depthSlope = 1;
     };
 }

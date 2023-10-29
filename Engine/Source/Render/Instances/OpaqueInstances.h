@@ -4,16 +4,10 @@
 #include <memory>
 
 #include "Core/Log.h"
-#include "Render/Vk.h"
 #include "Model/Model.h"
 
 #include "glm/glm.hpp"
-#include "Render/Vk.h"
-#include "Include/vulkan/vulkan.hpp"
 #include "Utilities/TextureLoader.h"
-#include "Vulkan/Descriptors.h"
-#include "Vulkan/Sampler.h"
-#include "Vulkan/Pipeline.h"
 
 namespace psm
 {

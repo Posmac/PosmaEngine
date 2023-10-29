@@ -138,6 +138,9 @@ namespace psm
         PrepareDirDepth();
         PrepareOffscreenRenderpass();
 
+        //init shadow system
+        Shadows::Instance()->Init();
+
         //init mesh systems
         OpaqueInstances::GetInstance()->Init(m_RenderPass, m_ShadowRenderPass, m_SwapChainExtent);
         ModelLoader::Instance()->Init(m_CommandPool);
@@ -157,7 +160,7 @@ namespace psm
             vk::DestroyImage(vk::Device, m_DepthImage);
         }
 
-        m_DepthFormat = FindSupportedFormat(
+        m_DepthFormat = vk::Vk::GetInstance()->FindSupportedFormat(
             { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
             VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
@@ -190,76 +193,7 @@ namespace psm
 
     void Renderer::PrepareDirDepth()
     {
-        m_DirDepthSize = { 2048, 2048, 1 };
-        m_DirDepthFormat = FindSupportedFormat(
-            { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-            VK_IMAGE_TILING_OPTIMAL, 
-            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT /*| VK_IMAGE_USAGE_SAMPLED_BIT*/);
-
-        m_DirDepthImage.resize(m_SwapChainImages.size());
-        m_DirDepthImageMemory.resize(m_SwapChainImages.size());
-        m_DirDepthImageView.resize(m_SwapChainImages.size());
-
-        for(int i = 0; i < m_SwapChainImages.size(); i++)
-        {
-            vk::CreateImageAndView(vk::Device, vk::PhysicalDevice, m_DirDepthSize, 1, 1, VK_IMAGE_TYPE_2D, m_DirDepthFormat,
-                       VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
-                       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                       VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
-                       m_DirDepthFormat, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT,
-                       &m_DirDepthImage[i], &m_DirDepthImageMemory[i], &m_DirDepthImageView[i]);
-        }
-
-        glm::mat4 lightView = glm::lookAt(glm::vec3(10.0f, 0.0f, 0.0f),
-                                   glm::vec3(0.0f, 0.0f, 0.0f),
-                                   glm::vec3(0.0f, 1.0f, 0.0f));
-
-        float nearFarPlanes = 100.0f;
-        glm::mat4 lightProjection = glm::orthoRH_ZO(-100.0f, 100.0f, -100.0f, 100.0f, -nearFarPlanes, nearFarPlanes);
-        m_DirViewProjMatrix = lightProjection * lightView;
-
-        //auto logVec = [](const glm::mat4& mat)
-        //{
-        //    std::cout << mat[0][0] << ' ' << mat[0][1] << ' ' << mat[0][2] << ' ' << mat[0][3] << ' ' << '\n'
-        //        << mat[1][0] << ' ' << mat[1][1] << ' ' << mat[1][2] << ' ' << mat[1][3] << ' ' << '\n'
-        //        << mat[2][0] << ' ' << mat[2][1] << ' ' << mat[2][2] << ' ' << mat[2][3] << ' ' << '\n'
-        //        << mat[3][0] << ' ' << mat[3][1] << ' ' << mat[3][2] << ' ' << mat[3][3] << ' ' << std::endl;
-        //    std::cout << std::endl;
-        //};
-
-        //logVec(lightView);
-        //logVec(lightProjection);
-        //logVec(m_DirViewProjMatrix);
-
-        vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice,
-                                     sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                     &m_DirShadowBuffer, &m_DirShadowBufferMemory, &m_DirShadowBufferMapping);
-
-        glm::mat4* mat = reinterpret_cast<glm::mat4*>(m_DirShadowBufferMapping);
-        *mat = m_DirViewProjMatrix;
-    }
-
-    VkFormat Renderer::FindSupportedFormat(const std::vector<VkFormat>& candidates,
-                                           VkImageTiling tiling,
-                                           VkFormatFeatureFlags features)
-    {
-        for(auto& format : candidates)
-        {
-            VkFormatProperties props;
-            vkGetPhysicalDeviceFormatProperties(vk::PhysicalDevice, format, &props);
-
-            if(tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
-            {
-                return format;
-            }
-            else if(tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
-            {
-                return format;
-            }
-        }
-
-        //LOG_ERROR("Unsupported format");
+      
     }
 
     void Renderer::Deinit()
@@ -290,12 +224,7 @@ namespace psm
 
         vkWaitForFences(vk::Device, 1, &m_FlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
-        glm::mat4 lightView = glm::lookAt(position, lookAt, up);
-        glm::mat4 lightProjection = glm::orthoZO(-range, range, -range, range, nearPlane, farPlane);
-        m_DirViewProjMatrix = lightProjection * lightView;
-
-        glm::mat4* mat = reinterpret_cast<glm::mat4*>(m_DirShadowBufferMapping);
-        *mat = m_DirViewProjMatrix;
+        Shadows::Instance()->Update();
 
         //data.ViewProjectionMatrix = m_DirViewProjMatrix;
 
