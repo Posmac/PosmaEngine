@@ -2,7 +2,7 @@
 
 namespace psm
 {
-    enum EBufferUsage
+    enum class EBufferUsage
     {
         USAGE_TRANSFER_SRC_BIT = 0x00000001,
         USAGE_TRANSFER_DST_BIT = 0x00000002,
@@ -13,10 +13,11 @@ namespace psm
         USAGE_INDEX_BUFFER_BIT = 0x00000040,
         USAGE_VERTEX_BUFFER_BIT = 0x00000080,
         USAGE_INDIRECT_BUFFER_BIT = 0x00000100,
+        MAX = 0x0FFFFFFF
         //not complete
     };
 
-    enum EMemoryProperties
+    enum class EMemoryProperties
     {
         MEMORY_PROPERTY_DEVICE_LOCAL_BIT = 0x00000001,
         MEMORY_PROPERTY_HOST_VISIBLE_BIT = 0x00000002,
@@ -27,6 +28,7 @@ namespace psm
         MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD = 0x00000040,
         MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD = 0x00000080,
         MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV = 0x00000100,
-        MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
+        MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF,
+        MAX = 0x0FFFFFFF
     };
 }

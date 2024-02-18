@@ -2,7 +2,7 @@
 
 namespace psm
 {
-    enum EBorderColor
+    enum class EBorderColor
     {
         BORDER_COLOR_FLOAT_TRANSPARENT_BLACK = 0,
         BORDER_COLOR_INT_TRANSPARENT_BLACK = 1,
@@ -13,14 +13,14 @@ namespace psm
         //not complete
     };
 
-    enum EFilterMode
+    enum class EFilterMode
     {
         FILTER_NEAREST = 0,
         FILTER_LINEAR = 1,
         //not complete
     };
 
-    enum ESamplerAddressMode
+    enum class ESamplerAddressMode
     {
         SAMPLER_MODE_REPEAT = 0,
         SAMPLER_MODE_MIRRORED_REPEAT = 1,
@@ -30,14 +30,14 @@ namespace psm
         //not complete
     };
 
-    enum ESamplerMipmapMode
+    enum class ESamplerMipmapMode
     {
         SAMPLER_MIPMAP_MODE_NEAREST = 0,
         SAMPLER_MIPMAP_MODE_LINEAR = 1,
         SAMPLER_MIPMAP_MODE_MAX_ENUM = 0x7FFFFFFF //forces it to be 32 bit
     };
 
-    enum ECompareOp
+    enum class ECompareOp
     {
         COMPARE_OP_NEVER = 0,
         COMPARE_OP_LESS = 1,

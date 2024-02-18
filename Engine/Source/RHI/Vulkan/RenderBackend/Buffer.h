@@ -4,7 +4,7 @@
 #include <vector>
 #include <iostream>
 
-#include "Core.h"
+#include "Common.h"
 #include "Memory.h"
 #include "CommandBuffer.h"
 
@@ -12,7 +12,7 @@ namespace psm
 {
     namespace vk
     {
-        void CreateBuffer(VkDevice device, 
+        VkResult CreateBuffer(VkDevice device, 
             VkPhysicalDevice gpu, 
             VkDeviceSize size, 
             VkBufferUsageFlags usage,
@@ -20,7 +20,7 @@ namespace psm
             VkBuffer* buffer, 
             VkDeviceMemory* bufferMemory);
 
-        void CreateBufferAndMapMemory(VkDevice device, 
+        VkResult CreateBufferAndMapMemory(VkDevice device, 
             VkPhysicalDevice gpu,
             VkDeviceSize size, 
             VkBufferUsageFlags usage,
@@ -43,7 +43,7 @@ namespace psm
             VkImage dstImage,
             VkExtent3D imageExtent);
 
-        void MapMemory(VkDevice device,
+        VkResult MapMemory(VkDevice device,
                        VkDeviceMemory bufferMemory,
                        VkDeviceSize offset,
                        VkDeviceSize size,

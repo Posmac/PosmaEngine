@@ -4,7 +4,7 @@ namespace psm
 {
     namespace vk
     {
-        void CreateInstance(std::vector<const char*>& validationLayers,
+        VkResult CreateInstance(std::vector<const char*>& validationLayers,
             std::vector<const char*>& instanceExtenstions,
             VkDebugUtilsMessengerCreateInfoEXT debugMessegerCreateInfoExt,
             VkInstance* instance)
@@ -31,8 +31,7 @@ namespace psm
             instanceCreateInfo.enabledExtensionCount = instanceExtenstions.size();
             instanceCreateInfo.ppEnabledExtensionNames = instanceExtenstions.data();
 
-            VkResult res = vkCreateInstance(&instanceCreateInfo, nullptr, instance);
-            VK_CHECK_RESULT(res);
+            return vkCreateInstance(&instanceCreateInfo, nullptr, instance);
         }
 
         void DestroyInstance(VkInstance instance)

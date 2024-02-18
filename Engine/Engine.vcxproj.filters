@@ -48,64 +48,61 @@
     <ClInclude Include="External\imgui\imstb_truetype.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Instance.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Instance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\PhysicalDevice.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\PhysicalDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Win32Surface.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Win32Surface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\SwapChain.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\SwapChain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\RenderPass.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\RenderPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Pipeline.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Pipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Shader.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\CommandBuffer.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\CommandBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Buffer.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\VulkanImGui.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\VulkanImGui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Model\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Framebuffer.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Framebuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Queue.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Queue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\DebugUtilsMessenger.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\DebugUtilsMessenger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\LogicalDevice.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\LogicalDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Core.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Image.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Synchronization.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Synchronization.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Descriptors.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Render\Vk.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Descriptors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="External\stb_image.h">
@@ -114,10 +111,10 @@
     <ClInclude Include="Source\Utilities\TextureLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Memory.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RenderBackend\Vulkan\Sampler.h">
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Sampler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Utilities\ModelLoader.h">
@@ -132,10 +129,10 @@
     <ClInclude Include="Source\Model\Vertex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Render\Instances\OpaqueInstances.h">
+    <ClInclude Include="Source\Render\Actors\OpaqueInstances.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Render\Camera.h">
+    <ClInclude Include="Source\Render\Camera\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Systems\InputSystem.h">
@@ -156,7 +153,7 @@
     <ClInclude Include="Source\RHI\ImageDescription.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\Misc\ImageDesciption.h">
+    <ClInclude Include="Source\RHI\Formats\ImageFormats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Vulkan\CVkImage.h">
@@ -165,10 +162,118 @@
     <ClInclude Include="Source\RHI\Interface\Device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\RHISelector.h">
+    <ClInclude Include="Source\RHI\Vulkan\CVkDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\RHIObjects.h">
+    <ClInclude Include="Source\RHI\Interface\Swapchain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\BackedInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\Sampler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\Buffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkSampler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkSwapchain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Formats\SamplerFormats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\TypeConvertor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Formats\BufferFormats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Formats\ResourceFormats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\ImGui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkImGui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\RenderPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Render\RenderDevice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\TextureConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Memory\UntypedBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\BufferConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\SamplerConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\SwapchainConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\PipelineLayoutConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\CommandQueueConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\PipelineConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\Types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\Surface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\SurfaceConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkSurface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\DeviceData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\Fence.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\RHICommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\RHIVulkan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\RHI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\VkCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\Pipeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\Commands.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\Shaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -203,55 +308,52 @@
     <ClCompile Include="External\imgui\imgui_widgets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Instance.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Instance.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\PhysicalDevice.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\PhysicalDevice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Win32Surface.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Win32Surface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\SwapChain.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\SwapChain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\RenderPass.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\RenderPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Pipeline.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Pipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Shader.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\CommandBuffer.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\CommandBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Buffer.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Buffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\VulkanImGui.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\VulkanImGui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Framebuffer.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Framebuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\DebugUtilsMessenger.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\DebugUtilsMessenger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\LogicalDevice.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\LogicalDevice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Image.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Synchronization.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Synchronization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Descriptors.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Render\Vk.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Descriptors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="External\stb_image.cpp">
@@ -260,13 +362,13 @@
     <ClCompile Include="Source\Utilities\TextureLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Memory.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Memory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Sampler.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Sampler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RenderBackend\Vulkan\Queue.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Queue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Utilities\ModelLoader.cpp">
@@ -284,10 +386,10 @@
     <ClCompile Include="Source\Model\Vertex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Render\Instances\OpaqueInstances.cpp">
+    <ClCompile Include="Source\Render\Actors\OpaqueInstances.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Render\Camera.cpp">
+    <ClCompile Include="Source\Render\Camera\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Render\PerFrameData.h">
@@ -302,6 +404,33 @@
     <ClCompile Include="Source\Render\Shadows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkSwapchain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkSampler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkSurface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\RHICommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\RHIVulkan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\RHI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\triangle.vert.glsl" />
@@ -311,6 +440,7 @@
     </None>
     <None Include="Shaders\shadow2D.vert.glsl" />
     <None Include="packages.config" />
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Shaders\triangle.frag.txt" />

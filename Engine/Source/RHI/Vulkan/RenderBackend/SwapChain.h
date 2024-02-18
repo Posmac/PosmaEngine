@@ -2,14 +2,15 @@
 
 #include <vector>
 
-#include "Core.h"
-#include "Win32Surface.h"
+//XXX REMOVE
+//#include "Core.h"
+//#include "Win32Surface.h"
 
 namespace psm
 {
     namespace vk
     {
-        void CreateSwapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
+        /*void CreateSwapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
             SurfaceData surfaceData, VkSwapchainKHR* swapchain,
             VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent);
         void CheckFormatSupport(VkFormat& format, const std::vector<VkSurfaceFormatKHR>& formats);
@@ -18,6 +19,6 @@ namespace psm
         void QuerrySwapchainImages(VkDevice device, VkSwapchainKHR swapchain,
             VkFormat swapchainImagesFormat, std::vector<VkImage>* swapchainImages,
             std::vector<VkImageView>* swapchainImageViews);
-        void DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain);
+        void DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain);*/
     }
 }

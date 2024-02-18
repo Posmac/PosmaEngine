@@ -1,23 +1,65 @@
 #pragma once
 
-#include "RenderBackend/Core.h"
+#include "../VkCommon.h"
 #include "../Interface/Buffer.h"
 
 namespace psm
 {
-    class CVkBuffer : CBuffer
+    class CVkBuffer final: IBuffer
     {
     public:
-        CVkBuffer() = default;
-        virtual ~CVkBuffer() = default;
-        virtual RHI_RESULT Init(CDevice* pDevice,
-                                SResourceSize size,
-                                EBufferUsage usage,
-                                EMemoryProperties memoryProperties) override;
-        virtual RHI_RESULT Map() override;
-        virtual RHI_RESULT Unmap() override;
+        CVkBuffer(DevicePtr& device, const BufferConfig& config);
+        virtual ~CVkBuffer();
+        virtual RESULT Map() override;
+        virtual RESULT Unmap() override;
+        virtual RESULT UpdateBuffer(const UntypedBuffer& data) override;
+        virtual void* GetMappedDataPtr() override;
     private:
-        VkBuffer m_Buffer;
-        VkDeviceMemory m_Memory;
+        VkResult CreateBuffer(VkDevice device,
+            VkPhysicalDevice gpu,
+            VkDeviceSize size,
+            VkBufferUsageFlags usage,
+            VkMemoryPropertyFlags properties,
+            VkBuffer* buffer,
+            VkDeviceMemory* bufferMemory);
+
+        VkResult CreateBufferAndMapMemory(VkDevice device,
+            VkPhysicalDevice gpu,
+            VkDeviceSize size,
+            VkBufferUsageFlags usage,
+            VkMemoryPropertyFlags properties,
+            VkBuffer* buffer,
+            VkDeviceMemory* bufferMemory,
+            void** mapping);
+
+        void CopyBuffer(VkDevice device,
+            VkCommandBuffer commandBuffer,
+            VkQueue graphicsQueue,
+            VkBuffer srcBuffer,
+            VkBuffer dstBuffer,
+            VkDeviceSize size);
+
+        void CopyBufferToImage(VkDevice device,
+            VkCommandBuffer commandBuffer,
+            VkQueue graphicsQueue,
+            VkBuffer srcBuffer,
+            VkImage dstImage,
+            VkExtent3D imageExtent);
+
+        VkResult MapMemory(VkDevice device,
+                       VkDeviceMemory bufferMemory,
+                       VkDeviceSize offset,
+                       VkDeviceSize size,
+                       VkMemoryMapFlags flags,
+                       void** mapping);
+
+        void UnmapMemory(VkDevice device, VkDeviceMemory memory);
+        void DestroyBuffer(VkDevice device, VkBuffer buffer);
+        void FreeMemory(VkDevice device, VkDeviceMemory memory);
+    private:
+        VkDevice mVkDevice;
+        void* mpMappedData;
+        VkBuffer mVkBuffer;
+        VkDeviceMemory mVkMemory;
     };
 }

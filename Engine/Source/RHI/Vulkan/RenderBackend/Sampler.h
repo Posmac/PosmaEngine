@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Core.h"
+#include "Common.h"
 
 namespace psm
 {
     namespace vk
     {
-        void CreateTextureSampler(VkDevice device,
+        VkResult CreateTextureSampler(VkDevice device,
             VkFilter magFilter,
             VkFilter minFilter,
             VkSamplerAddressMode uAdress,

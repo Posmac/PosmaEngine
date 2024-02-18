@@ -61,8 +61,8 @@ namespace psm
             createInfo.flags = 0;
             createInfo.enabledExtensionCount = deviceExtensions.size();
             createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-            createInfo.enabledLayerCount = deviceExtensions.size();
-            createInfo.ppEnabledLayerNames = deviceExtensions.data();
+            createInfo.enabledLayerCount = validationLayers.size();
+            createInfo.ppEnabledLayerNames = validationLayers.data();
             createInfo.pEnabledFeatures = &featuresToEnable;
 
             uint32_t queueFamilyPropertyCount;

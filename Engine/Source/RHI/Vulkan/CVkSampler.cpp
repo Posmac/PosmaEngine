@@ -1,5 +1,7 @@
 #include "CVkSampler.h"
 
+#include "../RHICommon.h"
+
 #include "RenderBackend/Sampler.h"
 #include "TypeConvertor.h"
 
@@ -7,45 +9,22 @@
 
 namespace psm
 {
-    RHI_RESULT CVkSampler::Init(CDevice* pDevice, 
-                                EFilterMode magFilter, 
-                                EFilterMode minFilter,
-                                ESamplerAddressMode uAddress,
-                                ESamplerAddressMode vAddress,
-                                ESamplerAddressMode wAddress,
-                                EBorderColor borderColor,
-                                bool enableComparision,
-                                ECompareOp compareOp,
-                                ESamplerMipmapMode samplerMode,
-                                bool enableAniso,
-                                float maxAniso, 
-                                float maxLod,
-                                float minLod,
-                                float mipLodBias, 
-                                bool unnormalizedCoords)
+    CVkSampler::CVkSampler(DevicePtr& device, const SamplerConfig& config)
     {
-        CVkDevice* device = (CVkDevice*)pDevice;
+        mVkDevice = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
+        VkResult result = vk::CreateTextureSampler(mVkDevice, ToVulkan(config.MagFilter), ToVulkan(config.MinFilter), 
+                                                   ToVulkan(config.UAddress), ToVulkan(config.VAddress), 
+                                                   ToVulkan(config.WAddress), config.EnableAniso, config.MaxAniso,
+                                                   ToVulkan(config.BorderColor), config.EnableComparision, 
+                                                   ToVulkan(config.CompareOp), 0, //sampler flags 
+                                                   config.MaxLod, config.MinLod, config.MipLodBias, ToVulkan(config.SamplerMode),
+                                                   config.UnnormalizedCoords, &mVkSampler);
+        VK_CHECK_RESULT(result);
+    }
 
-        vk::CreateTextureSampler(device->GetDevice(),
-                                 ToVulkan(magFilter),
-                                 ToVulkan(minFilter), 
-                                 ToVulkan(uAddress), 
-                                 ToVulkan(vAddress),
-                                 ToVulkan(wAddress),
-                                 enableAniso, 
-                                 maxAniso, 
-                                 ToVulkan(borderColor),
-                                 enableComparision, 
-                                 ToVulkan(compareOp), 
-                                 0, //sampler flags 
-                                 maxLod, 
-                                 minLod,
-                                 mipLodBias, 
-                                 ToVulkan(samplerMode),
-                                 unnormalizedCoords, 
-                                 &m_Sampler);
-
-        return VK_SUCCESS;
+    CVkSampler::~CVkSampler()
+    {
+        vk::DestroySampler(mVkDevice, mVkSampler);
     }
 }
 

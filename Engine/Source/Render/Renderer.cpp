@@ -1,5 +1,8 @@
 #include "Renderer.h"
 
+#include "RHI/RHI.h"
+#include "RHI/Interface/Device.h"
+
 namespace psm
 {
     Renderer* Renderer::s_Instance = nullptr;
@@ -19,9 +22,14 @@ namespace psm
         isInit = false;
     }
 
-    void Renderer::Init(HINSTANCE hInstance, HWND hWnd)
+    void Renderer::Init(DevicePtr device, HINSTANCE hInstance, HWND hWnd)
     {
-        m_Hwnd = hWnd;
+        mDevice = device;
+        SwapchainConfig swapchainConfig =
+        {
+            
+        };
+        mSwapchain = mDevice->CreateSwapchain(swapchainConfig);
 
         //swapchain creation
         m_CurrentFrame = 0;
@@ -198,6 +206,7 @@ namespace psm
 
     void Renderer::Deinit()
     {
+
         vkimgui::Deinit();
 
         vk::DestroyFramebuffers(vk::Device, m_Framebuffers);

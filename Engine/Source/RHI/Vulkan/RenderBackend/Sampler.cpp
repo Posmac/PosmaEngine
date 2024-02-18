@@ -4,7 +4,7 @@ namespace psm
 {
     namespace vk
     {
-        void CreateTextureSampler(VkDevice device, 
+        VkResult CreateTextureSampler(VkDevice device, 
             VkFilter magFilter, 
             VkFilter minFilter, 
             VkSamplerAddressMode uAdress, 
@@ -42,8 +42,7 @@ namespace psm
             info.mipmapMode = mipmapMode;
             info.unnormalizedCoordinates = unnormalizedCoords;
 
-            VkResult result = vkCreateSampler(device, &info, nullptr, sampler);
-            VK_CHECK_RESULT(result);
+            return vkCreateSampler(device, &info, nullptr, sampler);;
         }
 
         void DestroySampler(VkDevice device, VkSampler sampler)

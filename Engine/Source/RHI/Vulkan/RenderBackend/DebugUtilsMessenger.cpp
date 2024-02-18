@@ -19,7 +19,7 @@ namespace psm
                 VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         }
 
-        void CreateDebugUtilsMessenger(VkInstance instance, PFN_vkDebugUtilsMessengerCallbackEXT callback , 
+        VkResult CreateDebugUtilsMessenger(VkInstance instance, PFN_vkDebugUtilsMessengerCallbackEXT callback ,
             VkDebugUtilsMessengerEXT* messenger)
         {
             VkDebugUtilsMessengerCreateInfoEXT createInfo{};
@@ -28,12 +28,10 @@ namespace psm
             auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
             if (func != nullptr)
             {
-                VkResult result = func(instance, &createInfo, nullptr, messenger);
-                if (result != VK_SUCCESS)
-                {
-                    std::cout << "Failed to create Debug utils messenger EXT" << std::endl;
-                }
+                return func(instance, &createInfo, nullptr, messenger);
             }
+
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
 
         void DestroyDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT messenger)

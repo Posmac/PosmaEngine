@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Common.h"
 
 namespace psm
 {
@@ -8,7 +8,7 @@ namespace psm
     {
         void PopulateDebugUtilsMessenger(PFN_vkDebugUtilsMessengerCallbackEXT callback,
             VkDebugUtilsMessengerCreateInfoEXT* debugMessengerCreateInfo);
-        void CreateDebugUtilsMessenger(VkInstance instance, PFN_vkDebugUtilsMessengerCallbackEXT callback,
+        VkResult CreateDebugUtilsMessenger(VkInstance instance, PFN_vkDebugUtilsMessengerCallbackEXT callback,
             VkDebugUtilsMessengerEXT* messenger);
         void DestroyDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT messenger);
     }

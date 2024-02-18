@@ -4,7 +4,7 @@ namespace psm
 {
     namespace vk
     {
-        void CreateBuffer(VkDevice device, VkPhysicalDevice gpu, VkDeviceSize size, VkBufferUsageFlags usage,
+        VkResult CreateBuffer(VkDevice device, VkPhysicalDevice gpu, VkDeviceSize size, VkBufferUsageFlags usage,
             VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory)
         {
             VkBufferCreateInfo bufferInfo{};
@@ -14,7 +14,10 @@ namespace psm
             bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
             VkResult result = vkCreateBuffer(device, &bufferInfo, nullptr, buffer);
-            VK_CHECK_RESULT(result);
+            if(result != VK_SUCCESS)
+            {
+                return result;
+            }
 
             VkMemoryRequirements memReq{};
             vkGetBufferMemoryRequirements(device, *buffer, &memReq);
@@ -25,13 +28,23 @@ namespace psm
             allocInfo.memoryTypeIndex = FindMemoryType(gpu, memReq.memoryTypeBits, properties);
 
             result = vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory);
-            VK_CHECK_RESULT(result);
+            if(result != VK_SUCCESS)
+            {
+                DestroyBuffer(device, *buffer);
+                return result;
+            }
 
             result = vkBindBufferMemory(device, *buffer, *bufferMemory, 0);
-            VK_CHECK_RESULT(result);
+            if(result != VK_SUCCESS)
+            {
+                FreeMemory(device, *bufferMemory);
+                DestroyBuffer(device, *buffer);
+            }
+
+            return result;
         }
 
-        void CreateBufferAndMapMemory(VkDevice device, VkPhysicalDevice gpu,
+        VkResult CreateBufferAndMapMemory(VkDevice device, VkPhysicalDevice gpu,
             VkDeviceSize size, VkBufferUsageFlags usage,
             VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory,
             void** mapping)
@@ -42,8 +55,10 @@ namespace psm
             bufferInfo.usage = usage;
             bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-            if (vkCreateBuffer(device, &bufferInfo, nullptr, buffer) != VK_SUCCESS) {
-                throw std::runtime_error("Failed to create buffer");
+            VkResult result = vkCreateBuffer(device, &bufferInfo, nullptr, buffer);
+            if(result != VK_SUCCESS)
+            {
+                return result;
             }
 
             VkMemoryRequirements memReq{};
@@ -54,17 +69,32 @@ namespace psm
             allocInfo.allocationSize = memReq.size;
             allocInfo.memoryTypeIndex = FindMemoryType(gpu, memReq.memoryTypeBits, properties);
 
-            if (vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory) != VK_SUCCESS)
+            vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory);
+            if(result != VK_SUCCESS)
             {
-                throw std::runtime_error("Failed to allocate memory");
+                DestroyBuffer(device, *buffer);
+                return result;
             }
 
             vkBindBufferMemory(device, *buffer, *bufferMemory, 0);
+            if(result != VK_SUCCESS)
+            {
+                FreeMemory(device, *bufferMemory);
+                DestroyBuffer(device, *buffer);
+                return result;
+            }
 
-            vkMapMemory(device, *bufferMemory, 0,
-                size, 0, mapping);
+            vkMapMemory(device, *bufferMemory, 0, size, 0, mapping);
+            if(result != VK_SUCCESS)
+            {
+                FreeMemory(device, *bufferMemory);
+                DestroyBuffer(device, *buffer);
+            }
+
+            return result;
         }
 
+        //TODO: correction needed
         void CopyBuffer(VkDevice device, VkCommandBuffer commandBuffer, VkQueue graphicsQueue,
             VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
         {
@@ -84,6 +114,7 @@ namespace psm
             //    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);
         }
 
+        //TODO: correction needed
         void CopyBufferToImage(VkDevice device,
             VkCommandBuffer commandBuffer,
             VkQueue graphicsQueue,
@@ -107,14 +138,14 @@ namespace psm
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
         }
 
-        void MapMemory(VkDevice device, 
+        VkResult MapMemory(VkDevice device, 
                        VkDeviceMemory bufferMemory, 
                        VkDeviceSize offset, 
                        VkDeviceSize size, 
                        VkMemoryMapFlags flags, 
                        void** mapping)
         {
-            vkMapMemory(device, bufferMemory, offset, size, size, mapping);
+            return vkMapMemory(device, bufferMemory, offset, size, size, mapping);
         }
 
         void UnmapMemory(VkDevice device, VkDeviceMemory memory)

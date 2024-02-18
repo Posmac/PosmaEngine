@@ -1,22 +1,21 @@
 #pragma once
 
 #include "../Interface/Image.h"
-#include "../Context/ImageContext.h"
+#include "../Formats/ImageFormats.h"
 
-#include "RenderBackend/Core.h"
 #include "RenderBackend/Image.h"
 
 namespace psm
 {
-    class CVkImage : CImage
+    class CVkImage final : IImage
     {
     public:
-        CVkImage();
-        virtual ~CVkImage();
+        CVkImage() = default;
+        virtual ~CVkImage() = default;
     public:
         virtual EImageType GetImageType() const override;
         virtual EImageFormat GetImageFormat() const override;
-        virtual SImageSize GetImageSize() const override;
+        virtual SResourceExtent3D GetImageSize() const override;
         virtual uint32_t GetImageWidth() const override;
         virtual uint32_t GetImageHeight() const override;
         virtual uint32_t GetImageDepth() const override;

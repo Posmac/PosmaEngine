@@ -2,20 +2,20 @@
 
 #include <stdint.h>
 
-#include "../Context/ImageContext.h"
-#include "../RHIObjects.h"
+#include "../VkCommon.h"
+#include "../Formats/ImageFormats.h"
 
 namespace psm
 {
-    class CImage /*maybe some inheritance needed*/
+    class IImage /*maybe some inheritance needed*/
     {
     public:
-        CImage() = default;
-        virtual ~CImage() = default;
+        IImage() = default;
+        virtual ~IImage() = default;
     public:
         virtual EImageType GetImageType() const = 0;
         virtual EImageFormat GetImageFormat() const = 0;
-        virtual SImageSize GetImageSize() const = 0;
+        virtual SResourceExtent3D GetImageSize() const = 0;
         virtual uint32_t GetImageWidth() const = 0;
         virtual uint32_t GetImageHeight() const = 0;
         virtual uint32_t GetImageDepth() const = 0;

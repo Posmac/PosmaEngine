@@ -62,7 +62,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     ShowWindow(hWnd, nCmdShow);
 
-    psm::Engine::Instance()->Init(hWnd, hInstance);
+    psm::Engine::Get()->Init(hWnd, hInstance);
     app.Init();
 
     bool isAppRuning = true;

@@ -1,8 +1,6 @@
 #pragma once
 
-#include <cstdint>
-
-#include "Core.h"
+#include "Include/vulkan/vulkan.h"
 
 namespace psm
 {

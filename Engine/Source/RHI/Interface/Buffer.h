@@ -1,22 +1,22 @@
 #pragma once
 
-#include "../Context/BufferContext.h"
-#include "../RHISelector.h"
+#include "../Configs/BufferConfig.h"
+#include "../Interface/Types.h"
+#include "../Memory/UntypedBuffer.h"
 
 namespace psm
 {
-    class CDevice;
+    class IDevice;
 
-    class CBuffer
+    class IBuffer
     {
     public:
-        CBuffer() = default;
-        virtual ~CBuffer() = default;
-        virtual RHI_RESULT Init(CDevice* pDevice,
-                                SResourceSize size,
-                                EBufferUsage usage,
-                                EMemoryProperties memoryProperties) = 0;
-        virtual RHI_RESULT Map() = 0;
-        virtual RHI_RESULT Unmap() = 0;
+        IBuffer() = default;
+        virtual ~IBuffer() = default;
+        virtual RESULT Init(DevicePtr& pDevice, const BufferConfig& config) = 0;
+        virtual RESULT Map() = 0;
+        virtual RESULT Unmap() = 0;
+        virtual RESULT UpdateBuffer(const UntypedBuffer& data) = 0;
+        virtual void* GetMappedDataPtr() = 0;
     };
 }

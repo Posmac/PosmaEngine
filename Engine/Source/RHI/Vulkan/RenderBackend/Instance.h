@@ -2,13 +2,13 @@
 
 #include <vector>
 
-#include "Core.h"
+#include "Common.h"
 
 namespace psm
 {
     namespace vk
     {
-        void CreateInstance(std::vector<const char*>& validationLayers,
+        VkResult CreateInstance(std::vector<const char*>& validationLayers,
             std::vector<const char*>& instanceExtenstions,
             VkDebugUtilsMessengerCreateInfoEXT debugMessegerCreateInfoExt, 
             VkInstance* instance);

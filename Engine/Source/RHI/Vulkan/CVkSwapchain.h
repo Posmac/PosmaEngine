@@ -1,30 +1,35 @@
 #pragma once
 
-#include "RenderBackend/Core.h"
-#include "RenderBackend/Win32Surface.h"
+//XXX RM
+//#include "RenderBackend/Win32Surface.h"
 
+#include "Include/vulkan/vulkan.h"
 #include "../Interface/Swapchain.h"
+#include "../VkCommon.h"
+#include "../Interface/Types.h"
 
 namespace psm
 {
-    class CVkSwapchain : CSwapchain
+    class CVkSwapchain final : public ISwapchain, public std::enable_shared_from_this<CVkSwapchain>
     {
     public:
-        CVkSwapchain() = default;
-        virtual ~CVkSwapchain() = default;
-    public:
-        virtual RHI_RESULT Init(CDevice* device, HINSTANCE hInstance, HWND hWnd) override;
-    public:
-        VkSurfaceKHR GetSurface();
+        CVkSwapchain(DevicePtr device, const SwapchainConfig& config);
+        virtual ~CVkSwapchain();
+
     private:
-        CVkDevice* m_ParentDevice;
-        HWND m_Hwnd;
+        void CheckFormatSupport(VkFormat& format, const std::vector<VkSurfaceFormatKHR>& formats);
+        void CheckColorSpaceSupport(VkColorSpaceKHR& colorSpace, const std::vector<VkSurfaceFormatKHR>& formats);
+        void CheckPresentModeSupport(VkPresentModeKHR& presentMode, const std::vector<VkPresentModeKHR>& presentModes);
+        void QuerrySwapchainImages(VkDevice device, VkSwapchainKHR swapchain,
+            VkFormat swapchainImagesFormat, std::vector<VkImage>* swapchainImages,
+            std::vector<VkImageView>* swapchainImageViews);
+        void DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain);
+    private:
+        VkDevice mDeviceInternal;
 
-        VkSwapchainKHR m_SwapChain;
-        VkSurfaceKHR m_Surface;
-
-        VkFormat m_SwapChainImageFormat;
-        VkExtent2D m_SwapChainExtent;
+        VkSwapchainKHR mSwapChain;
+        VkFormat mSwapChainImageFormat;
+        VkExtent2D mSwapChainExtent;
 
         //should be moved to device
         std::vector<VkImage> m_SwapChainImages;
@@ -33,7 +38,6 @@ namespace psm
         std::vector<VkSemaphore> m_RenderFinishedSemaphores;
         std::vector<VkFence> m_FlightFences;
 
-        vk::SurfaceData m_SurfaceData;
         VkSampleCountFlagBits m_MaxMsaaSamples; //temporary
     };
 }
