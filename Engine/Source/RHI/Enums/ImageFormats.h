@@ -1,8 +1,48 @@
 #pragma once
 
+#include <cstdint>
+
 namespace psm
 {
-    enum class EImageFormat
+    enum class EImageCreateFlags : uint8_t
+    {
+        NONE = 0,
+    };
+
+    enum class ESamplesCount : uint8_t
+    {
+        COUNT_1 = 1,
+        COUNT_2 = 2,
+        COUNT_4 = 4,
+        COUNT_8 = 8,
+        COUNT_16 = 16,
+        COUNT_32 = 32,
+        COUNT_64 = 64,
+    };
+
+    enum class EImageLayout : uint8_t
+    {
+        UNDEFINED = 0,
+        GENERAL = 1,
+        COLOR_ATTACHMENT_OPTIMAL = 2,
+        DEPTH_STENCIL_ATTACHMENT_OPTIMAL = 3,
+        DEPTH_STENCIL_READ_ONLY_OPTIMAL = 4,
+        SHADER_READ_ONLY_OPTIMAL = 5,
+        TRANSFER_SRC_OPTIMAL = 6,
+        TRANSFER_DST_OPTIMAL = 7,
+        PREINITIALIZED = 8,
+        DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL = 9,
+        DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL = 10,
+        DEPTH_ATTACHMENT_OPTIMAL = 11,
+        DEPTH_READ_ONLY_OPTIMAL = 12,
+        STENCIL_ATTACHMENT_OPTIMAL = 13,
+        STENCIL_READ_ONLY_OPTIMAL = 14,
+        READ_ONLY_OPTIMAL = 15,
+        ATTACHMENT_OPTIMAL = 16,
+        PRESENT_SRC_KHR = 17,
+    };
+
+    enum class EImageFormat : uint8_t
     {
         UNDEFINED = 0,
         R4G4_UNORM_PACK8 = 1,
@@ -154,14 +194,25 @@ namespace psm
         //not complete
     };
 
-    enum class EImageType
+    enum class EImageType : uint8_t
     {
         TYPE_1D = 0,
         TYPE_2D = 1,
         TYPE_3D = 2,
     };
 
-    enum class EImageViewType
+    enum class EImageViewType : uint8_t
+    {
+        TYPE_1D = 0,
+        TYPE_2D = 1,
+        TYPE_3D = 2,
+        TYPE_CUBE = 3,
+        TYPE_1D_ARRAY = 4,
+        TYPE_2D_ARRAY = 5,
+        TYPE_CUBE_ARRAY = 6,
+    };
+
+    enum class EImageViewType : uint8_t
     {
         VIEW_TYPE_1D = 0,
         VIEW_TYPE_2D = 1,
@@ -172,7 +223,7 @@ namespace psm
         VIEW_TYPE_CUBE_ARRAY = 6,
     };
 
-    enum class EImageUsageType
+    enum class EImageUsageType : uint32_t
     {
         USAGE_TRANSFER_SRC_BIT = 0x00000001,
         USAGE_TRANSFER_DST_BIT = 0x00000002,
@@ -182,5 +233,62 @@ namespace psm
         USAGE_DEPTH_STENCIL_ATTACHMENT_BIT = 0x00000020,
         USAGE_TRANSIENT_ATTACHMENT_BIT = 0x00000040,
         USAGE_INPUT_ATTACHMENT_BIT = 0x00000080,
+    };
+
+    EImageUsageType operator &(const EImageUsageType& rhs, const EImageUsageType& lhs)
+    {
+        return static_cast<EImageUsageType>(static_cast<uint32_t>(rhs) & static_cast<uint32_t>(lhs));
+    }
+
+    EImageUsageType operator | (const EImageUsageType& rhs, const EImageUsageType& lhs)
+    {
+        return static_cast<EImageUsageType>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
+    }
+
+    bool operator != (const EImageUsageType& rhs, const uint32_t lhs)
+    {
+        return static_cast<uint32_t>(rhs) != lhs;
+    }
+
+    enum class EImageTiling : uint8_t
+    {
+        OPTIMAL = 0,
+        LINEAR = 1,
+    };
+
+    enum class EFeatureFormat : uint32_t
+    {
+        SAMPLED_IMAGE_BIT = 0x00000001,
+        STORAGE_IMAGE_BIT = 0x00000002,
+        STORAGE_IMAGE_ATOMIC_BIT = 0x00000004,
+        UNIFORM_TEXEL_BUFFER_BIT = 0x00000008,
+        STORAGE_TEXEL_BUFFER_BIT = 0x00000010,
+        STORAGE_TEXEL_BUFFER_ATOMIC_BIT = 0x00000020,
+        VERTEX_BUFFER_BIT = 0x00000040,
+        COLOR_ATTACHMENT_BIT = 0x00000080,
+        COLOR_ATTACHMENT_BLEND_BIT = 0x00000100,
+        DEPTH_STENCIL_ATTACHMENT_BIT = 0x00000200,
+        BLIT_SRC_BIT = 0x00000400,
+        BLIT_DST_BIT = 0x00000800,
+        SAMPLED_IMAGE_FILTER_LINEAR_BIT = 0x00001000,
+        TRANSFER_SRC_BIT = 0x00004000,
+        TRANSFER_DST_BIT = 0x00008000,
+    };
+
+    EFeatureFormat operator & (const EFeatureFormat& rhs, const EFeatureFormat& lhs)
+    {
+        return static_cast<EFeatureFormat>(static_cast<uint32_t>(rhs) & static_cast<uint32_t>(lhs));
+    }
+
+    bool operator != (const EFeatureFormat& rhs, const uint32_t& lhs)
+    {
+        return static_cast<uint32_t>(rhs) != lhs;
+    }
+
+    enum class EImageAspect : uint8_t
+    {
+        COLOR_BIT = 0x00000001,
+        DEPTH_BIT = 0x00000002,
+        STENCIL_BIT = 0x00000004,
     };
 }

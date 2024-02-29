@@ -2,7 +2,7 @@
 
 namespace psm
 {
-    struct CommandQueueConfig
+    struct SCommandQueueConfig
     {
 
     };

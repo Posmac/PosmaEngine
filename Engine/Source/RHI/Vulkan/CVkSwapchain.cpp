@@ -5,10 +5,12 @@
 
 #include "CVkDevice.h"
 #include "RHI/RHICommon.h"
+#include "CVkSurface.h"
+#include "RHI/Enums/ImageFormats.h"
 
 namespace psm
 {
-    CVkSwapchain::CVkSwapchain(DevicePtr device, const SwapchainConfig& config)
+    CVkSwapchain::CVkSwapchain(DevicePtr device, const SSwapchainConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
         if(mDeviceInternal == nullptr)
@@ -16,26 +18,31 @@ namespace psm
             LogMessage(psm::MessageSeverity::Fatal, "Device is nullptr");
         }
 
+        std::shared_ptr<CVkSurface> vkSurface = std::static_pointer_cast<CVkSurface>(config.Surface);
+        vkSurface->PopulateSurfaceData(device->GetDeviceData(), config.Surface);
+
+        CVkSurface::SurfaceData data = vkSurface->GetSurfaceData();
+
         VkSwapchainCreateInfoKHR swapchainCreateInfo{};
         swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapchainCreateInfo.pNext = nullptr;
         swapchainCreateInfo.flags = 0;
-        swapchainCreateInfo.surface = config.Surface;
+        swapchainCreateInfo.surface = vkSurface->GetSurface();
         swapchainCreateInfo.minImageCount = 
-            (config.Capabilities.minImageCount + 1 <= config.Capabilities.maxImageCount) ?
-            config.Capabilities.minImageCount + 1 : config.Capabilities.maxImageCount;
+            (data.Capabilities.minImageCount + 1 <= data.Capabilities.maxImageCount) ?
+            data.Capabilities.minImageCount + 1 : data.Capabilities.maxImageCount;
 
         VkFormat imageFormat = VK_FORMAT_R32G32B32A32_SFLOAT;
         VkColorSpaceKHR colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
         VkPresentModeKHR presetMode = VK_PRESENT_MODE_MAILBOX_KHR;
 
-        CheckFormatSupport(imageFormat, config.Formats);
-        CheckColorSpaceSupport(colorSpace, config.Formats);
-        CheckPresentModeSupport(presetMode, config.PresentModes);
+        CheckFormatSupport(imageFormat, data.Formats);
+        CheckColorSpaceSupport(colorSpace, data.Formats);
+        CheckPresentModeSupport(presetMode, data.PresentModes);
 
         swapchainCreateInfo.imageFormat = imageFormat;
         swapchainCreateInfo.imageColorSpace = colorSpace;
-        swapchainCreateInfo.imageExtent = config.Capabilities.currentExtent;
+        swapchainCreateInfo.imageExtent = data.Capabilities.currentExtent;
         swapchainCreateInfo.imageArrayLayers = 1;
         swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -55,7 +62,7 @@ namespace psm
         }
 
         mSwapChainImageFormat = imageFormat;
-        mSwapChainExtent = config.Capabilities.currentExtent;
+        mSwapChainExtent = data.Capabilities.currentExtent;
 
         LogMessage(psm::MessageSeverity::Info, "Created swapchain: width = " + std::to_string(mSwapChainExtent.width) 
                    + ", height: " + std::to_string(mSwapChainExtent.height));
@@ -64,6 +71,40 @@ namespace psm
     CVkSwapchain::~CVkSwapchain()
     {
         DestroySwapchain(mDeviceInternal, mSwapChain);
+    }
+
+    void CVkSwapchain::Resize(uint32_t width, uint32_t height)
+    {
+
+    }
+
+    void CVkSwapchain::GetNextImage(uint32_t* index)
+    {}
+
+    TexturePtr& CVkSwapchain::ImageAtIndex(uint32_t index)
+    {
+        // TODO: insert return statement here
+    }
+
+    void CVkSwapchain::Present(const SSwapchainPresentConfig& config)
+    {}
+
+    void CVkSwapchain::SetVsyncMode(bool enabled)
+    {}
+
+    uint32_t CVkSwapchain::GetImagesCount()
+    {
+        return mSwapChainImages.size();
+    }
+
+    EImageFormat CVkSwapchain::GetSwapchainImageFormat()
+    {
+        return FromVulkan(mSwapChainImageFormat);
+    }
+
+    SResourceExtent3D CVkSwapchain::GetSwapchainSize()
+    {
+        return { mSwapChainExtent.width, mSwapChainExtent.height, 1 };
     }
 
     void CVkSwapchain::CheckFormatSupport(VkFormat& format, const std::vector<VkSurfaceFormatKHR>& formats)

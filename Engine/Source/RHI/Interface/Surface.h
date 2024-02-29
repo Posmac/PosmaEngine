@@ -11,6 +11,5 @@ namespace psm
     public:
         ISurface() = default;
         virtual ~ISurface() = default;
-        virtual RESULT Init(DevicePtr& device, const SurfaceConfig& config) = 0;
     };
 }

@@ -2,15 +2,21 @@
 
 #include "CVkSurface.h"
 #include "CVkSwapchain.h"
+#include "CVkFence.h"
+#include "CVkSemaphore.h"
+#include "CVkRenderPass.h"
+#include "CVkCommandBuffer.h"
+#include "CVkCommandPool.h"
 
 #include <Windows.h>
+#include <set>
 
 #include "../RHICommon.h"
 #include "../VkCommon.h"
 
 #include "RenderBackend/BackedInfo.h"
-#include "RenderBackend/PhysicalDevice.h"
-#include "RenderBackend/LogicalDevice.h"
+//#include "RenderBackend/PhysicalDevice.h"
+//#include "RenderBackend/LogicalDevice.h"
 
 extern VkInstance Instance;
 
@@ -60,26 +66,16 @@ namespace psm
             LogMessage(psm::MessageSeverity::Info, "Production: " + std::to_string(deviceProps.vendorID) + ", " + deviceProps.deviceName);
             gpu = physicalDevicesAvailable[0];
         }
-        
+
         //create surface
-        VkWin32SurfaceCreateInfoKHR surfaceInfo{};
-        surfaceInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-        surfaceInfo.pNext = nullptr;
-        surfaceInfo.flags = 0;
-        surfaceInfo.hinstance = hInstance;
-        surfaceInfo.hwnd = hWnd;
-
-        VkSurfaceKHR surface;
-        VkResult result = vkCreateWin32SurfaceKHR(Instance, &surfaceInfo, nullptr, &surface);
-        VK_CHECK_RESULT(result);
-
+        std::shared_ptr<CVkSurface> surface = std::make_shared<CVkSurface>(config);
         return std::make_shared<CVkDevice>(gpu, surface);
     }
 
-    CVkDevice::CVkDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
+    CVkDevice::CVkDevice(VkPhysicalDevice physicalDevice, std::shared_ptr<CVkSurface> surface)
     {
         mPhysicalDevice = physicalDevice;
-        //mSurface = surface;
+        mVkSurface = surface;
 
         //check for features to enable
         VkPhysicalDeviceFeatures deviceFeatures{};
@@ -119,7 +115,7 @@ namespace psm
         for(const auto& family : availableQueueFamilyProperties)
         {
             VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
+            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface->GetSurface(), &presentSupport);
             if(family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
                 mQueues.GraphicsFamily = i;
@@ -166,8 +162,12 @@ namespace psm
 
     CVkDevice::~CVkDevice()
     {
-        //mSurface->DestroySurface(Instance, mSurface);
-        vk::DestroyDevice(mDevice);
+        vkDestroyDevice(mDevice, nullptr);
+    }
+
+    TexturePtr CVkDevice::CreateImage(const SImageConfig& config)
+    {
+        return std::make_shared<CVkI;
     }
 
     void VerifyDeviceExtensionsSupport(std::vector<const char*>& extensionsToEnable, VkPhysicalDevice gpu)
@@ -204,8 +204,62 @@ namespace psm
         extensionsToEnable = std::move(actualExtensionsToEnable);
     }
 
-    SwapchainPtr CVkDevice::CreateSwapchain(const SwapchainConfig& config)
+    SwapchainPtr CVkDevice::CreateSwapchain(const SSwapchainConfig& config)
     {
         return std::make_shared<CVkSwapchain>(this, config);
+    }
+
+    RenderPassPtr CVkDevice::CreateRenderPass(const SRenderPassConfig& config)
+    {
+        return std::make_shared<CVkRenderPass>(this, config);
+    }
+
+    CommandPoolPtr CVkDevice::CreateCommandPool(const CommandPoolConfig& config)
+    {
+        return std::make_shared<CVkCommandPool>(this, config);
+    }
+
+    CommandBufferPtr CVkDevice::CreateCommandBuffers(CommandPoolPtr commandPool, const CommandBufferConfig& config)
+    {
+        return std::make_shared<CVkCommandBuffer>(this, commandPool, config);
+    }
+
+    EImageFormat CVkDevice::FindSupportedFormat(const std::vector<EImageFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature)
+    {
+        VkPhysicalDevice gpu = reinterpret_cast<VkPhysicalDevice>(GetDeviceData().vkData.PhysicalDevice);
+
+        VkFormatFeatureFlags vkFeatures = ToVulkan(feature);
+
+        for(auto& format : desiredFormats)
+        {
+            VkFormatProperties props;
+            vkGetPhysicalDeviceFormatProperties(gpu, ToVulkan(format), &props);
+
+            if(tiling == EImageTiling::LINEAR && (props.linearTilingFeatures & vkFeatures) == vkFeatures)
+            {
+                return format;
+            }
+            else if(tiling == EImageTiling::OPTIMAL && (props.optimalTilingFeatures & vkFeatures) == vkFeatures)
+            {
+                return format;
+            }
+        }
+
+        __debugbreak();
+    }
+
+    SurfacePtr CVkDevice::GetSurface()
+    {
+        return std::static_pointer_cast<ISurface>(mVkSurface);
+    }
+
+    FencePtr CVkDevice::CreateFence(const SFenceConfig& config)
+    {
+        return std::make_shared<CVkFence>(this, config);
+    }
+
+    SemaphorePtr CVkDevice::CreateSemaphore(const SSemaphoreConfig& config)
+    {
+        return std::make_shared<CVkSemaphore>(this, config);
     }
 }

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../Formats/SamplerFormats.h"
+#include "../Enums/SamplerFormats.h"
 
 namespace psm
 {
-    struct SamplerConfig
+    struct SSamplerConfig
     {
         EFilterMode MagFilter;
         EFilterMode MinFilter;

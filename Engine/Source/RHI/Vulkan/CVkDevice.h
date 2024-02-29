@@ -1,30 +1,42 @@
 #pragma once
 
+#include <vector>
+
 #include "RenderBackend/Common.h"
 #include "RenderBackend/Queue.h"
 #include "../Interface/Device.h"
 #include "../Interface/Types.h"
+
+class CVkSurface;
 
 namespace psm
 {
     class CVkDevice final : public IDevice, public std::enable_shared_from_this<CVkDevice>
     {
     public:
-        CVkDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+        CVkDevice(VkPhysicalDevice physicalDevice, std::shared_ptr<CVkSurface> surface);
         virtual ~CVkDevice();
     public:
-        virtual TexturePtr CreateImage(const ImageConfig& config) override;
-        virtual TexturePtr CreateImageWithData(const ImageConfig& config, const UntypedBuffer& data) override;
-        virtual BufferPtr CreateBuffer(const BufferConfig& config) override;
-        virtual SamplerPtr CreateSampler(const SamplerConfig& config) override;
-        virtual SwapchainPtr CreateSwapchain(const SwapchainConfig& config) override;
-        virtual PipelineLayoutPtr CreatePipelineLayout(const PipelineLayoutConfig& config) override;
-        virtual CommandQueuePtr CreateCommandQueue(const CommandQueueConfig& config) override;
-        virtual PipelinePtr CreateRenderPipeline(const PipelineConfig& config) override;
-        virtual PipelinePtr CreateComputePipeline(const PipelineConfig& config) override;
+        virtual TexturePtr CreateImage(const SImageConfig& config) override;
+        virtual TexturePtr CreateImageWithData(const SImageConfig& config, const UntypedBuffer& data) override;
+        virtual BufferPtr CreateBuffer(const SBufferConfig& config) override;
+        virtual SamplerPtr CreateSampler(const SSamplerConfig& config) override;
+        virtual SwapchainPtr CreateSwapchain(const SSwapchainConfig& config) override;
+        virtual PipelineLayoutPtr CreatePipelineLayout(const SPipelineLayoutConfig& config) override;
+        virtual CommandQueuePtr CreateCommandQueue(const SCommandQueueConfig& config) override;
+        virtual PipelinePtr CreateRenderPipeline(const SPipelineConfig& config) override;
+        virtual PipelinePtr CreateComputePipeline(const SPipelineConfig& config) override;
         virtual ShaderModulePtr CreateShaderFromFilename(const std::filesystem::path& path) override;
+        virtual FencePtr CreateFence(const SFenceConfig& config) override;
+        virtual SemaphorePtr CreateSemaphore(const SSemaphoreConfig& config) override;
+        virtual RenderPassPtr CreateRenderPass(const SRenderPassConfig& config) override;
+        virtual CommandPoolPtr CreateCommandPool(const CommandPoolConfig& config) override;
+        virtual CommandBufferPtr CreateCommandBuffers(CommandPoolPtr commandPool, const CommandBufferConfig& config) override;
+
+        virtual EImageFormat FindSupportedFormat(const std::vector<EImageFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) = 0;
 
         virtual DeviceData GetDeviceData() override;
+        virtual SurfacePtr GetSurface() override;
 
         void SetDebugNameForResource(void* resource, VkDebugReportObjectTypeEXT type, const char* debugName);
     private:
@@ -35,7 +47,7 @@ namespace psm
 
         vk::QueueFamilyIndices mQueues;
 
-        //VkSurfaceKHR mSurface;//temporary
+        std::shared_ptr<CVkSurface> mVkSurface; //not sure if it should stay there
     };
 
     DevicePtr CreateDefaultDeviceVk(PlatformConfig& config);

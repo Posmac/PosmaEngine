@@ -1,17 +1,16 @@
 #pragma once
 
+#include "../Interface/Types.h"
+
 namespace psm
 {
-    struct SwapchainPresentConfig
+    struct SSwapchainPresentConfig
     {
         uint32_t ImageIndex;
     };
 
-    struct SwapchainConfig
+    struct SSwapchainConfig
     {
-        VkSurfaceKHR Surface;
-        VkSurfaceCapabilitiesKHR Capabilities;
-        std::vector<VkSurfaceFormatKHR> Formats;
-        std::vector<VkPresentModeKHR> PresentModes;
+        SurfacePtr Surface;
     };
 }

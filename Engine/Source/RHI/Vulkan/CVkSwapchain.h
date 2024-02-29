@@ -8,13 +8,24 @@
 #include "../VkCommon.h"
 #include "../Interface/Types.h"
 
+#include "TypeConvertor.h"
+
 namespace psm
 {
     class CVkSwapchain final : public ISwapchain, public std::enable_shared_from_this<CVkSwapchain>
     {
     public:
-        CVkSwapchain(DevicePtr device, const SwapchainConfig& config);
+        CVkSwapchain(DevicePtr device, const SSwapchainConfig& config);
         virtual ~CVkSwapchain();
+
+        virtual void Resize(uint32_t width, uint32_t height) override;
+        virtual void GetNextImage(uint32_t* index) override;
+        virtual TexturePtr& ImageAtIndex(uint32_t index) override;
+        virtual void Present(const SSwapchainPresentConfig& config) override;
+        virtual void SetVsyncMode(bool enabled) override;
+        virtual uint32_t GetImagesCount() override;
+        virtual EImageFormat GetSwapchainImageFormat() override;
+        virtual SResourceExtent3D GetSwapchainSize() override;
 
     private:
         void CheckFormatSupport(VkFormat& format, const std::vector<VkSurfaceFormatKHR>& formats);
@@ -31,13 +42,10 @@ namespace psm
         VkFormat mSwapChainImageFormat;
         VkExtent2D mSwapChainExtent;
 
-        //should be moved to device
-        std::vector<VkImage> m_SwapChainImages;
-        std::vector<VkImageView> m_SwapchainImageViews;
-        std::vector<VkSemaphore> m_ImageAvailableSemaphores;
-        std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-        std::vector<VkFence> m_FlightFences;
+        //should be moved to renderer
+        std::vector<VkImage> mSwapChainImages;
+        std::vector<VkImageView> mSwapchainImageViews;
 
-        VkSampleCountFlagBits m_MaxMsaaSamples; //temporary
+        VkSampleCountFlagBits mMaxMsaaSamples; //temporary
     };
 }

@@ -2,7 +2,7 @@
 
 namespace psm
 {
-    struct PipelineLayoutConfig
+    struct SPipelineLayoutConfig
     {
 
     };

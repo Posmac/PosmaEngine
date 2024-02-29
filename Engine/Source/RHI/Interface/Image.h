@@ -1,13 +1,13 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
-#include "../VkCommon.h"
-#include "../Formats/ImageFormats.h"
+#include "RHI/VkCommon.h"
+#include "RHI/Enums/ImageFormats.h"
 
 namespace psm
 {
-    class IImage /*maybe some inheritance needed*/
+    class IImage
     {
     public:
         IImage() = default;

@@ -52,8 +52,7 @@ namespace psm
 
         DevicePtr device;
         IDevice::CreateSystemDefaultDevice(device, config);
-
-        Renderer::Instance()->Init(device, hInstance, hWnd);
+        Renderer::Instance()->Init(device, config);
     }
 
     void Engine::Dispose()

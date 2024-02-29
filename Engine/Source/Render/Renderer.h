@@ -16,9 +16,12 @@
 //#include "Actors/OpaqueInstances.h"
 //
 //#include "PerFrameData.h"
-//#include "Shadows.h"
+#include "Shadows.h"
 
+#include "RHI/Interface/Types.h"
 #include "RHI/Interface/Device.h"
+
+#include "RHI/Enums/ImageFormats.h"
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm/glm.hpp"
@@ -37,11 +40,13 @@ namespace psm
         static Renderer* s_Instance;
         //class specific
     public:
-        void Init(DevicePtr device, HINSTANCE hInstance, HWND hWnd);
+        void Init(DevicePtr device, const PlatformConfig& config);
         void CreateDepthImage();
         void CreateMsaaImage();
         void PrepareDirDepth();
         void Deinit();
+        void Render();
+
        /* void Render(PerFrameData& data);
         void LoadTextureIntoMemory(const RawTextureData& textureData, 
                                    uint32_t mipLevels, 
@@ -56,10 +61,22 @@ namespace psm
         //new RHI data
         DevicePtr mDevice;
         SwapchainPtr mSwapchain;
+        RenderPassPtr mRenderPass;
+
+        CommandPoolPtr mCommandPool;
+        CommandBufferPtr mCommandBuffers;
+
+        std::vector<SemaphorePtr> mImageAvailableSemaphores;
+        std::vector<SemaphorePtr> mRenderFinishedSemaphores;
+        std::vector<FencePtr> mFlightFences;
 
         bool isInit;
-        uint32_t m_CurrentFrame;
+        uint32_t mCurrentFrame;
 
+        ImagePtr mDepthRenderTargetTexture;
+        EImageFormat mDepthStencilFormat;
+
+        ImagePtr mRenderTarget;
 
         //CDevicePtr m_Device;
         //CSwapchainPtr m_Swapchain;

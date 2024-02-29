@@ -1,5 +1,9 @@
 #include "RenderPass.h"
 
+#include "RHI/VkCommon.h"
+
+#include "Include/vulkan/vulkan.h"
+
 namespace psm
 {
     namespace vk

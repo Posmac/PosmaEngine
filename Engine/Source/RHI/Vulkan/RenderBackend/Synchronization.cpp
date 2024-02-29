@@ -1,5 +1,7 @@
 #include "Synchronization.h"
 
+#include "Include/vulkan/vulkan.h"
+
 namespace psm
 {
     namespace vk

@@ -153,7 +153,7 @@
     <ClInclude Include="Source\RHI\ImageDescription.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\Formats\ImageFormats.h">
+    <ClInclude Include="Source\RHI\Enums\ImageFormats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Vulkan\CVkImage.h">
@@ -186,16 +186,16 @@
     <ClInclude Include="Source\RHI\Vulkan\CVkSwapchain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\Formats\SamplerFormats.h">
+    <ClInclude Include="Source\RHI\Enums\SamplerFormats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Vulkan\TypeConvertor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\Formats\BufferFormats.h">
+    <ClInclude Include="Source\RHI\Enums\BufferFormats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\Formats\ResourceFormats.h">
+    <ClInclude Include="Source\RHI\Enums\ResourceFormats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Interface\ImGui.h">
@@ -205,9 +205,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Interface\RenderPass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Render\RenderDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Configs\TextureConfig.h">
@@ -270,10 +267,49 @@
     <ClInclude Include="Source\RHI\Interface\Pipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\Interface\Commands.h">
+    <ClInclude Include="Source\RHI\Interface\CommandBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Interface\Shaders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\Semaphore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\Barrier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkFence.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkSemaphore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\SyncronizationConfigs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkRenderPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\RenderPassConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Enums\RenderPassFormats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\CommandPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkCommandBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkCommandPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\CommandBuffers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkTexture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -429,6 +465,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\RHI\RHI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkFence.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkSemaphore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkRenderPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkCommandBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkCommandPool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

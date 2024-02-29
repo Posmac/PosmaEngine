@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../VkCommon.h"
-#include "../Formats/BufferFormats.h"
+#include "../Enums/BufferFormats.h"
 
 namespace psm
 {
-    struct BufferConfig
+    struct SBufferConfig
     {
         SResourceSize Size;
         EBufferUsage Usage;

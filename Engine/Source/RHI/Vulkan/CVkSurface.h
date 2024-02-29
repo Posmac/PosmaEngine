@@ -18,17 +18,25 @@ namespace psm
     class CVkSurface final : ISurface
     {
     public:
-        CVkSurface(DevicePtr& device, const PlatformConfig& config);
+        struct SurfaceData
+        {
+            VkSurfaceCapabilitiesKHR Capabilities;
+            std::vector<VkSurfaceFormatKHR> Formats;
+            std::vector<VkPresentModeKHR> PresentModes;
+        };
+
+    public:
+        CVkSurface(const PlatformConfig& config);
         virtual ~CVkSurface() = default;
     public:
         void DestroySurface();
-        void PopulateSurfaceData(VkInstance instance, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+        void PopulateSurfaceData(const DeviceData& data, SurfacePtr surface);
+        VkSurfaceKHR GetSurface();
+        SurfaceData& GetSurfaceData();
     private:
         VkInstance mInstanceInternal;
         VkSurfaceKHR mSurface;
 
-        VkSurfaceCapabilitiesKHR mCapabilities;
-        std::vector<VkSurfaceFormatKHR> mFormats;
-        std::vector<VkPresentModeKHR> mPresentModes;
+        SurfaceData mSurfaceData;
     };
 }

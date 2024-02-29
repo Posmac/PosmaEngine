@@ -2,13 +2,12 @@
 
 namespace psm
 {
-    class IFence
+    class ISemaphore
     {
     public:
-        IFence() = default;
-        virtual ~IFence() = default;
+        ISemaphore() = default;
+        virtual ~ISemaphore() = default;
         virtual void Wait() = 0;
-        virtual void Reset() = 0;
         virtual void Signal() = 0;
     };
 }
