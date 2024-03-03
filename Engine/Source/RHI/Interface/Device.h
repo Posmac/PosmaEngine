@@ -16,6 +16,8 @@
 #include "../Configs/SyncronizationConfigs.h"
 #include "../Configs/RenderPassConfig.h"
 #include "../Configs/CommandBuffers.h"
+#include "../Configs/FramebuffersConfig.h"
+#include "../Configs/Barriers.h"
 #include "../Memory/UntypedBuffer.h"
 #include "Types.h"
 #include "../VkCommon.h"
@@ -31,8 +33,8 @@ namespace psm
     public:
         static void CreateSystemDefaultDevice(DevicePtr& device, PlatformConfig& config);
 
-        virtual TexturePtr CreateImage(const SImageConfig& config) = 0;
-        virtual TexturePtr CreateImageWithData(const SImageConfig& config, const UntypedBuffer& data) = 0;
+        virtual ImagePtr CreateImage(const SImageConfig& config) = 0;
+        virtual ImagePtr CreateImageWithData(const SImageConfig& config, const UntypedBuffer& data) = 0;
         virtual BufferPtr CreateBuffer(const SBufferConfig& config) = 0;
         virtual SamplerPtr CreateSampler(const SSamplerConfig& config) = 0;
         virtual SwapchainPtr CreateSwapchain(const SSwapchainConfig& config) = 0;
@@ -44,8 +46,12 @@ namespace psm
         virtual FencePtr CreateFence(const SFenceConfig& config) = 0;
         virtual SemaphorePtr CreateSemaphore(const SSemaphoreConfig& config) = 0;
         virtual RenderPassPtr CreateRenderPass(const SRenderPassConfig& config) = 0;
-        virtual CommandPoolPtr CreateCommandPool(const CommandPoolConfig& config) = 0;
-        virtual CommandBufferPtr CreateCommandBuffers(CommandPoolPtr commandPool, const CommandBufferConfig& config) = 0;
+        virtual CommandPoolPtr CreateCommandPool(const SCommandPoolConfig& config) = 0;
+        virtual CommandBufferPtr CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config) = 0;
+        virtual FramebufferPtr CreateFramebuffer(const SFramebufferConfig& config) = 0;
+
+        virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) = 0;
+        virtual void Submit(const SSubmitConfig& config) = 0;
 
         virtual EImageFormat FindSupportedFormat(const std::vector<EImageFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) = 0;
 

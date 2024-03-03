@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <cassert>
 #include <array>
+#include <vector>
 
 //#include "../RHI/Interface/Device.h"
 //#include "../RHI/Interface/Swapchain.h"
@@ -13,7 +14,7 @@
 //#include "Utilities/TextureLoader.h"
 //#include "Utilities/ModelLoader.h"
 //
-//#include "Actors/OpaqueInstances.h"
+#include "Actors/OpaqueInstances.h"
 //
 //#include "PerFrameData.h"
 #include "Shadows.h"
@@ -46,11 +47,7 @@ namespace psm
         void PrepareDirDepth();
         void Deinit();
         void Render();
-
-       /* void Render(PerFrameData& data);
-        void LoadTextureIntoMemory(const RawTextureData& textureData, 
-                                   uint32_t mipLevels, 
-                                   Texture* texture);*/
+        void LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels, ImagePtr image);
         void ResizeWindow(HWND hWnd);
         void CreateSwapchain(HWND hWnd);
         void CreateFramebuffers();
@@ -58,10 +55,15 @@ namespace psm
         void PrepareOffscreenRenderpass();
     private:
 
+        //old
+        HWND mWindow; //abstract it?
+
         //new RHI data
         DevicePtr mDevice;
         SwapchainPtr mSwapchain;
         RenderPassPtr mRenderPass;
+        std::vector<FramebufferPtr> mFramebuffers;
+        ImagePtr mMSAARenderTarget;
 
         CommandPoolPtr mCommandPool;
         CommandBufferPtr mCommandBuffers;
@@ -73,10 +75,16 @@ namespace psm
         bool isInit;
         uint32_t mCurrentFrame;
 
+        RenderPassPtr mDepthRenderPass;
         ImagePtr mDepthRenderTargetTexture;
         EImageFormat mDepthStencilFormat;
 
         ImagePtr mRenderTarget;
+
+        SResourceExtent2D mShadowMapSize;
+        RenderPassPtr mShadowRenderPass;
+        std::vector<ImagePtr> mDirectionalDepthImageViews;
+        std::vector<FramebufferPtr> mDirectionalDepthFramebuffers;
 
         //CDevicePtr m_Device;
         //CSwapchainPtr m_Swapchain;

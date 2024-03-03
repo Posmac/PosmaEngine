@@ -6,7 +6,9 @@
 #include "CVkSemaphore.h"
 #include "CVkRenderPass.h"
 #include "CVkCommandBuffer.h"
+#include "CVkImage.h"
 #include "CVkCommandPool.h"
+#include "CVkFramebuffer.h"
 
 #include <Windows.h>
 #include <set>
@@ -165,9 +167,9 @@ namespace psm
         vkDestroyDevice(mDevice, nullptr);
     }
 
-    TexturePtr CVkDevice::CreateImage(const SImageConfig& config)
+    ImagePtr CVkDevice::CreateImage(const SImageConfig& config)
     {
-        return std::make_shared<CVkI;
+        return std::make_shared<CVkImage>(this, config);
     }
 
     void VerifyDeviceExtensionsSupport(std::vector<const char*>& extensionsToEnable, VkPhysicalDevice gpu)
@@ -214,14 +216,65 @@ namespace psm
         return std::make_shared<CVkRenderPass>(this, config);
     }
 
-    CommandPoolPtr CVkDevice::CreateCommandPool(const CommandPoolConfig& config)
+    CommandPoolPtr CVkDevice::CreateCommandPool(const SCommandPoolConfig& config)
     {
         return std::make_shared<CVkCommandPool>(this, config);
     }
 
-    CommandBufferPtr CVkDevice::CreateCommandBuffers(CommandPoolPtr commandPool, const CommandBufferConfig& config)
+    CommandBufferPtr CVkDevice::CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config)
     {
         return std::make_shared<CVkCommandBuffer>(this, commandPool, config);
+    }
+
+    FramebufferPtr CVkDevice::CreateFramebuffer(const SFramebufferConfig& config)
+    {
+        return std::make_shared<CVkFramebuffer>(this, config);
+    }
+
+    void CVkDevice::InsertImageMemoryBarrier(const SImageBarrierConfig& config)
+    {
+        VkImage vkImage = reinterpret_cast<VkImage>(config.Image->GetImage());
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(config.CommandBuffer->GetRawPointer());
+
+        VkImageMemoryBarrier barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.pNext = nullptr;
+        barrier.oldLayout = ToVulkan(config.OldLayout);
+        barrier.newLayout = ToVulkan(config.NewLayout);
+        barrier.image = vkImage;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.subresourceRange.aspectMask = ToVulkan(config.AspectMask);
+        barrier.subresourceRange.baseArrayLayer = config.BaseArrayLayer;
+        barrier.subresourceRange.baseMipLevel = config.BaseMipLevel;
+        barrier.subresourceRange.levelCount = config.LevelCount;
+        barrier.subresourceRange.layerCount = config.LayerCount;
+        barrier.srcAccessMask = ToVulkan(config.SrcAccessMask);
+        barrier.dstAccessMask = ToVulkan(config.DstAccessMask);
+
+        vkCmdPipelineBarrier(vkCommandBuffer,
+            ToVulkan(config.SourceStage),
+            ToVulkan(config.DestinationStage),
+            0,
+            0, nullptr,
+            0, nullptr,
+            1, &barrier);
+    }
+
+    void CVkDevice::Submit(const SSubmitConfig& config)
+    {
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.pNext = nullptr;
+        submitInfo.waitSemaphoreCount = waitSemaphoresCount;
+        submitInfo.pWaitSemaphores = pWaitSemaphores;
+        submitInfo.pWaitDstStageMask = &waitStageFlags;
+        submitInfo.commandBufferCount = commandBuffersCount;
+        submitInfo.pCommandBuffers = pCommandBuffers;
+        submitInfo.signalSemaphoreCount = signalSemaphoresCount;
+        submitInfo.pSignalSemaphores = pSignalSemaphores;
+
+        VkResult result = vkQueueSubmit(queue, submitCount, &submitInfo, fence);
     }
 
     EImageFormat CVkDevice::FindSupportedFormat(const std::vector<EImageFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature)

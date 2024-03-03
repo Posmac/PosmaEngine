@@ -6,7 +6,7 @@
 
 namespace psm
 {
-    CVkFence::CVkFence(DevicePtr device, const FenceConfig& config)
+    CVkFence::CVkFence(DevicePtr device, const SFenceConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 
@@ -24,9 +24,9 @@ namespace psm
         vkDestroyFence(mDeviceInternal, mFence, nullptr);
     }
 
-    void CVkFence::Wait()
+    void CVkFence::Wait(const SFenceWaitConfig& config)
     {
-        vkWaitForFences(mDeviceInternal, 1, &mFence, true, FLT_MAX);
+        vkWaitForFences(mDeviceInternal, 1, &mFence, config.WaitAll, config.Timeout);
     }
 
     void CVkFence::Reset()

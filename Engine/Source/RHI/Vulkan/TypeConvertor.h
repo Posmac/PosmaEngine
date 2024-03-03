@@ -1014,9 +1014,15 @@ namespace psm
 
     VkDependencyFlags ToVulkan(EDependencyFlags dependencyFlags)
     {
-        VkDependencyFlags flags = 0;
-        //empty for now
-        return flags;
+        switch(dependencyFlags)
+        {
+            case psm::EDependencyFlags::NONE:
+                return 0;
+            case psm::EDependencyFlags::BY_REGION_BIT:
+                VkDependencyFlagBits::VK_DEPENDENCY_BY_REGION_BIT;
+            default:
+                break;
+        }
     }
 
     VkFormatFeatureFlags ToVulkan(EFeatureFormat feature)
@@ -1208,6 +1214,40 @@ namespace psm
             default:
                 return VkImageAspectFlagBits::VK_IMAGE_ASPECT_NONE;
 
+        }
+    }
+
+    VkCommandBufferUsageFlags ToVulkan(ECommandBufferUsage usage)
+    {
+        VkCommandBufferUsageFlags flags = 0;
+        
+        switch(usage)
+        {
+            case psm::ECommandBufferUsage::NONE:
+                return 0;
+            case psm::ECommandBufferUsage::ONE_TIME_SUBMIT_BIT:
+                VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+            case psm::ECommandBufferUsage::RENDER_PASS_CONTINUE_BIT:
+                VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+            case psm::ECommandBufferUsage::SIMULTANEOUS_USE_BIT:
+                VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+            default:
+                return 0;
+        }
+
+        return flags;
+    }
+
+    VkSubpassContents ToVulkan(ESubpassContents contents)
+    {
+        switch(contents)
+        {
+            case psm::ESubpassContents::INLINE:
+                VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE;
+            case psm::ESubpassContents::SECONDARY_COMMAND_BUFFERS:
+                VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
+            default:
+                VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE;
         }
     }
 }

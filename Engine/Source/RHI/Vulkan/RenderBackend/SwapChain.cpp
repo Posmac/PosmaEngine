@@ -1,5 +1,6 @@
 #include "SwapChain.h"
 
+#if 0
 namespace psm
 {
     namespace vk
@@ -113,3 +114,4 @@ namespace psm
         }
     }
 }
+#endif

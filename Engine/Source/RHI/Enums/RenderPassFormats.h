@@ -74,7 +74,8 @@ namespace psm
 
     enum class EDependencyFlags : uint8_t
     {
-        NONE = 0, //for now
+        NONE = 0,
+        BY_REGION_BIT = 0x00000001,
     };
 
     EPipelineStageFlags operator | (const EPipelineStageFlags& rhs, const EPipelineStageFlags& lhs)

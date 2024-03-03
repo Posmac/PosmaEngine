@@ -78,10 +78,16 @@ namespace psm
 
     }
 
-    void CVkSwapchain::GetNextImage(uint32_t* index)
-    {}
+    void CVkSwapchain::GetNextImage(const SSwapchainAquireNextImageConfig& config, uint32_t* index)
+    {
+        VkResult result = vkAcquireNextImageKHR(vk::Device, m_SwapChain, UINT64_MAX,
+                                                m_ImageAvailableSemaphores[m_CurrentFrame],
+                                                nullptr, &imageIndex);
 
-    TexturePtr& CVkSwapchain::ImageAtIndex(uint32_t index)
+        VK_CHECK_RESULT(result);
+    }
+
+    ImagePtr& CVkSwapchain::ImageAtIndex(uint32_t index)
     {
         // TODO: insert return statement here
     }

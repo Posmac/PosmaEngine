@@ -22,5 +22,8 @@ namespace psm
         virtual uint32_t GetImageMips() const = 0;
         virtual uint32_t GetArrayLayers() const = 0;
         virtual uint32_t GetSampleCount() const = 0;
+
+        virtual void* GetImageView() = 0;
+        virtual void* GetImage() = 0;
     };
 }

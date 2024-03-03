@@ -157,13 +157,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Source\RHI\Common.h" />
+    <ClInclude Include="Source\RHI\Configs\Barriers.h" />
     <ClInclude Include="Source\RHI\Configs\CommandBuffers.h" />
+    <ClInclude Include="Source\RHI\Configs\FramebuffersConfig.h" />
     <ClInclude Include="Source\RHI\Configs\RenderPassConfig.h" />
     <ClInclude Include="Source\RHI\Configs\SyncronizationConfigs.h" />
     <ClInclude Include="Source\RHI\Enums\RenderPassFormats.h" />
     <ClInclude Include="Source\RHI\Interface\Barrier.h" />
     <ClInclude Include="Source\RHI\Interface\CommandBuffer.h" />
     <ClInclude Include="Source\RHI\Interface\CommandPool.h" />
+    <ClInclude Include="Source\RHI\Interface\Framebuffer.h" />
     <ClInclude Include="Source\RHI\Interface\Pipeline.h" />
     <ClInclude Include="Source\RHI\Interface\Semaphore.h" />
     <ClInclude Include="Source\RHI\Interface\Shaders.h" />
@@ -175,6 +178,7 @@
     <ClInclude Include="Source\RHI\Vulkan\CVkCommandBuffer.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkCommandPool.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkFence.h" />
+    <ClInclude Include="Source\RHI\Vulkan\CVkFramebuffer.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkRenderPass.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkSemaphore.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkSurface.h" />
@@ -263,6 +267,7 @@
     <ClCompile Include="Source\RHI\Vulkan\CVkCommandBuffer.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkCommandPool.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkFence.cpp" />
+    <ClCompile Include="Source\RHI\Vulkan\CVkFramebuffer.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkRenderPass.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkSemaphore.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkSurface.cpp" />

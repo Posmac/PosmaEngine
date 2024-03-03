@@ -19,6 +19,7 @@ namespace psm
     class IRenderPass;
     class ICommandBuffer;
     class ICommandPool;
+    class IFramebuffer;
 
     using DevicePtr = std::shared_ptr<IDevice>;
     using SwapchainPtr = std::shared_ptr<ISwapchain>;
@@ -35,4 +36,5 @@ namespace psm
     using RenderPassPtr = std::shared_ptr<IRenderPass>;
     using CommandBufferPtr = std::shared_ptr<ICommandBuffer>;
     using CommandPoolPtr = std::shared_ptr<ICommandPool>;
+    using FramebufferPtr = std::shared_ptr<IFramebuffer>;
 }

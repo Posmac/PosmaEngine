@@ -5,6 +5,7 @@
 
 #include "RHI/Enums/ImageFormats.h"
 #include "RHI/Enums/RenderPassFormats.h"
+#include "RHI/VkCommon.h"
 
 namespace psm
 {
@@ -63,5 +64,42 @@ namespace psm
         EAccessFlags SrcAccessMask;
         EAccessFlags DstAccessMask;
         EDependencyFlags DependencyFlags;
+    };
+
+    enum class ESubpassContents : uint8_t
+    {
+        INLINE = 0,
+        SECONDARY_COMMAND_BUFFERS = 1,
+    };
+
+    union UClearColorValue
+    {
+        float       float32[4];
+        int32_t     int32[4];
+        uint32_t    uint32[4];
+    };
+
+    struct DepthStencilClearValues
+    {
+        float Depth;
+        uint32_t Stencil;
+    };
+
+    union UClearValue
+    {
+        UClearColorValue Color;
+        DepthStencilClearValues DepthStencil;
+    };
+
+    struct SRenderPassBeginConfig
+    {
+        RenderPassPtr RenderPass;
+        FramebufferPtr Framebuffer;
+        CommandBufferPtr CommandBuffer;
+        SResourceOffset2D Offset;
+        SResourceExtent2D Extent;
+        uint32_t ClearValuesCount;
+        UClearValue* pClearValues;
+        ESubpassContents SubpassContents;
     };
 }

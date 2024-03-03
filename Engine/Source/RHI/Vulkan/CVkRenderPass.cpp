@@ -3,11 +3,13 @@
 #include "RHI/VkCommon.h"
 #include "TypeConvertor.h"
 #include "CVkDevice.h"
+#include "CVkCommandBuffer.h"
+#include "CVkFramebuffer.h"
 
 #include <vector>
 #include <optional>
 
-#include "RenderBackend/RenderPass.h"
+//#include "RenderBackend/RenderPass.h"
 
 namespace psm
 {
@@ -172,49 +174,77 @@ namespace psm
         vkDestroyRenderPass(mDeviceInternal, mRenderPass, nullptr);
     }
 
-    void CVkRenderPass::BeginRenderPass(VkRenderPass renderPass,
-                             VkFramebuffer framebuffer,
-                             VkOffset2D offset,
-                             VkExtent2D extent,
-                             VkClearValue* clearValues,
-                             uint32_t clearValuesCount,
-                             VkCommandBuffer commandBuffer,
-                             VkSubpassContents subpassContents)
+    void CVkRenderPass::BeginRenderPass(const SRenderPassBeginConfig& config)
     {
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(config.CommandBuffer->GetRawPointer());
+        VkRenderPass vkRenderPass = reinterpret_cast<VkRenderPass>(config.RenderPass->GetNativeRawPtr());
+        VkFramebuffer vkFramebuffer = reinterpret_cast<VkFramebuffer>(config.Framebuffer->GetRawPointer());
+
+        std::vector<VkClearValue> clearValues;
+        clearValues.resize(config.ClearValuesCount);
+
+        clearValues[0] =
+        {
+            .color = *config.pClearValues[0].Color.float32
+        };
+
+        clearValues[1] =
+        {
+            .depthStencil = 
+            {
+                .depth = config.pClearValues[1].DepthStencil.Depth,
+                .stencil = config.pClearValues[1].DepthStencil.Stencil,
+            }
+        };
+
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = renderPass;
-        renderPassInfo.framebuffer = framebuffer;
-        renderPassInfo.renderArea.offset = offset;
-        renderPassInfo.renderArea.extent = extent;
-        renderPassInfo.clearValueCount = clearValuesCount;
-        renderPassInfo.pClearValues = clearValues;
+        renderPassInfo.renderPass = vkRenderPass;
+        renderPassInfo.framebuffer = vkFramebuffer;
+        renderPassInfo.renderArea.offset = config.Offset;
+        renderPassInfo.renderArea.extent = config.Extent;
+        renderPassInfo.clearValueCount = config.ClearValuesCount;
+        renderPassInfo.pClearValues = clearValues.data();
 
-        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, subpassContents);
+        vkCmdBeginRenderPass(vkCommandBuffer, &renderPassInfo, ToVulkan(config.SubpassContents));
     }
 
-    void CVkRenderPass::SetViewPortAndScissors(VkCommandBuffer commandBuffer,
-                                float viewPortX,
-                                float viewPortY,
-                                float viewPortWidth,
-                                float viewPortHeight,
-                                float viewPortMinDepth,
-                                float viewPortMaxDepth,
-                                VkOffset2D scissorsOffet,
-                                VkExtent2D scissorsExtent)
+    void CVkRenderPass::EndRenderPass(CommandBufferPtr commandBuffer)
     {
-        VkViewport viewport{};
-        viewport.x = viewPortX;
-        viewport.y = viewPortY;
-        viewport.width = viewPortWidth;
-        viewport.height = viewPortHeight;
-        viewport.minDepth = viewPortMinDepth;
-        viewport.maxDepth = viewPortMaxDepth;
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer());
+        vkCmdEndRenderPass(vkCommandBuffer);
+    }
 
-        VkRect2D scissor{};
-        scissor.offset = scissorsOffet;
-        scissor.extent = scissorsExtent;
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+    void CVkRenderPass::SetViewport(CommandBufferPtr commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth)
+    {
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer());
+        VkViewport viewport =
+        {
+            .x = viewPortX,
+            .y = viewPortY,
+            .width = viewPortWidth,
+            .height = viewPortHeight,
+            .minDepth = viewPortMinDepth,
+            .maxDepth = viewPortMaxDepth
+        };
+
+        vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+    }
+
+    void CVkRenderPass::SetScissors(CommandBufferPtr commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent)
+    {
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer());
+
+        VkRect2D scissor =
+        {
+            .offset = scissorsOffet,
+            .extent = scissorsExtent
+        };
+        vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+    }
+
+    void* CVkRenderPass::GetNativeRawPtr()
+    {
+        return mRenderPass;
     }
 }
