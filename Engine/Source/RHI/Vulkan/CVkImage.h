@@ -18,7 +18,7 @@ namespace psm
         virtual ~CVkImage();
     public:
         virtual EImageType GetImageType() const override;
-        virtual EImageFormat GetImageFormat() const override;
+        virtual EFormat GetImageFormat() const override;
         virtual SResourceExtent3D GetImageSize() const override;
         virtual uint32_t GetImageWidth() const override;
         virtual uint32_t GetImageHeight() const override;

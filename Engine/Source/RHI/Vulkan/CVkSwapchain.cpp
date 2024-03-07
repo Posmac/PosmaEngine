@@ -93,7 +93,9 @@ namespace psm
     }
 
     void CVkSwapchain::Present(const SSwapchainPresentConfig& config)
-    {}
+    {
+
+    }
 
     void CVkSwapchain::SetVsyncMode(bool enabled)
     {}
@@ -103,7 +105,7 @@ namespace psm
         return mSwapChainImages.size();
     }
 
-    EImageFormat CVkSwapchain::GetSwapchainImageFormat()
+    EFormat CVkSwapchain::GetSwapchainImageFormat()
     {
         return FromVulkan(mSwapChainImageFormat);
     }

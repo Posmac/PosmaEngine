@@ -15,7 +15,7 @@ namespace psm
         int MipLevels;
         int ArrayLevels;
         EImageType Type;
-        EImageFormat Format;
+        EFormat Format;
         EImageTiling Tiling;
         EImageLayout InitialLayout;
         EImageUsageType Usage;
@@ -23,7 +23,7 @@ namespace psm
         ESamplesCount SamplesCount;
         EImageCreateFlags Flags; //for now 0 everywhere
 
-        EImageFormat ViewFormat;
+        EFormat ViewFormat;
         EImageViewType ViewType;
         EImageAspect ViewAspect;
     };

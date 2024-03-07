@@ -2,8 +2,10 @@
 
 namespace psm
 {
-    class IShaderModule
+    class IShader
     {
-
+    public:
+        IShader() = default;
+        virtual ~IShader() = default;
     };
 }

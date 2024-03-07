@@ -77,7 +77,7 @@ namespace psm
 
         RenderPassPtr mDepthRenderPass;
         ImagePtr mDepthRenderTargetTexture;
-        EImageFormat mDepthStencilFormat;
+        EFormat mDepthStencilFormat;
 
         ImagePtr mRenderTarget;
 

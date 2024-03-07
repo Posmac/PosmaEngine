@@ -79,7 +79,7 @@ namespace psm
         return mImageConfig.Type;
     }
 
-    EImageFormat CVkImage::GetImageFormat() const
+    EFormat CVkImage::GetImageFormat() const
     {
         return mImageConfig.Format;
     }

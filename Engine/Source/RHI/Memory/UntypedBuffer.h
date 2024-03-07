@@ -2,16 +2,16 @@
 
 namespace psm
 {
-    struct UntypedBuffer //mutable
+    struct SUntypedBuffer //mutable
     {
         void* DataPtr;
         size_t DataSize;
     };
 
-    struct UntypedBuffer //immutable
+    struct SUntypedBuffer //immutable
     {
     public:
-        UntypedBuffer(size_t size, void* data) 
+        SUntypedBuffer(size_t size, void* data) 
             : mDataPtr(data), mDataSize(size) 
         {
 

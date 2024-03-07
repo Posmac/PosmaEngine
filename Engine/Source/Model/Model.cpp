@@ -1,5 +1,13 @@
 #include "Model.h"
 
+#include "RHI/Configs/PipelineConfig.h"
+
+#ifdef RHI_VULKAN
+#include "RHI/Vulkan/CVkDevice.h"
+#include "RHI/Vulkan/CVkCommandBuffer.h"
+#include "RHI/Vulkan/CVkBuffer.h"
+#endif
+
 namespace psm
 {
     Model::Model()
@@ -12,20 +20,38 @@ namespace psm
         this->Meshes = std::move(meshes);
     }
 
-    void Model::BindBuffers(VkCommandBuffer commandBuffer) const
+    void Model::BindBuffers(DevicePtr device, CommandBufferPtr commandBuffer)
     {
-        VkDeviceSize offset = { 0 };
+        SVertexBufferBindConfig vertexBindConfig =
+        {
+            .FirstSlot = 0,
+            .BindingCount = 1,
+            .Offsets = {0},
+            .Buffers = &mVertexBuffer,
+        };
+
+        device->BindVertexBuffers(vertexBindConfig);
+
+        SIndexBufferBindConfig indexBindConfig =
+        {
+            .Type = EIndexType::UINT32,
+            .Buffer = mIndexBuffer
+        };
+
+        device->BindIndexBuffer(indexBindConfig);
+
+        /*VkDeviceSize offset = { 0 };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_VertexBuffer, &offset);
-        vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);*/
     }
 
     void Model::Deinit()
     {
-        vk::DestroyBuffer(vk::Device, m_VertexBuffer);
-        vk::FreeMemory(vk::Device, m_VertexBufferMemory);
+        /*vk::DestroyBuffer(vk::Device, m_VertexBuffer);
+        vk::FreeMemory(vk::Device, m_VertexBufferMemory);*/
     }
 
-    void Model::Init(VkCommandPool commandPool)
+    void Model::Init(DevicePtr device, CommandPoolPtr commandPool)
     {
         uint32_t totalVertices = 0;
         uint32_t totalIndices = 0;
@@ -36,23 +62,58 @@ namespace psm
             totalIndices += mesh.MeshIndices.size();
         }
 
-        //vertex buffer
-        VkDeviceSize vertexBufferSize = sizeof(Vertex) * totalVertices;
-        VkBuffer vertexStagingBuffer;
-        VkDeviceMemory vertexStagingBufferMemory;
+        SBufferConfig vertexBufferConfig =
+        {
+            .Size = sizeof(Vertex) * totalVertices,
+            .Usage = EBufferUsage::USAGE_TRANSFER_DST_BIT | EBufferUsage::USAGE_VERTEX_BUFFER_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        };
 
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, vertexBufferSize,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &vertexStagingBuffer, &vertexStagingBufferMemory);
+        SBufferConfig stagingVertexBufferConfig =
+        {
+            .Size = sizeof(Vertex) * totalVertices,
+            .Usage = EBufferUsage::USAGE_TRANSFER_SRC_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
 
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, vertexBufferSize,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            &m_VertexBuffer, &m_VertexBufferMemory);
+        mVertexBuffer = device->CreateBuffer(vertexBufferConfig);
+        BufferPtr vertexStagingBuffer = device->CreateBuffer(stagingVertexBufferConfig);
+
+        ////vertex buffer
+        //VkDeviceSize vertexBufferSize = sizeof(Vertex) * totalVertices;
+        //VkBuffer vertexStagingBuffer;
+        //VkDeviceMemory vertexStagingBufferMemory;
+
+        //vk::CreateBuffer(vk::Device, vk::PhysicalDevice, vertexBufferSize,
+        //    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        //    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        //    &vertexStagingBuffer, &vertexStagingBufferMemory);
+
+        //vk::CreateBuffer(vk::Device, vk::PhysicalDevice, vertexBufferSize,
+        //    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        //    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        //    &m_VertexBuffer, &m_VertexBufferMemory);
 
         //index buffer
-        VkDeviceSize indexBufferSize = sizeof(uint32_t) * totalIndices;
+
+        SBufferConfig indexBufferConfig =
+        {
+            .Size = sizeof(Vertex) * totalVertices,
+            .Usage = EBufferUsage::USAGE_TRANSFER_DST_BIT | EBufferUsage::USAGE_INDEX_BUFFER_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        };
+
+        SBufferConfig stagingIndexBufferConfig =
+        {
+            .Size = sizeof(Vertex) * totalVertices,
+            .Usage = EBufferUsage::USAGE_TRANSFER_SRC_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
+
+        mIndexBuffer = device->CreateBuffer(vertexBufferConfig);
+        BufferPtr indexStagingBuffer = device->CreateBuffer(stagingVertexBufferConfig);
+
+       /* VkDeviceSize indexBufferSize = sizeof(uint32_t) * totalIndices;
         VkBuffer indexStagingBuffer;
         VkDeviceMemory indexStagingBufferMemory;
 
@@ -64,49 +125,82 @@ namespace psm
         vk::CreateBuffer(vk::Device, vk::PhysicalDevice, indexBufferSize,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            &m_IndexBuffer, &m_IndexBufferMemory);
+            &m_IndexBuffer, &m_IndexBufferMemory);*/
 
         //copy data
-        VkDeviceSize vertexOffset = 0;
-        VkDeviceSize indexOffset = 0;
+        uint64_t vertexOffset = 0;
+        uint64_t indexOffset = 0;
+
+        //VkDeviceSize vertexOffset = 0;
+        //VkDeviceSize indexOffset = 0;
 
         for (auto& mesh : Meshes)
         {
             void* vertexData;
-            VkDeviceSize currentVerticesSize = sizeof(Vertex) * mesh.MeshVertices.size();
-            vkMapMemory(vk::Device, vertexStagingBufferMemory, vertexOffset,
-                currentVerticesSize, 0, &vertexData);
+            uint64_t currentVerticesSize = sizeof(Vertex) * mesh.MeshVertices.size();
+
+            SBufferMapConfig vMapConfig =
+            {
+                .Size = currentVerticesSize,
+                .Offset = vertexOffset,
+                .pData = &vertexData,
+                .Flags = 0
+            };
+
+            vertexStagingBuffer->Map(vMapConfig);
+
             memcpy(vertexData, mesh.MeshVertices.data(), currentVerticesSize);
 
-            VkMappedMemoryRange range{};
-            range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-            range.pNext = nullptr;
-            range.memory = vertexStagingBufferMemory;
-            range.offset = vertexOffset;
-            range.size = currentVerticesSize;
+            SBufferFlushConfig vFlushConfig =
+            {
+                .Size = currentVerticesSize,
+                .Offset = vertexOffset,
+            };
 
-            vkFlushMappedMemoryRanges(vk::Device, 1, &range);
+            vertexStagingBuffer->Flush(vFlushConfig);
+            vertexStagingBuffer->Unmap();
 
-            vkUnmapMemory(vk::Device, vertexStagingBufferMemory);
             vertexOffset += currentVerticesSize;
 
             void* indexData;
-            VkDeviceSize currentIndicesSize = sizeof(uint32_t) * mesh.MeshIndices.size();
-            vkMapMemory(vk::Device, indexStagingBufferMemory, indexOffset,
-                currentIndicesSize, 0, &indexData);
+            uint64_t currentIndicesSize = sizeof(uint32_t) * mesh.MeshIndices.size();
+
+            SBufferMapConfig iMapConfig =
+            {
+                .Size = currentIndicesSize,
+                .Offset = indexOffset,
+                .pData = &indexData,
+                .Flags = 0
+            };
+
+            indexStagingBuffer->Map(iMapConfig);
+           /* vkMapMemory(vk::Device, indexStagingBufferMemory, indexOffset,
+                currentIndicesSize, 0, &indexData);*/
             memcpy(indexData, mesh.MeshIndices.data(), currentIndicesSize);
 
-            range.memory = indexStagingBufferMemory;
+            SBufferFlushConfig iFlushConfig =
+            {
+                .Size = currentIndicesSize,
+                .Offset = indexOffset,
+            };
+            indexStagingBuffer->Flush(iFlushConfig);
+
+            /*range.memory = indexStagingBufferMemory;
             range.offset = indexOffset;
-            range.size = currentIndicesSize;
+            range.size = currentIndicesSize;*/
 
-            vkFlushMappedMemoryRanges(vk::Device, 1, &range);
+            //vkFlushMappedMemoryRanges(vk::Device, 1, &range);
+            
+            indexStagingBuffer->Unmap();
 
-            vkUnmapMemory(vk::Device, indexStagingBufferMemory);
+            //vkUnmapMemory(vk::Device, indexStagingBufferMemory);
             indexOffset += currentIndicesSize;
         };
 
-        VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(vk::Device, commandPool);
+        device->CopyBuffer(vertexStagingBuffer, mVertexBuffer);
+        device->CopyBuffer(indexStagingBuffer, mIndexBuffer);
+
+        /*VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(vk::Device, commandPool);
 
         vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
             vertexStagingBuffer, m_VertexBuffer, vertexBufferSize);
@@ -114,12 +208,12 @@ namespace psm
         vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
             indexStagingBuffer, m_IndexBuffer, indexBufferSize);
 
-        putils::EndSingleTimeCommandBuffer(vk::Device, commandPool, commandBuffer, vk::Queues.GraphicsQueue);
+        putils::EndSingleTimeCommandBuffer(vk::Device, commandPool, commandBuffer, vk::Queues.GraphicsQueue);*/
 
-        vk::DestroyBuffer(vk::Device, vertexStagingBuffer);
+        /*vk::DestroyBuffer(vk::Device, vertexStagingBuffer);
         vk::FreeMemory(vk::Device, vertexStagingBufferMemory);
 
         vk::DestroyBuffer(vk::Device, indexStagingBuffer);
-        vk::FreeMemory(vk::Device, indexStagingBufferMemory);
+        vk::FreeMemory(vk::Device, indexStagingBufferMemory);*/
     }
 }

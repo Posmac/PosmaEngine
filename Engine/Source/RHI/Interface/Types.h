@@ -20,6 +20,12 @@ namespace psm
     class ICommandBuffer;
     class ICommandPool;
     class IFramebuffer;
+    class IDescriptorPool;
+    class IDescriptorSet;
+    class IDescriptorSetLayout;
+    class IPipeline;
+    class IShader;
+    class IPushConstant;
 
     using DevicePtr = std::shared_ptr<IDevice>;
     using SwapchainPtr = std::shared_ptr<ISwapchain>;
@@ -37,4 +43,10 @@ namespace psm
     using CommandBufferPtr = std::shared_ptr<ICommandBuffer>;
     using CommandPoolPtr = std::shared_ptr<ICommandPool>;
     using FramebufferPtr = std::shared_ptr<IFramebuffer>;
+    using DescriptorPoolPtr = std::shared_ptr<IDescriptorPool>;
+    using DescriptorSetPtr = std::shared_ptr<IDescriptorSet>;
+    using PipelinePtr = std::shared_ptr<IPipeline>;
+    using DescriptorSetLayoutPtr = std::shared_ptr<IDescriptorSetLayout>;
+    using ShaderPtr = std::shared_ptr<IShader>;
+    using PushConstantPtr = std::shared_ptr<IPushConstant>
 }

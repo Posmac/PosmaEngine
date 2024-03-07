@@ -26,7 +26,7 @@ namespace psm
     struct SAttachmentDescription
     {
         EAttachmentDescriptionFlags Flags;
-        EImageFormat Format;
+        EFormat Format;
         ESamplesCount Samples;
         EAttachmentLoadOp LoadOperation;
         EAttachmentStoreOp StoreOperation;

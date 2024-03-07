@@ -42,7 +42,7 @@ namespace psm
         PRESENT_SRC_KHR = 17,
     };
 
-    enum class EImageFormat : uint8_t
+    enum class EFormat : uint8_t
     {
         UNDEFINED = 0,
         R4G4_UNORM_PACK8 = 1,

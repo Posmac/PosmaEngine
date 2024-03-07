@@ -9,6 +9,10 @@
 #include "CVkImage.h"
 #include "CVkCommandPool.h"
 #include "CVkFramebuffer.h"
+#include "CVkDescriptorPool.h"
+#include "CVkBuffer.h"
+#include "CVkShader.h"
+#include "CVkPipelineLayout.h"
 
 #include <Windows.h>
 #include <set>
@@ -172,6 +176,29 @@ namespace psm
         return std::make_shared<CVkImage>(this, config);
     }
 
+    ImagePtr CVkDevice::CreateImageWithData(const SImageConfig& config, const SUntypedBuffer& data, const SImageLayoutTransition& transition)
+    {
+        vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
+                               { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,
+                               VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
+                               VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                               VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
+                               VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
+                               &texture->Image, &texture->ImageMemory, &texture->ImageView);
+
+        vk::LoadDataIntoImageUsingBuffer(vk::Device, vk::PhysicalDevice,
+                                         , m_CommandPool, vk::Queues.GraphicsQueue,
+                                         { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
+                                         mipLevels,
+                                         VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_FORMAT_R8G8B8A8_SRGB,
+                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &texture->Image);
+    }
+
+    BufferPtr CVkDevice::CreateBuffer(const SBufferConfig& config)
+    {
+        return std::make_shared<CVkBuffer>(this, config);
+    }
+
     void VerifyDeviceExtensionsSupport(std::vector<const char*>& extensionsToEnable, VkPhysicalDevice gpu)
     {
         uint32_t availableExtensionsCount;
@@ -211,6 +238,11 @@ namespace psm
         return std::make_shared<CVkSwapchain>(this, config);
     }
 
+    PipelineLayoutPtr CVkDevice::CreatePipelineLayout(const SPipelineLayoutConfig& config)
+    {
+        return std::make_shared<CVkPipelineLayout>(this, config);
+    }
+
     RenderPassPtr CVkDevice::CreateRenderPass(const SRenderPassConfig& config)
     {
         return std::make_shared<CVkRenderPass>(this, config);
@@ -229,6 +261,11 @@ namespace psm
     FramebufferPtr CVkDevice::CreateFramebuffer(const SFramebufferConfig& config)
     {
         return std::make_shared<CVkFramebuffer>(this, config);
+    }
+
+    DescriptorPoolPtr CVkDevice::CreateDescriptorPool(const SDescriptorPoolConfig& config)
+    {
+        return std::make_shared<CVkDescriptorPool>(this, config);
     }
 
     void CVkDevice::InsertImageMemoryBarrier(const SImageBarrierConfig& config)
@@ -277,7 +314,70 @@ namespace psm
         VkResult result = vkQueueSubmit(queue, submitCount, &submitInfo, fence);
     }
 
-    EImageFormat CVkDevice::FindSupportedFormat(const std::vector<EImageFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature)
+    void CVkDevice::Present(const SPresentConfig& config)
+    {
+        VkSemaphore vkSemaphore = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[0]->GetRawData());
+        VkSwapchainKHR vkSwapchain = reinterpret_cast<VkSwapchainKHR>(config.pSwapchains[0]->Present)
+            VkResult result = vk::Present(mQueues.GraphicsQueue, &vkSemaphore, 1,
+                        &m_SwapChain, 1, config.ImageIndices);
+        VK_CHECK_RESULT(result);
+    }
+
+    void CVkDevice::WaitIndle()
+    {
+        vkDeviceWaitIdle(mDevice);
+    }
+
+    void CVkDevice::BindVertexBuffers(const SVertexBufferBindConfig& config)
+    {
+        VkDeviceSize offset = { 0 };
+        vkCmdBindVertexBuffers(commandBuffer,
+                               1, //first binding 
+                               1, //binding count
+                               &m_InstanceBuffer,
+                               &offset);
+    }
+
+    void CVkDevice::BindIndexBuffer(const SIndexBufferBindConfig& config)
+    {
+        vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    }
+
+    void CVkDevice::CopyBuffer(BufferPtr sourceBuffer, BufferPtr destinationBuffer)
+    {
+        VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(vk::Device, commandPool);
+
+        vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
+            vertexStagingBuffer, m_VertexBuffer, vertexBufferSize);
+
+        vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
+            indexStagingBuffer, m_IndexBuffer, indexBufferSize);
+
+        putils::EndSingleTimeCommandBuffer(vk::Device, commandPool, commandBuffer, vk::Queues.GraphicsQueue);
+    }
+
+    void CVkDevice::BindDescriptorSets(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint, PipelinePtr pipeline, const std::vector<DescriptorSetPtr>& descriptors)
+    {
+        vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                        m_InstancedPipelineLayout, { m_InstanceDescriptorSet,
+                                        perModel.PerMaterials[i].MaterialDescriptorSet });
+    }
+
+    void CVkDevice::DrawIndexed(CommandBufferPtr commandBuffer, const Mesh Range& range, uint32_t totalInstances, uint32_t firstInstance)
+    {
+        vkCmdDrawIndexed(commandBuffer, range.IndicesCount, totalInstances,
+                     range.IndicesOffset, range.VerticesOffset, firstInstance);
+    }
+
+    void CVkDevice::SetDepthBias(CommandBufferPtr commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
+    {
+        vkCmdSetDepthBias(commandBuffer,
+                 depthBias,
+                 1.0f,
+                 depthSlope);
+    }
+
+    EFormat CVkDevice::FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature)
     {
         VkPhysicalDevice gpu = reinterpret_cast<VkPhysicalDevice>(GetDeviceData().vkData.PhysicalDevice);
 
@@ -304,6 +404,11 @@ namespace psm
     SurfacePtr CVkDevice::GetSurface()
     {
         return std::static_pointer_cast<ISurface>(mVkSurface);
+    }
+
+    ShaderPtr CVkDevice::CreateShaderFromFilename(const std::filesystem::path& path, EShaderStageFlag shaderType)
+    {
+        return std::make_shared<CVkShader>(this, path, shaderType);
     }
 
     FencePtr CVkDevice::CreateFence(const SFenceConfig& config)

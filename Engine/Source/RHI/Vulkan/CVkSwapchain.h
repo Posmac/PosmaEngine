@@ -24,7 +24,7 @@ namespace psm
         virtual void Present(const SSwapchainPresentConfig& config) override;
         virtual void SetVsyncMode(bool enabled) override;
         virtual uint32_t GetImagesCount() override;
-        virtual EImageFormat GetSwapchainImageFormat() override;
+        virtual EFormat GetSwapchainImageFormat() override;
         virtual SResourceExtent3D GetSwapchainSize() override;
 
     private:

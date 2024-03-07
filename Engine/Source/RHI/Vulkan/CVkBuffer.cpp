@@ -8,13 +8,13 @@
 
 namespace psm
 {
-    CVkBuffer::CVkBuffer(DevicePtr& device, const BufferConfig& config)
+    CVkBuffer::CVkBuffer(DevicePtr& device, const SBufferConfig& config)
     {
-        mVkDevice = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
+        mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 
         VkPhysicalDevice physicalDevice = reinterpret_cast<VkPhysicalDevice>(device->GetDeviceData().vkData.PhysicalDevice);
 
-        VkResult result = CreateBuffer(mVkDevice,
+        VkResult result = CreateBuffer(mDeviceInternal,
                          physicalDevice,
                          config.Size,
                          ToVulkan(config.Usage),
@@ -186,27 +186,31 @@ namespace psm
 
     CVkBuffer::~CVkBuffer()
     {
-        FreeMemory(mVkDevice, mVkMemory);
-        DestroyBuffer(mVkDevice, mVkBuffer);
+        FreeMemory(mDeviceInternal, mVkMemory);
+        DestroyBuffer(mDeviceInternal, mVkBuffer);
     }
 
-    RESULT CVkBuffer::Map()
+    void CVkBuffer::Map(SBufferMapConfig& config)
     {
-
+        vkMapMemory(mDeviceInternal, vertexStagingBufferMemory, vertexOffset,
+                currentVerticesSize, 0, &vertexData);
     }
 
-    RESULT CVkBuffer::Unmap()
+    void CVkBuffer::Unmap()
     {
-
+        vkUnmapMemory(vk::Device, vertexStagingBufferMemory);
     }
 
-    RESULT CVkBuffer::UpdateBuffer(const UntypedBuffer & data)
+    void CVkBuffer::Flush(SBufferFlushConfig & config)
     {
+        //can be made once at the finish
+        VkMappedMemoryRange range{};
+        range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+        range.pNext = nullptr;
+        range.memory = vertexStagingBufferMemory;
+        range.offset = vertexOffset;
+        range.size = currentVerticesSize;
 
-    }
-
-    void* CVkBuffer::GetMappedDataPtr()
-    {
-        return mpMappedData;
+        vkFlushMappedMemoryRanges(vk::Device, 1, &range);
     }
 }

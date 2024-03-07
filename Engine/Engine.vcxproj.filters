@@ -324,6 +324,27 @@
     <ClInclude Include="Source\RHI\Configs\Barriers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\RHI\Configs\ShadersConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkDescriptorPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\DescriptorPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkPipeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Enums\PipelineFormats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkPipelineLayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine.cpp">
@@ -498,6 +519,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\RHI\Vulkan\CVkFramebuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkDescriptorPool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkPipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkPipelineLayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

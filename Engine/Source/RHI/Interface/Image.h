@@ -14,7 +14,7 @@ namespace psm
         virtual ~IImage() = default;
     public:
         virtual EImageType GetImageType() const = 0;
-        virtual EImageFormat GetImageFormat() const = 0;
+        virtual EFormat GetImageFormat() const = 0;
         virtual SResourceExtent3D GetImageSize() const = 0;
         virtual uint32_t GetImageWidth() const = 0;
         virtual uint32_t GetImageHeight() const = 0;

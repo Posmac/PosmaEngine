@@ -24,4 +24,12 @@ namespace psm
         EImageAspect AspectMask;
         uint32_t MipLevels;
     };
+
+    struct SImageLayoutTransition
+    {
+        EFormat FormatBeforeTransition;
+        EImageLayout LayoutBeforeTransition;
+        EFormat FormatAfterTransition;
+        EImageLayout LayoutAfterTransition;
+    };
 }

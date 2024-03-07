@@ -20,7 +20,7 @@ namespace psm
         virtual void Present(const SSwapchainPresentConfig& config) = 0;
         virtual void SetVsyncMode(bool enabled) = 0;
         virtual uint32_t GetImagesCount() = 0;
-        virtual EImageFormat GetSwapchainImageFormat() = 0;
+        virtual EFormat GetSwapchainImageFormat() = 0;
         virtual SResourceExtent3D GetSwapchainSize() = 0;
     };
 }

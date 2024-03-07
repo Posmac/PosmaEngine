@@ -1,18 +1,21 @@
 #pragma once
 
-#include "../VkCommon.h"
-#include "../Interface/Buffer.h"
+#include <memory>
+
+#include "Include/vulkan/vulkan.h"
+#include "RHI/Interface/Buffer.h"
 
 namespace psm
 {
-    class CVkBuffer final: IBuffer
+    class CVkBuffer : public IBuffer, std::enable_shared_from_this<CVkBuffer>
     {
     public:
-        CVkBuffer(DevicePtr& device, const BufferConfig& config);
+        CVkBuffer(DevicePtr& device, const SBufferConfig& config);
         virtual ~CVkBuffer();
-        virtual RESULT Map() override;
-        virtual RESULT Unmap() override;
-        virtual RESULT UpdateBuffer(const UntypedBuffer& data) override;
+        virtual void Map(SBufferMapConfig& config) override;
+        virtual void Unmap() override;
+        virtual void Flush(SBufferFlushConfig& config) override;
+        virtual void UpdateBuffer(const SUntypedBuffer& data) override;
         virtual void* GetMappedDataPtr() override;
     private:
         VkResult CreateBuffer(VkDevice device,
@@ -57,8 +60,7 @@ namespace psm
         void DestroyBuffer(VkDevice device, VkBuffer buffer);
         void FreeMemory(VkDevice device, VkDeviceMemory memory);
     private:
-        VkDevice mVkDevice;
-        void* mpMappedData;
+        VkDevice mDeviceInternal;
         VkBuffer mVkBuffer;
         VkDeviceMemory mVkMemory;
     };

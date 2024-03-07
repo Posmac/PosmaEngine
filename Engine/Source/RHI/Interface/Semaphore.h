@@ -9,5 +9,6 @@ namespace psm
         virtual ~ISemaphore() = default;
         virtual void Wait() = 0;
         virtual void Signal() = 0;
+        virtual void* GetRawData() = 0;
     };
 }

@@ -3,7 +3,10 @@
 #include <unordered_map>
 #include <memory>
 
-#include "Core/Log.h"
+#include "RHI/VkCommon.h"
+#include "RHI/Interface/Types.h"
+
+//#include "Core/Log.h"
 #include "Model/Model.h"
 
 #include "glm/glm.hpp"
@@ -41,7 +44,7 @@ namespace psm
             std::vector<Instance> Instances;
 
             //api related data
-            VkDescriptorSet MaterialDescriptorSet;
+            DescriptorSetPtr MaterialDescriptorSet;
         };
 
         struct PerModel
@@ -73,63 +76,74 @@ namespace psm
 
         //class related
     public:
-        void Init(VkRenderPass renderPass,
-                  VkRenderPass shadowRenderPass, 
-                  VkExtent2D windowSize);
+        void Init(DevicePtr device, 
+                  RenderPassPtr renderPass,
+                  RenderPassPtr shadowRenderPass,
+                  SResourceExtent2D windowSize);
         void Deinit();
-        void Render(VkCommandBuffer commandBuffer);
-        void RenderDepth2D(VkCommandBuffer commandBuffer,
+        void Render(CommandBufferPtr commandBuffer);
+        void RenderDepth2D(CommandBufferPtr commandBuffer,
                            float depthBias,
                            float depthSlope);
-        void AddInstance(std::shared_ptr<Model> model, 
+        void AddInstance(std::shared_ptr<Model> model,
                          const Material& material,
                          const Instance& instance);
 
-        void UpdateDescriptorSets(VkImageView shadowMapView, 
-                                  VkBuffer lightsBuffer);
-        void UpdateShadowDescriptors(VkBuffer lightsBuffer);
+        void UpdateDescriptorSets(ImagePtr shadowMapView,
+                                  BufferPtr lightsBuffer);
+        void UpdateShadowDescriptors(BufferPtr lightsBuffer);
 
         void PrepareInstances();
     private:
         void CreateInstanceDescriptorSets();
-        void CreateInstancePipelineLayout(VkRenderPass renderPass, 
-                                          VkExtent2D extent);
+        void CreateInstancePipelineLayout(RenderPassPtr renderPass,
+                                          SResourceExtent2D extent);
         void CreateShadowDescriptorSets();
-        void CreateShadowPipeline(VkExtent2D size,
-                                  VkRenderPass renderPass);
+        void CreateShadowPipeline(SResourceExtent2D size,
+                                  RenderPassPtr renderPass);
         void CreateMaterialDescriptors();
-        void AllocateAndUpdateDescriptors(VkDescriptorSet* descriptorSet,
+        void AllocateAndUpdateDescriptors(DescriptorSetPtr descriptorSet,
                                           const Material& material);
 
     private:
         std::unordered_map<std::shared_ptr<Model>, uint32_t> m_Models;
         std::vector<PerModel> m_PerModels;
 
+        DevicePtr mDeviceInternal;
         //pipeline data
-        VkPipelineLayout m_InstancedPipelineLayout;
-        VkPipeline m_InstancedPipeline;
+        PipelinePtr mInstancedPipeline;
+        //VkPipelineLayout m_InstancedPipelineLayout;
+        //VkPipeline m_InstancedPipeline;
 
         //shadow generation pipeline
-        VkPipelineLayout m_ShadowPipelineLayout;
-        VkPipeline m_ShadowPipeline;
+        PipelinePtr mShadowsPipeline;
+        //VkPipelineLayout m_ShadowPipelineLayout;
+        //VkPipeline m_ShadowPipeline;
 
         //instance buffer
-        VkBuffer m_InstanceBuffer;
-        VkDeviceMemory m_InstanceBufferMemory;
+        BufferPtr mInstanceBuffer;
+        //VkBuffer m_InstanceBuffer;
+        //VkDeviceMemory m_InstanceBufferMemory;
 
         //descriptos
-        VkDescriptorPool m_DescriptorPool;
+        DescriptorPoolPtr mDescriptorPool;
+        //VkDescriptorPool m_DescriptorPool;
 
         //model material descriptor layout
-        VkDescriptorSetLayout m_MaterialSetLayout;
+        DescriptorSetLayoutPtr mMaterilaSetLayout;
+        //VkDescriptorSetLayout m_MaterialSetLayout;
 
         //general data for all models
-        VkDescriptorSetLayout m_InstanceDescriptorSetLayout;
-        VkDescriptorSet m_InstanceDescriptorSet;
+        DescriptorSetLayoutPtr mInstanceDescriptorSetLayout;
+        DescriptorSetPtr mInstanceDescriptorSet;
+        //VkDescriptorSetLayout m_InstanceDescriptorSetLayout;
+        //VkDescriptorSet m_InstanceDescriptorSet;
 
         //shadow data (also for all models)
-        VkDescriptorSetLayout m_ShadowDescriptorSetLayout;
-        VkDescriptorSet m_ShadowDescriptorSet;
+        DescriptorSetLayoutPtr mShadowDescriptorSetLayout;
+        DescriptorSetPtr mShadowDescriptorSet;
+        //VkDescriptorSetLayout m_ShadowDescriptorSetLayout;
+        //VkDescriptorSet m_ShadowDescriptorSet;
     };
 
     bool operator==(const OpaqueInstances::Material& lhs, const OpaqueInstances::Material& rhs);

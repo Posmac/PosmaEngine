@@ -2,7 +2,7 @@
 
 namespace psm
 {
-    enum class EBufferUsage
+    enum class EBufferUsage : uint32_t
     {
         USAGE_TRANSFER_SRC_BIT = 0x00000001,
         USAGE_TRANSFER_DST_BIT = 0x00000002,
@@ -17,7 +17,12 @@ namespace psm
         //not complete
     };
 
-    enum class EMemoryProperties
+    EBufferUsage operator | (const EBufferUsage rhs, const EBufferUsage lhs)
+    {
+        return static_cast<EBufferUsage>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
+    }
+
+    enum class EMemoryProperties : uint32_t
     {
         MEMORY_PROPERTY_DEVICE_LOCAL_BIT = 0x00000001,
         MEMORY_PROPERTY_HOST_VISIBLE_BIT = 0x00000002,
@@ -31,4 +36,9 @@ namespace psm
         MEMORY_PROPERTY_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF,
         MAX = 0x0FFFFFFF
     };
+
+    EMemoryProperties operator | (const EMemoryProperties rhs, const EMemoryProperties lhs)
+    {
+        return static_cast<EMemoryProperties>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
+    }
 }

@@ -13,10 +13,10 @@ namespace psm
     public:
         IBuffer() = default;
         virtual ~IBuffer() = default;
-        virtual RESULT Init(DevicePtr& pDevice, const BufferConfig& config) = 0;
-        virtual RESULT Map() = 0;
-        virtual RESULT Unmap() = 0;
-        virtual RESULT UpdateBuffer(const UntypedBuffer& data) = 0;
+        virtual void Map(SBufferMapConfig& config) = 0;
+        virtual void Unmap() = 0;
+        virtual void Flush(SBufferFlushConfig& config) = 0;
+        virtual void UpdateBuffer(const SUntypedBuffer& data) = 0;
         virtual void* GetMappedDataPtr() = 0;
     };
 }

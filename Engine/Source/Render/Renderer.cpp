@@ -202,7 +202,7 @@ namespace psm
 
     void Renderer::CreateDepthImage()
     {
-        mDepthStencilFormat = EImageFormat::D32_SFLOAT_S8_UINT;
+        mDepthStencilFormat = EFormat::D32_SFLOAT_S8_UINT;
 
         /*if(mDepthRenderTargetTexture == nullptr)
         {
@@ -212,7 +212,7 @@ namespace psm
             vk::DestroyImage(vk::Device, m_DepthImage);
         }*/
 
-        auto desiredFormats = { EImageFormat::D32_SFLOAT, EImageFormat::D32_SFLOAT_S8_UINT, EImageFormat::D24_UNORM_S8_UINT };
+        auto desiredFormats = { EFormat::D32_SFLOAT, EFormat::D32_SFLOAT_S8_UINT, EFormat::D24_UNORM_S8_UINT };
 
         mDepthStencilFormat = mDevice->FindSupportedFormat(desiredFormats, EImageTiling::OPTIMAL, EFeatureFormat::DEPTH_STENCIL_ATTACHMENT_BIT);
 
@@ -513,7 +513,7 @@ namespace psm
             .pCommandBuffers = &mCommandBuffers,
             .SignalSemaphoresCount = 1,
             .pSignalSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
-            .Fence = mFlightFences[m_CurrentFrame],
+            .Fence = mFlightFences[mCurrentFrame],
         };
 
         mDevice->Submit(submitConfig);
@@ -524,14 +524,21 @@ namespace psm
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        SPresentConfig presentConfig =
+        {
+            .Queue = nullptr,
+            .WaitSemaphoresCount = 1,
+            .pWaitSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
+            .SwapchainsCount = 1,
+            .pSwapchains = &mSwapchain,
+            .ImageIndices = &imageIndex
+        };
 
-        mDevice->Preset();
-        result = vk::Present(vk::Queues.PresentQueue, &m_RenderFinishedSemaphores[m_CurrentFrame], 1,
-                    &m_SwapChain, 1, &imageIndex);
-        VK_CHECK_RESULT(result);
+        mDevice->Present(presentConfig);
 
-        m_CurrentFrame = (m_CurrentFrame + 1) % m_SwapChainImages.size();
-        vkDeviceWaitIdle(vk::Device);
+        mCurrentFrame = (mCurrentFrame + 1) % mSwapchain->GetImagesCount();
+
+        mDevice->WaitIndle();
     }
 
     void Renderer::LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels, ImagePtr image)
@@ -545,23 +552,52 @@ namespace psm
         {
             LogMessage(MessageSeverity::Error, "Raw texture data pointer is null");
         }
+        
+        SImageConfig imageConfig =
+        {
+            .ImageSize = { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
+            .MipLevels = mipLevels,
+            .ArrayLevels = 1,
+            .Type = EImageType::TYPE_2D,
+            .Format = EFormat::R8G8B8A8_SRGB,
+            .Tiling = EImageTiling::OPTIMAL,
+            .InitialLayout = EImageLayout::UNDEFINED,
+            .Usage = EImageUsageType::USAGE_TRANSFER_SRC_BIT | EImageUsageType::USAGE_TRANSFER_DST_BIT | EImageUsageType::USAGE_SAMPLED_BIT,
+            .SharingMode = ESharingMode::EXCLUSIVE,
+            .SamplesCount = ESamplesCount::COUNT_1,
+            .Flags = EImageCreateFlags::NONE,
+            .ViewFormat = EFormat::R8G8B8A8_SRGB,
+            .ViewType = EImageViewType::TYPE_2D,
+            .ViewAspect = EImageAspect::COLOR_BIT
+        };
 
-        vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
+        SUntypedBuffer textureBuffer(textureData.Width * textureData.Height * textureData.Type, textureData.Data);
+
+        SImageLayoutTransition layoutTransition =
+        {
+            .FormatBeforeTransition = EFormat::R8G8B8A8_SRGB,
+            .LayoutBeforeTransition = EImageLayout::UNDEFINED,
+            .FormatAfterTransition = EFormat::R8G8B8A8_SRGB,
+            .LayoutAfterTransition = EImageLayout::SHADER_READ_ONLY_OPTIMAL
+        };
+
+        image = mDevice->CreateImageWithData(imageConfig, textureBuffer, layoutTransition);
+
+        /*vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
                                { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,
                                VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
                                VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
                                VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
-                               &texture->Image, &texture->ImageMemory, &texture->ImageView);
+                               &texture->Image, &texture->ImageMemory, &texture->ImageView);*/
 
 
-        vk::LoadDataIntoImageUsingBuffer(vk::Device, vk::PhysicalDevice,
-                                         textureData.Width * textureData.Height * textureData.Type,
-                                         textureData.Data, m_CommandPool, vk::Queues.GraphicsQueue,
-                                         { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
-                                         mipLevels,
-                                         VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_FORMAT_R8G8B8A8_SRGB,
-                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &texture->Image);
+        //vk::LoadDataIntoImageUsingBuffer(vk::Device, vk::PhysicalDevice,
+        //                                 , m_CommandPool, vk::Queues.GraphicsQueue,
+        //                                 { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
+        //                                 mipLevels,
+        //                                 VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_FORMAT_R8G8B8A8_SRGB,
+        //                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &texture->Image);
     }
 
     void Renderer::ResizeWindow(HWND hWnd)

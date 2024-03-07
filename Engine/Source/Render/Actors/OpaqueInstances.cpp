@@ -1,5 +1,12 @@
 #include "OpaqueInstances.h"
 
+#include "RHI/Configs/ShadersConfig.h"
+
+#ifdef RHI_VULKAN
+#include "RHI/Vulkan/CVkDevice.h"
+#include "RHI/Vulkan/CVkPipeline.h"
+#endif
+
 namespace psm
 {
     OpaqueInstances* OpaqueInstances::s_Instance = nullptr;
@@ -14,32 +21,40 @@ namespace psm
         return s_Instance;
     }
 
-    void OpaqueInstances::Init(VkRenderPass defaultRenderPass,
-                               VkRenderPass shadowRenderPass,
-                               VkExtent2D windowSize)
+    void OpaqueInstances::Init(DevicePtr device,
+                               RenderPassPtr defaultRenderPass,
+                               RenderPassPtr shadowRenderPass,
+                               SResourceExtent2D windowSize)
     {
         constexpr uint32_t maxUniformBuffers = 50;
         constexpr uint32_t maxCombinedImageSamples = 50;
         constexpr uint32_t maxDescriptorSets = 50;
 
         //create descriptor pool for everything
-        std::vector<vk::DescriptorPoolSize> shaderDescriptors =
+        std::vector<SDescriptorPoolSize> shaderDescriptors =
         {
             {
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                EDescriptorType::UNIFORM_BUFFER, //VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                 maxUniformBuffers
             },
             {
-                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                EDescriptorType::COMBINED_IMAGE_SAMPLER, //VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                 maxCombinedImageSamples
             }
         };
 
-        vk::CreateDescriptorPool(vk::Device,
-                                 shaderDescriptors,
-                                 maxDescriptorSets, //maximum descriptor sets 
-                                 0, //flags
-                                 &m_DescriptorPool);
+        SDescriptorPoolConfig descriptorPoolConfig =
+        {
+            .DesciptorPoolSizes = shaderDescriptors,
+            .MaxDesciptorPools = maxDescriptorSets
+        };
+
+        mDescriptorPool = mDeviceInternal->CreateDescriptorPool(descriptorPoolConfig);
+        //vk::CreateDescriptorPool(vk::Device,
+        //                         shaderDescriptors,
+        //                         maxDescriptorSets, //maximum descriptor sets 
+        //                         0, //flags
+        //                         &m_DescriptorPool);
 
         CreateMaterialDescriptors();
 
@@ -52,16 +67,16 @@ namespace psm
 
     void OpaqueInstances::Deinit()
     {
-        vk::DestroyPipeline(vk::Device, m_InstancedPipeline);
+        /*vk::DestroyPipeline(vk::Device, m_InstancedPipeline);
         vk::DestroyPipelineLayout(vk::Device, m_InstancedPipelineLayout);
         vkDestroyDescriptorSetLayout(vk::Device, m_InstanceDescriptorSetLayout, nullptr);
 
         vk::DestroyDescriptorPool(vk::Device, m_DescriptorPool);
 
-        vkDestroyDescriptorPool(vk::Device, m_DescriptorPool, nullptr);
+        vkDestroyDescriptorPool(vk::Device, m_DescriptorPool, nullptr);*/
     }
 
-    void OpaqueInstances::Render(VkCommandBuffer commandBuffer)
+    void OpaqueInstances::Render(CommandBufferPtr commandBuffer)
     {
         if(m_Models.size() == 0)
         {
@@ -70,40 +85,50 @@ namespace psm
 
         //bind all necessary things
         //(pipeline, descriptor sets, push constants, uniform buffers)
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_InstancedPipeline);
-        VkDeviceSize offset = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer,
-                               1, //first binding 
-                               1, //binding count
-                               &m_InstanceBuffer,
-                               &offset);
+
+        mInstancedPipeline->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
+        //vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_InstancedPipeline);
+
+        SVertexBufferBindConfig vertexBufferBind =
+        {
+            .FirstSlot = 1,
+            .BindingCount = 1,
+            .Offsets = {0},
+            .Buffers = &mInstanceBuffer
+        };
+
+        mDeviceInternal->BindVertexBuffers(vertexBufferBind);
+        //VkDeviceSize offset = { 0 };
+        //vkCmdBindVertexBuffers(commandBuffer,
+        //                       1, //first binding 
+        //                       1, //binding count
+        //                       &m_InstanceBuffer,
+        //                       &offset);
 
         uint32_t firstInstance = 0;
 
         for(auto& perModel : m_PerModels)
         {
-            perModel.Model->BindBuffers(commandBuffer);
+            perModel.Model->BindBuffers(mDeviceInternal, commandBuffer);
 
             for(int i = 0; i < perModel.PerMaterials.size(); i++)
             {
                 uint32_t totalInstances = perModel.PerMaterials[i].Instances.size();
 
-                vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                           m_InstancedPipelineLayout, { m_InstanceDescriptorSet,
-                                           perModel.PerMaterials[i].MaterialDescriptorSet });
+                mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mInstancedPipeline, {mInstanceDescriptorSet, perModel.PerMaterials[i].MaterialDescriptorSet});
 
                 for(int i = 0; i < perModel.Model->Meshes.size(); i++)
                 {
                     MeshRange range = perModel.Model->Meshes[i].Range;
-                    vkCmdDrawIndexed(commandBuffer, range.IndicesCount, totalInstances,
-                        range.IndicesOffset, range.VerticesOffset, firstInstance);
+                    mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
+                 
                 }
                 firstInstance += totalInstances;
             }
         }
     }
 
-    void OpaqueInstances::RenderDepth2D(VkCommandBuffer commandBuffer,
+    void OpaqueInstances::RenderDepth2D(CommandBufferPtr commandBuffer,
                                         float depthBias,
                                         float depthSlope)
     {
@@ -112,40 +137,51 @@ namespace psm
             return;
         }
 
+        mShadowsPipeline->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
         //bind all necessary things
         //(pipeline, descriptor sets, push constants, uniform buffers)
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowPipeline);
+        //vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ShadowPipeline);
 
-        vkCmdSetDepthBias(commandBuffer,
-                     depthBias,
-                     1.0f,
-                     depthSlope);
+        mDeviceInternal->SetDepthBias(commandBuffer, depthBias, 1.0f, depthSlope);
 
-        VkDeviceSize offset = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer,
-                               1, //first binding 
-                               1, //binding count
-                               &m_InstanceBuffer,
-                               &offset);
+        SVertexBufferBindConfig config =
+        {
+            .FirstSlot = 1, 
+            .BindingCount = 1,
+            .Offsets = {0},
+            .Buffers = &mInstanceBuffer
+        };
+
+        mDeviceInternal->BindVertexBuffers(config);
+        //VkDeviceSize offset = { 0 };
+        //vkCmdBindVertexBuffers(commandBuffer,
+        //                       1, //first binding 
+        //                       1, //binding count
+        //                       &m_InstanceBuffer,
+        //                       &offset);
 
         uint32_t firstInstance = 0;
 
         for(auto& perModel : m_PerModels)
         {
-            perModel.Model->BindBuffers(commandBuffer);
+
+            perModel.Model->BindBuffers(mDeviceInternal, commandBuffer);
 
             for(int i = 0; i < perModel.PerMaterials.size(); i++)
             {
                 uint32_t totalInstances = perModel.PerMaterials[i].Instances.size();
 
-                vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                           m_ShadowPipelineLayout, { m_ShadowDescriptorSet });
+                mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mShadowsPipeline, { mShadowDescriptorSet });
+
+                /*vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                           m_ShadowPipelineLayout, { m_ShadowDescriptorSet });*/
 
                 for(int i = 0; i < perModel.Model->Meshes.size(); i++)
                 {
                     MeshRange range = perModel.Model->Meshes[i].Range;
-                    vkCmdDrawIndexed(commandBuffer, range.IndicesCount, totalInstances,
-                        range.IndicesOffset, range.VerticesOffset, firstInstance);
+                    mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
+                    /*vkCmdDrawIndexed(commandBuffer, range.IndicesCount, totalInstances,
+                        range.IndicesOffset, range.VerticesOffset, firstInstance);*/
                 }
                 firstInstance += totalInstances;
             }
@@ -163,7 +199,7 @@ namespace psm
             PerMaterial perMat = {};
             perMat.Material = material;
             perMat.Instances.push_back(instance);
-            AllocateAndUpdateDescriptors(&perMat.MaterialDescriptorSet, perMat.Material);
+            AllocateAndUpdateDescriptors(perMat.MaterialDescriptorSet, perMat.Material);
 
             m_Models.insert({ model, index });
 
@@ -197,13 +233,14 @@ namespace psm
         //CreateInstanceBuffer();
     }
 
-    void OpaqueInstances::CreateInstancePipelineLayout(VkRenderPass renderPass,
-        VkExtent2D extent)
+    void OpaqueInstances::CreateInstancePipelineLayout(RenderPassPtr renderPass, SResourceExtent2D extent)
     {
-        VkShaderModule vertexShader;
+        ShaderPtr vertexShader = mDeviceInternal->CreateShaderFromFilename("../Engine/Shaders/triangle.vert.txt", EShaderStageFlag::VERTEX_BIT);
+        ShaderPtr fragmentShader = mDeviceInternal->CreateShaderFromFilename("../Engine/Shaders/triangle.frag.txt", EShaderStageFlag::FRAGMENT_BIT);
+        /*VkShaderModule vertexShader;
         VkShaderModule fragmentShader;
-        vk::CreateShaderModule(vk::Device, "../Engine/Shaders/triangle.vert.txt", &vertexShader);
-        vk::CreateShaderModule(vk::Device, "../Engine/Shaders/triangle.frag.txt", &fragmentShader);
+        vk::CreateShaderModule(vk::Device, , &vertexShader);
+        vk::CreateShaderModule(vk::Device, "../Engine/Shaders/triangle.frag.txt", &fragmentShader);*/
 
         //pipeline layout
         //constexpr uint32_t pushConstantsSize = 1;
@@ -217,85 +254,91 @@ namespace psm
         //};
 
         constexpr uint32_t descriptorSetLayoutsSize = 2;
-        VkDescriptorSetLayout descriptorSetLayouts[descriptorSetLayoutsSize] =
+        DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
         {
-            m_InstanceDescriptorSetLayout,
-            m_MaterialSetLayout
+            mInstanceDescriptorSetLayout,
+            mMaterilaSetLayout
         };
 
-        vk::CreatePipelineLayout(vk::Device,
-            descriptorSetLayouts,
-            descriptorSetLayoutsSize,
-            nullptr, //pPushConstants
-            0, //push constants size 
-            &m_InstancedPipelineLayout);
+        SPipelineLayoutConfig pipelingLayoutConfig =
+        {
+            .pLayouts = descriptorSetLayouts,
+            .LayoutsSize = descriptorSetLayoutsSize,
+            .pPushConstants = nullptr,
+            .PushConstantsSize = 0
+        };
+
+        mDeviceInternal->CreatePipelineLayout(pipelingLayoutConfig);
+        //vk::CreatePipelineLayout(vk::Device,
+        //    descriptorSetLayouts,
+        //    descriptorSetLayoutsSize,
+        //    nullptr, //pPushConstants
+        //    0, //push constants size 
+        //    &m_InstancedPipelineLayout);
 
         //shader stages (describe all shader stages used in pipeline)
         constexpr size_t modulesSize = 2;
-        vk::ShaderModuleInfo modules[modulesSize] =
+        SShaderModuleConfig modules[modulesSize] =
         {
             {
-                vertexShader,                 // shader module 
-                VK_SHADER_STAGE_VERTEX_BIT,   // VkShaderStageFlag
-                "main"                        // entry point
+                .Shader = vertexShader,                 // shader module 
+                .Type = EShaderStageFlag::VERTEX_BIT,   // VkShaderStageFlag
+                .EntryPoint = "main"                        // entry point
             },
             {
-                fragmentShader,               // shader module 
-                VK_SHADER_STAGE_FRAGMENT_BIT, // VkShaderStageFlag
-                "main"                        // entry point
+                .Shader = fragmentShader,               // shader module 
+                .Type = EShaderStageFlag::FRAGMENT_BIT, // VkShaderStageFlag
+                .EntryPoint = "main"                        // entry point
             },
         };
 
-        VkPipelineShaderStageCreateInfo stages[modulesSize];
-        vk::GetPipelineShaderStages(modules, modulesSize, stages);
-
         constexpr size_t perVertexAttribsSize = 7;
-        VkVertexInputAttributeDescription vertexAttribDescr[perVertexAttribsSize] =
+        SVertexInputAttributeDescription vertexAttribDescr[perVertexAttribsSize] =
         {
             //vertex attribs input (per vertex input data)
             {
-                0,                              // location
-                0,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                offsetof(Vertex, Position)      // offset
+                .Location =  0,                              // location
+                .Binding = 0,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
+                .Offset = offsetof(Vertex, Position)      // offset
             },
             {
-                1,                              // location
-                0,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                offsetof(Vertex, Normal)        // offset
+                .Location = 1,                              // location
+                .Binding = 0,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
+                .Offset = offsetof(Vertex, Normal)        // offset
             },
             {
-                2,                              // location
-                0,                              // binding
-                VK_FORMAT_R32G32_SFLOAT,        // format
-                offsetof(Vertex, TexCoord)      // offset
+                .Location = 2,                              // location
+                .Binding = 0,                              // binding
+                .Format = EFormat::R32G32_SFLOAT,        // format
+                .Offset = offsetof(Vertex, TexCoord)      // offset
             },
 
             //instance attribs input (per instance input data)
             {
-                3,                              // location
-                1,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4) * 0               // offset
+                .Location = 3,                              // location
+                .Binding = 1,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
+                .Offset = sizeof(glm::vec4) * 0               // offset
             },
             {
-                4,                              // location
-                1,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4) * 1              // offset
+                .Location = 4,                              // location
+                .Binding = 1,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
+                .Offset = sizeof(glm::vec4) * 1              // offset
             },
             {
-                5,                              // location
-                1,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,        // format
-                sizeof(glm::vec4) * 2     // offset
+                .Location = 5,                              // location
+                .Binding = 1,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,        // format
+                .Offset = sizeof(glm::vec4) * 2     // offset
             },
             {
-                6,                              // location
-                1,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4) * 3     // offset
+                .Location = 6,                              // location
+                .Binding = 1,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
+                .Offset = sizeof(glm::vec4) * 3     // offset
             },
         };
 
@@ -313,8 +356,6 @@ namespace psm
                 VK_VERTEX_INPUT_RATE_INSTANCE // input rate
             },
         };
-
-
 
         VkPipelineVertexInputStateCreateInfo vertexInputState{};
         vk::GetVertexInputInfo(vertexAttribDescr, perVertexAttribsSize,
@@ -346,6 +387,9 @@ namespace psm
                                       0.0f,
                                       1.0f,
                                       &rasterizationStateInfo);
+
+        VkPipelineShaderStageCreateInfo stages[modulesSize];
+        vk::GetPipelineShaderStages(modules, modulesSize, stages);
 
         //create graphics pipeline (a lot of default things)
         vk::CreateGraphicsPipeline(vk::Device, extent, renderPass,
