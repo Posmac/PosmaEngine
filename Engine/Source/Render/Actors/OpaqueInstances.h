@@ -82,7 +82,7 @@ namespace psm
         void RenderDepth2D(CommandBufferPtr commandBuffer, float depthBias, float depthSlope);
         void AddInstance(std::shared_ptr<Model> model, const Material& material, const Instance& instance);
 
-        void UpdateDescriptorSets(ImagePtr shadowMapView, BufferPtr lightsBuffer);
+        void UpdateDescriptorSets(ImagePtr shadowMapView, BufferPtr lightsBuffer, BufferPtr matrixBuffer);
         void UpdateShadowDescriptors(BufferPtr lightsBuffer);
 
         void PrepareInstances();

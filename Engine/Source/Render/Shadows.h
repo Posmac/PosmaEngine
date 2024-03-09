@@ -2,6 +2,14 @@
 
 #include <array>
 
+#include "RHI/VkCommon.h"
+#include "RHI/Interface/Types.h"
+#include "RHI/Enums/ImageFormats.h"
+
+#ifdef RHI_VULKAN
+
+#endif
+
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
@@ -18,9 +26,7 @@ namespace psm
             glm::mat4 m_SpotViewProjectionMatrix;
             std::array<glm::mat4, MAX_POINT_LIGHT_SOURCES> PointLightViewProjectionMatrices;
 
-            VkBuffer ShadowBuffer;
-            VkDeviceMemory ShadowBufferMemory;
-            void* ShadowBufferMapping;
+            BufferPtr ShadowBuffer;
         };
 
         //singleton realization
@@ -33,7 +39,7 @@ namespace psm
         static Shadows* s_Instance;
         //class specific
     public:
-        void Init(uint32_t swapchainImages);
+        void Init(DevicePtr device, uint32_t swapchainImages);
         void InitShadowsBuffer();
         void InitDirectionalLightData(uint32_t swapchainImages);
         void InitPointLightsData(uint32_t swapchainImages);
@@ -42,28 +48,36 @@ namespace psm
         void RenderDepth();
         void Update();
     private:
-        ShadowsBuffer m_ShadowsBuffer;
-        VkFormat m_DepthFormat;
-        VkExtent3D m_DepthSize;
+
+        DevicePtr mDeviceInternal;
+
+        ShadowsBuffer mShadowsBuffer;
+        EFormat mDepthFormat;
+        SResourceExtent3D mDepthSize;
+        //VkFormat mDepthFormat;
+        //VkExtent3D m_DepthSize;
 
         //dir light depth image
-        std::vector<VkImage> m_DirDepthImage;
+        std::vector<ImagePtr> mDirDepthShadowMaps;
+        /*std::vector<VkImage> m_DirDepthImage;
         std::vector<VkDeviceMemory> m_DirDepthImageMemory;
-        std::vector<VkImageView> m_DirDepthImageView;
+        std::vector<VkImageView> m_DirDepthImageView;*/
 
         //point light depth images
-        std::array<std::vector<VkImage>, MAX_POINT_LIGHT_SOURCES> m_PointLightsDepthImages;
+        std::array<std::vector<ImagePtr>, MAX_POINT_LIGHT_SOURCES> mPointLightsShadowMaps;
+       /* std::array<std::vector<VkImage>, MAX_POINT_LIGHT_SOURCES> m_PointLightsDepthImages;
         std::array<std::vector<VkDeviceMemory>, MAX_POINT_LIGHT_SOURCES> m_PointLightsDepthImagesMemory;
-        std::array<std::vector<VkImageView>, MAX_POINT_LIGHT_SOURCES> m_PointLightsDepthImageViews;
+        std::array<std::vector<VkImageView>, MAX_POINT_LIGHT_SOURCES> m_PointLightsDepthImageViews;*/
 
         //spot light depth image
-        std::vector<VkImage> m_SpotDepthImage;
+        std::vector<ImagePtr> mSpotLightShadowMaps;
+        /*std::vector<VkImage> m_SpotDepthImage;
         std::vector<VkDeviceMemory> m_SpotDepthImageMemory;
-        std::vector<VkImageView> m_SpotDepthImageView;
+        std::vector<VkImageView> m_SpotDepthImageView;*/
 
         //renderer related thing
-        VkRenderPass m_ShadowRenderPass;
-        std::vector<VkFramebuffer> m_ShadowFramebuffers;
+        RenderPassPtr mShadowRenderPass;
+        std::vector<FramebufferPtr> mShadowFramebuffers;
 
         //imgui data
         float range = 100;

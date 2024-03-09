@@ -1,5 +1,10 @@
 #include "Shadows.h"
 
+#ifdef RHI_VULKAN
+#include "RHI/Vulkan/CVkDevice.h"
+#include "RHI/Vulkan/CVkBuffer.h"
+#endif
+
 namespace psm
 {
     Shadows* Shadows::s_Instance = nullptr;
@@ -14,13 +19,17 @@ namespace psm
         return s_Instance;
     }
 
-    void Shadows::Init(uint32_t swapchainImages)
+    void Shadows::Init(DevicePtr device, uint32_t swapchainImages)
     {
-        m_DepthFormat = vk::Vk::GetInstance()->FindSupportedFormat(
-            { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT /*| VK_IMAGE_USAGE_SAMPLED_BIT*/);
-        m_DepthSize = { 2048, 2048, 1 };
+        mDeviceInternal = device;
+
+        mDeviceInternal->FindSupportedFormat({EFormat::D32_SFLOAT, EFormat::D32_SFLOAT_S8_UINT, EFormat::D32_SFLOAT_S8_UINT}, EImageTiling::OPTIMAL, EFeatureFormat::DEPTH_STENCIL_ATTACHMENT_BIT);
+
+        //m_DepthFormat = vk::Vk::GetInstance()->FindSupportedFormat(
+        //    { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+        //    VK_IMAGE_TILING_OPTIMAL,
+        //    VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT /*| VK_IMAGE_USAGE_SAMPLED_BIT*/);
+        mDepthSize = { 2048, 2048, 1 };
 
         InitShadowsBuffer();
         InitDirectionalLightData(swapchainImages);
@@ -30,30 +39,60 @@ namespace psm
 
     void Shadows::InitShadowsBuffer()
     {
-        VkDeviceSize bufferSize = sizeof(m_ShadowsBuffer) - offsetof(ShadowsBuffer, ShadowBuffer);
-        vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice, 
+        uint64_t bufferSize = sizeof(mShadowsBuffer) - offsetof(ShadowsBuffer, ShadowBuffer);
+
+        SBufferConfig bufferConfig =
+        {
+            .Size = bufferSize,
+            .Usage = EBufferUsage::USAGE_UNIFORM_BUFFER_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
+
+        mShadowsBuffer.ShadowBuffer = mDeviceInternal->CreateBuffer(bufferConfig);
+        /*vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice, 
                                      bufferSize,
                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                      &m_ShadowsBuffer.ShadowBuffer, 
                                      &m_ShadowsBuffer.ShadowBufferMemory, 
-                                     &m_ShadowsBuffer.ShadowBufferMapping);
+                                     &m_ShadowsBuffer.ShadowBufferMapping);*/
     }
 
     void Shadows::InitDirectionalLightData(uint32_t swapchainImages)
     {
-        m_DirDepthImage.resize(swapchainImages);
+        mDirDepthShadowMaps.resize(swapchainImages);
+        /*m_DirDepthImage.resize(swapchainImages);
         m_DirDepthImageMemory.resize(swapchainImages);
-        m_DirDepthImageView.resize(swapchainImages);
+        m_DirDepthImageView.resize(swapchainImages);*/
 
         for(int i = 0; i < swapchainImages; i++)
         {
-            vk::CreateImageAndView(vk::Device, vk::PhysicalDevice, m_DepthSize, 1, 1, VK_IMAGE_TYPE_2D, m_DepthFormat,
+            SImageConfig imageConfig =
+            {
+                .ImageSize = mDepthSize,
+                .MipLevels = 1,
+                .ArrayLevels = 1,
+                .Type = EImageType::TYPE_2D,
+                .Format = mDepthFormat,
+                .Tiling = EImageTiling::OPTIMAL,
+                .InitialLayout = EImageLayout::UNDEFINED,
+                .Usage = EImageUsageType::USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | EImageUsageType::USAGE_SAMPLED_BIT,
+                .SharingMode = ESharingMode::EXCLUSIVE,
+                .SamplesCount = ESamplesCount::COUNT_1,
+                .Flags = EImageCreateFlags::NONE,
+                .ViewFormat = mDepthFormat,
+                .ViewType = EImageViewType::TYPE_2D,
+                .ViewAspect = EImageAspect::DEPTH_BIT
+            };
+
+            mDirDepthShadowMaps[i] = mDeviceInternal->CreateImage(imageConfig);
+
+            /*vk::CreateImageAndView(vk::Device, vk::PhysicalDevice, m_DepthSize, 1, 1, VK_IMAGE_TYPE_2D, m_DepthFormat,
                        VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
                        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                        VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
                        m_DepthFormat, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT,
-                       &m_DirDepthImage[i], &m_DirDepthImageMemory[i], &m_DirDepthImageView[i]);
+                       &m_DirDepthImage[i], &m_DirDepthImageMemory[i], &m_DirDepthImageView[i]);*/
         }
 
         glm::mat4 lightView = glm::lookAt(glm::vec3(10.0f, 0.0f, 0.0f),
@@ -62,7 +101,7 @@ namespace psm
 
         float nearFarPlanes = 100.0f;
         glm::mat4 lightProjection = glm::orthoRH_ZO(-100.0f, 100.0f, -100.0f, 100.0f, -nearFarPlanes, nearFarPlanes);
-        m_ShadowsBuffer.DirectionalLightViewProjectionMatrix = lightProjection * lightView;
+        mShadowsBuffer.DirectionalLightViewProjectionMatrix = lightProjection * lightView;
 
         //auto logVec = [](const glm::mat4& mat)
         //{
@@ -77,8 +116,21 @@ namespace psm
         //logVec(lightProjection);
         //logVec(m_DirViewProjMatrix);
 
-        ShadowsBuffer* mat = reinterpret_cast<ShadowsBuffer*>(m_ShadowsBuffer.ShadowBufferMapping);
-        mat->DirectionalLightViewProjectionMatrix = m_ShadowsBuffer.DirectionalLightViewProjectionMatrix;
+        void* mapping;
+
+        SBufferMapConfig mapConfig =
+        {
+            .Size = sizeof(mShadowsBuffer) - offsetof(ShadowsBuffer, ShadowBuffer),
+            .Offset = 0,
+            .pData = &mapping
+        };
+
+        mShadowsBuffer.ShadowBuffer->Map(mapConfig);
+
+        ShadowsBuffer* mat = reinterpret_cast<ShadowsBuffer*>(mapping);
+        mat->DirectionalLightViewProjectionMatrix = mShadowsBuffer.DirectionalLightViewProjectionMatrix;
+
+        mShadowsBuffer.ShadowBuffer->Unmap();
     }
 
     void Shadows::InitPointLightsData(uint32_t swapchainImages)
@@ -93,7 +145,7 @@ namespace psm
 
     Shadows::ShadowsBuffer& Shadows::GetBufferData()
     {
-        return m_ShadowsBuffer;
+        return mShadowsBuffer;
     }
 
     void Shadows::RenderDepth()
@@ -105,9 +157,22 @@ namespace psm
     {
         glm::mat4 lightView = glm::lookAt(position, lookAt, up);
         glm::mat4 lightProjection = glm::orthoZO(-range, range, -range, range, nearPlane, farPlane);
-        m_ShadowsBuffer.DirectionalLightViewProjectionMatrix = lightProjection * lightView;
+        mShadowsBuffer.DirectionalLightViewProjectionMatrix = lightProjection * lightView;
 
-        ShadowsBuffer* mat = reinterpret_cast<ShadowsBuffer*>(m_ShadowsBuffer.ShadowBufferMapping);
-        mat->DirectionalLightViewProjectionMatrix = m_ShadowsBuffer.DirectionalLightViewProjectionMatrix;
+        void* mapping;
+
+        SBufferMapConfig mapConfig =
+        {
+            .Size = sizeof(mShadowsBuffer) - offsetof(ShadowsBuffer, ShadowBuffer),
+            .Offset = 0,
+            .pData = &mapping
+        };
+
+        mShadowsBuffer.ShadowBuffer->Map(mapConfig);
+
+        ShadowsBuffer* mat = reinterpret_cast<ShadowsBuffer*>(mapping);
+        mat->DirectionalLightViewProjectionMatrix = mShadowsBuffer.DirectionalLightViewProjectionMatrix;
+
+        mShadowsBuffer.ShadowBuffer->Unmap();
     }
 }
