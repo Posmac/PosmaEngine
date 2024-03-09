@@ -13,6 +13,9 @@
 #include "CVkBuffer.h"
 #include "CVkShader.h"
 #include "CVkPipelineLayout.h"
+#include "CVkSampler.h"
+#include "CVkPipeline.h"
+#include "CVkDescriptorSetLayout.h"
 
 #include <Windows.h>
 #include <set>
@@ -199,6 +202,11 @@ namespace psm
         return std::make_shared<CVkBuffer>(this, config);
     }
 
+    SamplerPtr CVkDevice::CreateSampler(const SSamplerConfig& config)
+    {
+        return std::make_shared<CVkSampler>(this, config);
+    }
+
     void VerifyDeviceExtensionsSupport(std::vector<const char*>& extensionsToEnable, VkPhysicalDevice gpu)
     {
         uint32_t availableExtensionsCount;
@@ -266,6 +274,11 @@ namespace psm
     DescriptorPoolPtr CVkDevice::CreateDescriptorPool(const SDescriptorPoolConfig& config)
     {
         return std::make_shared<CVkDescriptorPool>(this, config);
+    }
+
+    DescriptorSetLayoutPtr CVkDevice::CreateDescriptorSetLayout(const SDescriptorSetLayoutConfig& config)
+    {
+        return std::make_shared<CVkDescriptorSetLayout>(this, config);
     }
 
     void CVkDevice::InsertImageMemoryBarrier(const SImageBarrierConfig& config)
@@ -377,6 +390,12 @@ namespace psm
                  depthSlope);
     }
 
+    void CVkDevice::UpdateDescriptorSets(DescriptorSetPtr* descriptorSets, uint32_t setsCount, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers)
+    {
+        vk::UpdateDescriptorSets(vk::Device, *descriptorSet, {}, imagesInfo,
+            imagesInfo.size());
+    }
+
     EFormat CVkDevice::FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature)
     {
         VkPhysicalDevice gpu = reinterpret_cast<VkPhysicalDevice>(GetDeviceData().vkData.PhysicalDevice);
@@ -404,6 +423,11 @@ namespace psm
     SurfacePtr CVkDevice::GetSurface()
     {
         return std::static_pointer_cast<ISurface>(mVkSurface);
+    }
+
+    PipelinePtr CVkDevice::CreateRenderPipeline(const SPipelineConfig& config)
+    {
+        return std::make_shared<CVkPipeline>(this, config);
     }
 
     ShaderPtr CVkDevice::CreateShaderFromFilename(const std::filesystem::path& path, EShaderStageFlag shaderType)

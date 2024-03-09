@@ -181,6 +181,7 @@
     <ClInclude Include="Source\RHI\Vulkan\CVkCommandBuffer.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkCommandPool.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkDescriptorPool.h" />
+    <ClInclude Include="Source\RHI\Vulkan\CVkDescriptorSetLayout.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkFence.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkFramebuffer.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkPipeline.h" />
@@ -274,6 +275,7 @@
     <ClCompile Include="Source\RHI\Vulkan\CVkCommandBuffer.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkCommandPool.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkDescriptorPool.cpp" />
+    <ClCompile Include="Source\RHI\Vulkan\CVkDescriptorSetLayout.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkFence.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkFramebuffer.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkPipeline.cpp" />

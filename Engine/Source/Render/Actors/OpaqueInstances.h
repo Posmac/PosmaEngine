@@ -19,7 +19,7 @@ namespace psm
     public:
         struct Material
         {
-            std::shared_ptr<Texture> Tex;
+            ImagePtr Albedo;
 
             bool operator==(const Material& lhs);
         };
@@ -29,7 +29,7 @@ namespace psm
             std::size_t operator()(const Material& mat) const
             {
                 std::hash<std::shared_ptr<void>> func;
-                return func(mat.Tex);
+                return func(mat.Albedo);
             }
         };
 
@@ -76,34 +76,23 @@ namespace psm
 
         //class related
     public:
-        void Init(DevicePtr device, 
-                  RenderPassPtr renderPass,
-                  RenderPassPtr shadowRenderPass,
-                  SResourceExtent2D windowSize);
+        void Init(DevicePtr device, RenderPassPtr renderPass, RenderPassPtr shadowRenderPass, SResourceExtent2D windowSize);
         void Deinit();
         void Render(CommandBufferPtr commandBuffer);
-        void RenderDepth2D(CommandBufferPtr commandBuffer,
-                           float depthBias,
-                           float depthSlope);
-        void AddInstance(std::shared_ptr<Model> model,
-                         const Material& material,
-                         const Instance& instance);
+        void RenderDepth2D(CommandBufferPtr commandBuffer, float depthBias, float depthSlope);
+        void AddInstance(std::shared_ptr<Model> model, const Material& material, const Instance& instance);
 
-        void UpdateDescriptorSets(ImagePtr shadowMapView,
-                                  BufferPtr lightsBuffer);
+        void UpdateDescriptorSets(ImagePtr shadowMapView, BufferPtr lightsBuffer);
         void UpdateShadowDescriptors(BufferPtr lightsBuffer);
 
         void PrepareInstances();
     private:
         void CreateInstanceDescriptorSets();
-        void CreateInstancePipelineLayout(RenderPassPtr renderPass,
-                                          SResourceExtent2D extent);
+        void CreateInstancePipelineLayout(RenderPassPtr renderPass, SResourceExtent2D extent);
         void CreateShadowDescriptorSets();
-        void CreateShadowPipeline(SResourceExtent2D size,
-                                  RenderPassPtr renderPass);
+        void CreateShadowPipeline(RenderPassPtr renderPass, SResourceExtent2D size);
         void CreateMaterialDescriptors();
-        void AllocateAndUpdateDescriptors(DescriptorSetPtr descriptorSet,
-                                          const Material& material);
+        void AllocateAndUpdateDescriptors(DescriptorSetPtr descriptorSet, const Material& material);
 
     private:
         std::unordered_map<std::shared_ptr<Model>, uint32_t> m_Models;
@@ -112,11 +101,13 @@ namespace psm
         DevicePtr mDeviceInternal;
         //pipeline data
         PipelinePtr mInstancedPipeline;
+        PipelineLayoutPtr mInstancedPipelineLayout;
         //VkPipelineLayout m_InstancedPipelineLayout;
         //VkPipeline m_InstancedPipeline;
 
         //shadow generation pipeline
         PipelinePtr mShadowsPipeline;
+        PipelineLayoutPtr mShadowsPipelineLayout;
         //VkPipelineLayout m_ShadowPipelineLayout;
         //VkPipeline m_ShadowPipeline;
 
@@ -144,6 +135,8 @@ namespace psm
         DescriptorSetPtr mShadowDescriptorSet;
         //VkDescriptorSetLayout m_ShadowDescriptorSetLayout;
         //VkDescriptorSet m_ShadowDescriptorSet;
+
+        SamplerPtr mSampler; //temporary
     };
 
     bool operator==(const OpaqueInstances::Material& lhs, const OpaqueInstances::Material& rhs);

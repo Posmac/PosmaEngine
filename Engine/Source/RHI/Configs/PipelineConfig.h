@@ -23,7 +23,19 @@ namespace psm
 
     struct SPipelineConfig
     {
-
+        RenderPassPtr RenderPass;
+        SResourceExtent2D Extent;
+        PipelineLayoutPtr PipelineLayout;
+        SVertexInputAttributeDescription* pVertexInputAttributes;
+        uint32_t VertexInputAttributeCount;
+        SVertexInputBindingDescription* pVertexInputBindings;
+        uint32_t VertexInputBindingCount;
+        SShaderModuleConfig* pShaderModules;
+        uint32_t ShaderModulesCount;
+        EDynamicState* pDynamicStates;
+        uint32_t DynamicStatesCount;
+        SInputAssemblyConfig InputAssembly;
+        SRasterizationConfig Rasterization;
     };
 
     struct SPipelineBindConfig

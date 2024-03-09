@@ -45,7 +45,6 @@ namespace psm
         virtual PipelineLayoutPtr CreatePipelineLayout(const SPipelineLayoutConfig& config) = 0;
         virtual CommandQueuePtr CreateCommandQueue(const SCommandQueueConfig& config) = 0;
         virtual PipelinePtr CreateRenderPipeline(const SPipelineConfig& config) = 0;
-        virtual PipelinePtr CreateComputePipeline(const SPipelineConfig& config) = 0;
         virtual ShaderPtr CreateShaderFromFilename(const std::filesystem::path& path, EShaderStageFlag shaderType) = 0;
         virtual FencePtr CreateFence(const SFenceConfig& config) = 0;
         virtual SemaphorePtr CreateSemaphore(const SSemaphoreConfig& config) = 0;
@@ -54,6 +53,7 @@ namespace psm
         virtual CommandBufferPtr CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config) = 0;
         virtual FramebufferPtr CreateFramebuffer(const SFramebufferConfig& config) = 0;
         virtual DescriptorPoolPtr CreateDescriptorPool(const SDescriptorPoolConfig& config) = 0;
+        virtual DescriptorSetLayoutPtr CreateDescriptorSetLayout(const SDescriptorSetLayoutConfig& config) = 0;
 
         virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) = 0;
         virtual void Submit(const SSubmitConfig& config) = 0;
@@ -65,6 +65,7 @@ namespace psm
         virtual void BindDescriptorSets(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint, PipelinePtr pipeline, const std::vector<DescriptorSetPtr>& descriptors) = 0;
         virtual void DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance) = 0;
         virtual void SetDepthBias(CommandBufferPtr commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) = 0;
+        virtual void UpdateDescriptorSets(DescriptorSetPtr* descriptorSets, uint32_t setsCount, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) = 0;
 
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) = 0;
 

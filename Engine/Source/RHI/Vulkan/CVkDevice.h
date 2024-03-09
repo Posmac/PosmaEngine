@@ -27,7 +27,6 @@ namespace psm
         virtual PipelineLayoutPtr CreatePipelineLayout(const SPipelineLayoutConfig& config) override;
         virtual CommandQueuePtr CreateCommandQueue(const SCommandQueueConfig& config) override;
         virtual PipelinePtr CreateRenderPipeline(const SPipelineConfig& config) override;
-        virtual PipelinePtr CreateComputePipeline(const SPipelineConfig& config) override;
         virtual ShaderPtr CreateShaderFromFilename(const std::filesystem::path& path, EShaderStageFlag shaderType) override;
         virtual FencePtr CreateFence(const SFenceConfig& config) override;
         virtual SemaphorePtr CreateSemaphore(const SSemaphoreConfig& config) override;
@@ -36,6 +35,7 @@ namespace psm
         virtual CommandBufferPtr CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config) override;
         virtual FramebufferPtr CreateFramebuffer(const SFramebufferConfig& config) override;
         virtual DescriptorPoolPtr CreateDescriptorPool(const SDescriptorPoolConfig& config) override;
+        virtual DescriptorSetLayoutPtr CreateDescriptorSetLayout(const SDescriptorSetLayoutConfig& config) override;
 
         virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) override;
         virtual void Submit(const SSubmitConfig& config) override;
@@ -47,6 +47,7 @@ namespace psm
         virtual void BindDescriptorSets(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint, PipelinePtr pipeline, const std::vector<DescriptorSetPtr>& descriptors) override;
         virtual void DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance) override;
         virtual void SetDepthBias(CommandBufferPtr commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) override;
+        virtual void UpdateDescriptorSets(DescriptorSetPtr* descriptorSets, uint32_t setsCount, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) override;
 
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) override;
 

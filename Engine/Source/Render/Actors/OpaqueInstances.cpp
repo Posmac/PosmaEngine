@@ -1,10 +1,12 @@
 #include "OpaqueInstances.h"
 
 #include "RHI/Configs/ShadersConfig.h"
+#include "RHI/Configs/RenderPassConfig.h"
 
 #ifdef RHI_VULKAN
 #include "RHI/Vulkan/CVkDevice.h"
 #include "RHI/Vulkan/CVkPipeline.h"
+#include "RHI/Vulkan/CVkBuffer.h"
 #endif
 
 namespace psm
@@ -62,7 +64,7 @@ namespace psm
         CreateInstancePipelineLayout(defaultRenderPass, windowSize);
 
         CreateShadowDescriptorSets();
-        CreateShadowPipeline(windowSize, shadowRenderPass);
+        CreateShadowPipeline(shadowRenderPass, windowSize);
     }
 
     void OpaqueInstances::Deinit()
@@ -268,7 +270,7 @@ namespace psm
             .PushConstantsSize = 0
         };
 
-        mDeviceInternal->CreatePipelineLayout(pipelingLayoutConfig);
+        mInstancedPipelineLayout = mDeviceInternal->CreatePipelineLayout(pipelingLayoutConfig);
         //vk::CreatePipelineLayout(vk::Device,
         //    descriptorSetLayouts,
         //    descriptorSetLayoutsSize,
@@ -343,76 +345,118 @@ namespace psm
         };
 
         constexpr size_t bindingsSize = 2;
-        VkVertexInputBindingDescription bindingDescriptions[bindingsSize] =
+        SVertexInputBindingDescription bindingDescriptions[bindingsSize] =
         {
             {
-                0,                          // binding
-                sizeof(Vertex),             // stride
-                VK_VERTEX_INPUT_RATE_VERTEX // input rate
+                .Binding = 0,                          // binding
+                .Stride =  sizeof(Vertex),             // stride
+                .InputRate = EVertexInputRate::VERTEX // input rate
             },
             {
-                1,                          // binding
-                sizeof(glm::mat4),             // stride
-                VK_VERTEX_INPUT_RATE_INSTANCE // input rate
+                .Binding = 1,                          // binding
+                .Stride = sizeof(glm::mat4),             // stride
+                .InputRate = EVertexInputRate::INSTANCE // input rate
             },
         };
 
-        VkPipelineVertexInputStateCreateInfo vertexInputState{};
-        vk::GetVertexInputInfo(vertexAttribDescr, perVertexAttribsSize,
-            bindingDescriptions, bindingsSize, &vertexInputState);
+        SInputAssemblyConfig inputAssembly =
+        {
+            .Topology = EPrimitiveTopology::TRIANGLE_LIST,
+            .RestartPrimitives = false
+        };
 
-        //input assembly
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
-        vk::GetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false, &inputAssemblyInfo);
+        ////move inside vulkan class
+        //{
+        //    VkPipelineVertexInputStateCreateInfo vertexInputState{};
+        //    vk::GetVertexInputInfo(vertexAttribDescr, perVertexAttribsSize,
+        //        bindingDescriptions, bindingsSize, &vertexInputState);
 
-        VkPipelineMultisampleStateCreateInfo msState{};
-        vk::GetPipelineMultisampleState(false, false, 1, nullptr, vk::MaxMsaaSamples, &msState);
+        //    //input assembly
+        //    VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
+        //    vk::GetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false, &inputAssemblyInfo);
+
+        //    VkPipelineMultisampleStateCreateInfo msState{};
+        //    vk::GetPipelineMultisampleState(false, false, 1, nullptr, vk::MaxMsaaSamples, &msState);
+
+        //    VkPipelineShaderStageCreateInfo stages[modulesSize];
+        //    vk::GetPipelineShaderStages(modules, modulesSize, stages);
+        //}
 
         constexpr size_t dynamicStatesCount = 2;
-        VkDynamicState dynamicStates[dynamicStatesCount] =
+        EDynamicState dynamicStates[dynamicStatesCount] =
         {
-            VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_SCISSOR,
+            EDynamicState::SCISSOR,
+            EDynamicState::VIEWPORT
         };
 
-        VkPipelineRasterizationStateCreateInfo rasterizationStateInfo{};
-        vk::GetRasterizationStateInfo(VK_FALSE,
-                                      VK_FALSE,
-                                      VK_POLYGON_MODE_FILL,
-                                      VK_CULL_MODE_BACK_BIT,
-                                      VK_FRONT_FACE_COUNTER_CLOCKWISE,
-                                      VK_FALSE,
-                                      0.0f,
-                                      0.0f,
-                                      0.0f,
-                                      1.0f,
-                                      &rasterizationStateInfo);
+        SRasterizationConfig rasterization =
+        {
+            .DepthClampEnable = false,
+            .RasterizerDiscardEnable = false,
+            .CullMode = ECullMode::BACK_BIT,
+            .PolygonMode = EPolygonMode::FILL,
+            .FrontFace = EFrontFace::COUNTER_CLOCKWISE,
+            .DepthBiasEnable = false,
+            .DepthBiasConstantFactor = 0.0f,
+            .DepthBiasClamp = 0.0f,
+            .DepthBiasSlopeFactor = 0.0f,
+            .LineWidth = 1.0f,
+        };
 
-        VkPipelineShaderStageCreateInfo stages[modulesSize];
-        vk::GetPipelineShaderStages(modules, modulesSize, stages);
+        //VkPipelineRasterizationStateCreateInfo rasterizationStateInfo{};
+        //vk::GetRasterizationStateInfo(VK_FALSE,
+        //                              VK_FALSE,
+        //                              VK_POLYGON_MODE_FILL,
+        //                              VK_CULL_MODE_BACK_BIT,
+        //                              VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        //                              VK_FALSE,
+        //                              0.0f,
+        //                              0.0f,
+        //                              0.0f,
+        //                              1.0f,
+        //                              &rasterizationStateInfo);
 
-        //create graphics pipeline (a lot of default things)
-        vk::CreateGraphicsPipeline(vk::Device, extent, renderPass,
-                                   m_InstancedPipelineLayout, stages,
-                                   modulesSize, dynamicStates, dynamicStatesCount,
-                                   &msState, &vertexInputState,
-                                   &inputAssemblyInfo, &rasterizationStateInfo,
-                                   &m_InstancedPipeline);
+        ////create graphics pipeline (a lot of default things)
+        //vk::CreateGraphicsPipeline(vk::Device, extent, renderPass,
+        //                           m_InstancedPipelineLayout, stages,
+        //                           modulesSize, dynamicStates, dynamicStatesCount,
+        //                           &msState, &vertexInputState,
+        //                           &inputAssemblyInfo, &rasterizationStateInfo,
+        //                           &m_InstancedPipeline);
+        
+        SPipelineConfig pipelineConfig =
+        {
+            .RenderPass = renderPass,
+            .Extent = extent,
+            .PipelineLayout = mInstancedPipelineLayout,
+            .pVertexInputAttributes = vertexAttribDescr,
+            .VertexInputAttributeCount = perVertexAttribsSize,
+            .pVertexInputBindings = bindingDescriptions,
+            .VertexInputBindingCount = bindingsSize,
+            .pShaderModules = modules,
+            .ShaderModulesCount = modulesSize,
+            .pDynamicStates = dynamicStates,
+            .DynamicStatesCount = dynamicStatesCount,
+            .InputAssembly = inputAssembly,
+            .Rasterization = rasterization,
+        };
 
-        vk::DestroyShaderModule(vk::Device, vertexShader);
-        vk::DestroyShaderModule(vk::Device, fragmentShader);
+        mDeviceInternal->CreateRenderPipeline(pipelineConfig);
+
+        /*vk::DestroyShaderModule(vk::Device, vertexShader);
+        vk::DestroyShaderModule(vk::Device, fragmentShader);*/
     }
 
     void OpaqueInstances::CreateShadowDescriptorSets()
     {
         //descriptor set layout 
-        std::vector<vk::DescriptorLayoutInfo> shaderDescriptorInfo =
+        std::vector<SDescriptorLayoutInfo> shaderDescriptorInfo =
         {
             {
-                0, //binding
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, //descriptor type
-                1, //count
-                VK_SHADER_STAGE_VERTEX_BIT //vertex stage
+                .Binding = 0, //binding
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER, //descriptor type
+                .DescriptorCount = 1, //count
+                .ShaderStage = EShaderStageFlag::VERTEX_BIT //vertex stage
             },
             //{
             //    1, //binding
@@ -422,198 +466,256 @@ namespace psm
             //}
         };
 
-        vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo }, 0,
-                                      &m_ShadowDescriptorSetLayout);
+        SDescriptorSetLayoutConfig layoutConfig =
+        {
+            .pLayoutsInfo = shaderDescriptorInfo.data(),
+            .LayoutsCount = 1,
+        };
 
-        vk::AllocateDescriptorSets(vk::Device, m_DescriptorPool, { m_ShadowDescriptorSetLayout },
-            1, &m_ShadowDescriptorSet);
+        mDeviceInternal->CreateDescriptorSetLayout(layoutConfig);
     }
 
-    void OpaqueInstances::CreateShadowPipeline(VkExtent2D size,
-                                               VkRenderPass renderPass)
+    void OpaqueInstances::CreateShadowPipeline(RenderPassPtr renderPass, SResourceExtent2D size)
     {
-        VkShaderModule vertexShader;
+        ShaderPtr vertexShader = mDeviceInternal->CreateShaderFromFilename("../Engine/Shaders/shadow2D.vert.txt", EShaderStageFlag::VERTEX_BIT);
+        /*VkShaderModule vertexShader;
         vk::CreateShaderModule(vk::Device,
                                "../Engine/Shaders/shadow2D.vert.txt",
-                               &vertexShader);
+                               &vertexShader);*/
 
         //pipeline layout
         constexpr uint32_t descriptorSetLayoutsSize = 1;
-        VkDescriptorSetLayout descriptorSetLayouts[descriptorSetLayoutsSize] =
+        DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
         {
-            m_ShadowDescriptorSetLayout
+            mShadowDescriptorSetLayout
         };
 
-        vk::CreatePipelineLayout(vk::Device,
-            descriptorSetLayouts,
-            descriptorSetLayoutsSize,
-            nullptr,                    //push constants pointer
-            0,                          //push constants size
-            &m_ShadowPipelineLayout);
+        SPipelineLayoutConfig pipelineLayoutConfig =
+        {
+            .pLayouts = descriptorSetLayouts,
+            .LayoutsSize = descriptorSetLayoutsSize,
+            .pPushConstants = nullptr,
+            .PushConstantsSize = 0
+        };
+
+        mShadowsPipelineLayout = mDeviceInternal->CreatePipelineLayout(pipelineLayoutConfig);
+
+        //vk::CreatePipelineLayout(vk::Device,
+        //    descriptorSetLayouts,
+        //    descriptorSetLayoutsSize,
+        //    nullptr,                    //push constants pointer
+        //    0,                          //push constants size
+        //    &m_ShadowPipelineLayout);
 
         //shader stages
         constexpr size_t modulesSize = 1;
-        vk::ShaderModuleInfo modules[modulesSize] =
+        SShaderModuleConfig modules[modulesSize] =
         {
             {
-                vertexShader,                 // shader module 
-                VK_SHADER_STAGE_VERTEX_BIT,   // VkShaderStageFlag
-                "main"                        // entry point
+                .Shader = vertexShader,                 // shader module 
+                .Type = EShaderStageFlag::VERTEX_BIT,   // VkShaderStageFlag
+                .EntryPoint = "main"                        // entry point
             },
         };
 
-        VkPipelineShaderStageCreateInfo stages[modulesSize];
+     /*   VkPipelineShaderStageCreateInfo stages[modulesSize];
         vk::GetPipelineShaderStages(modules, modulesSize, stages);
 
         VkPipelineMultisampleStateCreateInfo msState{};
-        vk::GetPipelineMultisampleState(false, false, 1, nullptr, VK_SAMPLE_COUNT_1_BIT, &msState);
+        vk::GetPipelineMultisampleState(false, false, 1, nullptr, VK_SAMPLE_COUNT_1_BIT, &msState);*/
 
         constexpr size_t attribsSize = 5;
-        VkVertexInputAttributeDescription vertexAttribDescr[attribsSize] =
+        SVertexInputAttributeDescription vertexAttribDescr[attribsSize] =
         {
             //vertex input (per vertex)
             {
-                0,                              // location
-                0,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                offsetof(Vertex, Position)      // offset
+                .Location = 0,                              // location
+                .Binding =  0,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
+                .Offset = offsetof(Vertex, Position)      // offset
             },
             //instance attribs input (per instance)
             {
-                1,                              // location
-                1,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4) * 0     // offset
+                .Location = 1,                              // location
+                .Binding = 1,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
+                .Offset = sizeof(glm::vec4) * 0     // offset
             },
             {
-                2,                              // location
-                1,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4) * 1       // offset
+                .Location = 2,                              // location
+                .Binding = 1,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
+                .Offset = sizeof(glm::vec4) * 1       // offset
             },
             {
-                3,                              // location
-                1,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,        // format
-                sizeof(glm::vec4) * 2     // offset
+                .Location = 3,                              // location
+                .Binding = 1,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,        // format
+                .Offset = sizeof(glm::vec4) * 2     // offset
             },
             {   
-                4,                              // location
-                1,                              // binding
-                VK_FORMAT_R32G32B32A32_SFLOAT,  // format
-                sizeof(glm::vec4) * 3     // offset
+                .Location = 4,                              // location
+                .Binding = 1,                              // binding
+                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
+                .Offset = sizeof(glm::vec4) * 3     // offset
             },
         };
 
         constexpr size_t bindingsSize = 2;
-        VkVertexInputBindingDescription bindingDescriptions[bindingsSize] =
+        SVertexInputBindingDescription bindingDescriptions[bindingsSize] =
         {
             {
-                0,                          // binding
-                sizeof(Vertex),             // string
-                VK_VERTEX_INPUT_RATE_VERTEX // input rate
+                .Binding = 0,                          // binding
+                .Stride = sizeof(Vertex),             // string
+                .InputRate = EVertexInputRate::VERTEX // input rate
             },
             {
-                1,                          // binding
-                sizeof(glm::mat4),             // string
-                VK_VERTEX_INPUT_RATE_INSTANCE // input rate
+                .Binding = 1,                          // binding
+                .Stride = sizeof(glm::mat4),             // string
+                .InputRate = EVertexInputRate::INSTANCE // input rate
             },
         };
 
-        VkPipelineVertexInputStateCreateInfo vertexInputState{};
+        /*VkPipelineVertexInputStateCreateInfo vertexInputState{};
         vk::GetVertexInputInfo(vertexAttribDescr, attribsSize,
-            bindingDescriptions, bindingsSize, &vertexInputState);
+            bindingDescriptions, bindingsSize, &vertexInputState);*/
 
-        //input assembly
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
-        vk::GetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false, &inputAssemblyInfo);
+        SInputAssemblyConfig inputAssembly =
+        {
+            .Topology = EPrimitiveTopology::TRIANGLE_LIST,
+            .RestartPrimitives = false
+        };
+        ////input assembly
+        //VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
+        //vk::GetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false, &inputAssemblyInfo);
 
         constexpr size_t dynamicStatesCount = 3;
-        VkDynamicState dynamicStates[dynamicStatesCount] =
+        EDynamicState dynamicStates[dynamicStatesCount] =
         {
-            VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_SCISSOR,
-            VK_DYNAMIC_STATE_DEPTH_BIAS,
+            EDynamicState::VIEWPORT,
+            EDynamicState::SCISSOR,
+            EDynamicState::DEPTH_BIAS,
         };
 
-        VkPipelineRasterizationStateCreateInfo rasterizationStateInfo{};
-        vk::GetRasterizationStateInfo(VK_FALSE,
-                                      VK_FALSE,
-                                      VK_POLYGON_MODE_FILL,
-                                      VK_CULL_MODE_FRONT_BIT,//for depth only rendering it is better
-                                      VK_FRONT_FACE_COUNTER_CLOCKWISE,
-                                      VK_TRUE,
-                                      0.0f,
-                                      1.0f,
-                                      0.0f,
-                                      1.0f,
-                                      &rasterizationStateInfo);
+        SRasterizationConfig rasterization =
+        {
+            .DepthClampEnable = false,
+            .RasterizerDiscardEnable = false,
+            .CullMode = ECullMode::FRONT_BIT,
+            .PolygonMode = EPolygonMode::FILL,
+            .FrontFace = EFrontFace::COUNTER_CLOCKWISE,
+            .DepthBiasEnable = true,
+            .DepthBiasConstantFactor = 0.0f,
+            .DepthBiasClamp = 1.0f,
+            .DepthBiasSlopeFactor = 0.0f,
+            .LineWidth = 1.0f,
+        };
 
-        vk::CreateGraphicsPipeline(vk::Device, size, renderPass,
-                                   m_ShadowPipelineLayout, stages, modulesSize,
-                                   dynamicStates, dynamicStatesCount,
-                                   &msState, &vertexInputState, &inputAssemblyInfo, &rasterizationStateInfo,
-                                   &m_ShadowPipeline);
+        //VkPipelineRasterizationStateCreateInfo rasterizationStateInfo{};
+        //vk::GetRasterizationStateInfo(VK_FALSE,
+        //                              VK_FALSE,
+        //                              VK_POLYGON_MODE_FILL,
+        //                              VK_CULL_MODE_FRONT_BIT,//for depth only rendering it is better
+        //                              VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        //                              VK_TRUE,
+        //                              0.0f,
+        //                              1.0f,
+        //                              0.0f,
+        //                              1.0f,
+        //                              &rasterizationStateInfo);
+
+        //vk::CreateGraphicsPipeline(vk::Device, size, renderPass,
+        //                           m_ShadowPipelineLayout, stages, modulesSize,
+        //                           dynamicStates, dynamicStatesCount,
+        //                           &msState, &vertexInputState, &inputAssemblyInfo, &rasterizationStateInfo,
+        //                           &m_ShadowPipeline);
+
+        SPipelineConfig pipelineConfig =
+        {
+            .RenderPass = renderPass,
+            .Extent = size,
+            .PipelineLayout = mInstancedPipelineLayout,
+            .pVertexInputAttributes = vertexAttribDescr,
+            .VertexInputAttributeCount = attribsSize,
+            .pVertexInputBindings = bindingDescriptions,
+            .VertexInputBindingCount = bindingsSize,
+            .pShaderModules = modules,
+            .ShaderModulesCount = modulesSize,
+            .pDynamicStates = dynamicStates,
+            .DynamicStatesCount = dynamicStatesCount,
+            .InputAssembly = inputAssembly,
+            .Rasterization = rasterization,
+        };
+
+        mShadowsPipeline = mDeviceInternal->CreateRenderPipeline(pipelineConfig);
     }
 
     void OpaqueInstances::CreateMaterialDescriptors()
     {
         //descriptor set layout 
-        std::vector<vk::DescriptorLayoutInfo> shaderDescriptorInfo =
+        std::vector<SDescriptorLayoutInfo> shaderDescriptorInfo =
         {
             {
-                0, //binding
-                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, //descriptor type
-                1, //count
-                VK_SHADER_STAGE_FRAGMENT_BIT //vertex stage
+                .Binding =  0, //binding
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER, //descriptor type
+                .DescriptorCount = 1, //count
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT //vertex stage
             }
         };
 
-        vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo }, 0,
-                                      &m_MaterialSetLayout);
+        SDescriptorSetLayoutConfig config =
+        {
+            .pLayoutsInfo = shaderDescriptorInfo.data(),
+            .LayoutsCount = shaderDescriptorInfo.size()
+        };
+
+        mMaterilaSetLayout = mDeviceInternal->CreateDescriptorSetLayout(config);
+        /*vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo }, 0,
+                                      &m_MaterialSetLayout);*/
     }
 
-    void OpaqueInstances::AllocateAndUpdateDescriptors(VkDescriptorSet* descriptorSet,
-                                                       const Material& material)
+    void OpaqueInstances::AllocateAndUpdateDescriptors(DescriptorSetPtr descriptorSet, const Material& material)
     {
-        vk::AllocateDescriptorSets(vk::Device, m_DescriptorPool,
-                                           { m_MaterialSetLayout },
-                                           1, descriptorSet);
+        descriptorSet = mDescriptorPool->AllocateDescriptorSets({ mMaterilaSetLayout }, 1);
 
-        std::vector<vk::UpdateTextureInfo> imagesInfo =
+        /*vk::AllocateDescriptorSets(vk::Device, m_DescriptorPool,
+                                           { m_MaterialSetLayout },
+                                           1, descriptorSet);*/
+
+        /*SamplerPtr Sampler;
+        ImagePtr Image;
+        EImageLayout ImageLayout;
+        uint32_t DstBinding;
+        EDescriptorType  DescriptorType;*/
+
+        std::vector<SUpdateTextureConfig> texturesUpdateInfo =
         {
             {
-                {
-                    //VkDescriptorImageInfo
-                    vk::Sampler,                                // sampler
-                    material.Tex->ImageView,                  // image view
-                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,   // image layout
-                },
-
-                0,                                              // binding
-                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,      // descriptor type
+                .Sampler = mSampler,
+                .Image = material.Albedo,
+                .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .DstBinding = 0,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
             }
         };
+        
+        mDeviceInternal->UpdateDescriptorSets(&descriptorSet, 1, texturesUpdateInfo, {});
 
-        vk::UpdateDescriptorSets(vk::Device, *descriptorSet, {}, imagesInfo,
-            imagesInfo.size());
+        //vk::UpdateDescriptorSets(vk::Device, *descriptorSet, {}, imagesInfo,
+        //    imagesInfo.size());
     }
 
-    void OpaqueInstances::UpdateShadowDescriptors(VkBuffer dirLightBuffer)
+    void OpaqueInstances::UpdateShadowDescriptors(BufferPtr dirLightBuffer)
     {
         //update descriptor sets
-        std::vector<vk::UpdateBuffersInfo> buffersInfo =
+        std::vector<SUpdateBuffersConfig> buffersInfo =
         {
              {
-                 {
-                     //VkDescriptorBufferInfo
-                     dirLightBuffer,              // buffer
-                     0 , // offset
-                     sizeof(glm::mat4),           // range
-                  },
-
-                  0,                                 // binding
-                  VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
+                .Buffer = dirLightBuffer,
+                .Offset = 0,
+                .Range = sizeof(glm::mat4),
+                .DstBinding = 0,
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
              },
 
              //{
@@ -629,8 +731,10 @@ namespace psm
              //},
         };
 
-        vk::UpdateDescriptorSets(vk::Device, m_ShadowDescriptorSet, buffersInfo, {},
-            buffersInfo.size() /*+ imagesInfo.size()*/);
+        mDeviceInternal->UpdateDescriptorSets(&mShadowDescriptorSet, 1, {}, buffersInfo);
+
+        //vk::UpdateDescriptorSets(vk::Device, m_ShadowDescriptorSet, buffersInfo, {},
+        //    buffersInfo.size() /*+ imagesInfo.size()*/);
     }
 
     void OpaqueInstances::PrepareInstances()
@@ -650,20 +754,37 @@ namespace psm
             }
         }
 
-        if(m_InstanceBuffer != VK_NULL_HANDLE)
+        if(mInstanceBuffer != nullptr)
         {
-            vk::DestroyBuffer(vk::Device, m_InstanceBuffer);
-            vk::FreeMemory(vk::Device, m_InstanceBufferMemory);
+            mInstanceBuffer = nullptr;
         }
 
         VkDeviceSize bufferSize = sizeof(Instance) * totalInstances;
 
         void* instanceBufferMapping = nullptr;
 
-        vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice,
+        SBufferConfig bufferConfig =
+        {
+            .Size = bufferSize,
+            .Usage = EBufferUsage::USAGE_VERTEX_BUFFER_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
+
+        mInstanceBuffer = mDeviceInternal->CreateBuffer(bufferConfig);
+        /*vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice,
             bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &m_InstanceBuffer, &m_InstanceBufferMemory, &instanceBufferMapping);
+            &m_InstanceBuffer, &m_InstanceBufferMemory, &instanceBufferMapping);*/
+
+        SBufferMapConfig mapConfig =
+        {
+            .Size = bufferSize,
+            .Offset = 0,
+            .pData = &instanceBufferMapping,
+            .Flags = 0 //0 everythime for now
+        };
+
+        mInstanceBuffer->Map(mapConfig);
 
         Instance* perInstance = reinterpret_cast<Instance*>(instanceBufferMapping);
 
@@ -678,25 +799,31 @@ namespace psm
                 }
             }
         }
-        vk::UnmapMemory(vk::Device, m_InstanceBufferMemory);
+
+        mInstanceBuffer->Unmap();
+        //vk::UnmapMemory(vk::Device, m_InstanceBufferMemory);
     }
 
-    void OpaqueInstances::UpdateDescriptorSets(VkImageView shadowMapView,
-                                               VkBuffer lightsBuffer)
+    void OpaqueInstances::UpdateDescriptorSets(ImagePtr shadowMapView, BufferPtr lightsBuffer, BufferPtr matrixBuffer)
     {
         //update descriptor sets
-        std::vector<vk::UpdateBuffersInfo> buffersInfo =
+        std::vector<SUpdateBuffersConfig> buffersInfo =
         {
              {
-                 {
-                     //VkDescriptorBufferInfo
-                     vk::PerFrameBuffer,              // buffer
-                     0 , // offset 
-                     sizeof(PerFrameData),           // range
-                 },
+                .Buffer = matrixBuffer,  //vk::PerFrameBuffer
+                .Offset = 0,
+                .Range = sizeof(glm::mat4) * 3,
+                .DstBinding = 0,
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
+                 //{
+                 //    //VkDescriptorBufferInfo
+                 //    vk::PerFrameBuffer,              // buffer
+                 //    0 , // offset 
+                 //    sizeof(PerFrameData),           // range
+                 //},
 
-                  0,                                 // binding
-                  VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
+                 // 0,                                 // binding
+                 // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
              },
              //{
              //    {
@@ -710,57 +837,68 @@ namespace psm
              //     VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
              //},
             {
-                {
+                 .Buffer = lightsBuffer,  //vk::PerFrameBuffer
+                .Offset = 0,
+                .Range = sizeof(glm::mat4),
+                .DstBinding = 2,
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
+                /*{
                     lightsBuffer,
                     0,
                     sizeof(glm::mat4)
                 },
 
                 2,
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER*/
             },
         };
 
-        std::vector<vk::UpdateTextureInfo> imagesInfo =
+        std::vector<SUpdateTextureConfig> imagesInfo =
         {
             {
-                {
+                .Sampler = mSampler,
+                .Image = shadowMapView,
+                .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .DstBinding = 1,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
+                /*{
                     vk::Sampler,
                     shadowMapView,
                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                 },
 
                 1,
-                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER*/
             },
         };
 
-        vk::UpdateDescriptorSets(vk::Device, m_InstanceDescriptorSet, buffersInfo, imagesInfo,
-            buffersInfo.size() + imagesInfo.size());
+        mDeviceInternal->UpdateDescriptorSets(&mInstanceDescriptorSet, 1, imagesInfo, buffersInfo);
+        /*vk::UpdateDescriptorSets(vk::Device, m_InstanceDescriptorSet, buffersInfo, imagesInfo,
+            buffersInfo.size() + imagesInfo.size());*/
     }
 
     void OpaqueInstances::CreateInstanceDescriptorSets()
     {
         //descriptor set layout 
-        std::vector<vk::DescriptorLayoutInfo> shaderDescriptorInfo =
+        std::vector<SDescriptorLayoutInfo> shaderDescriptorInfo =
         {
             {
-                0, //binding
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, //descriptor type
-                1, //count
-                VK_SHADER_STAGE_VERTEX_BIT //vertex stage
+                .Binding = 0, //binding
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER, //descriptor type
+                .DescriptorCount = 1, //count
+                .ShaderStage = EShaderStageFlag::VERTEX_BIT//vertex stage
             },
             {
-                1,
-                VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                1,
-                VK_SHADER_STAGE_FRAGMENT_BIT
+                .Binding = 1,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER,
+                .DescriptorCount = 1,
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT
             },
             {
-                2, //binding
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, //descriptor type
-                1, //count
-                VK_SHADER_STAGE_FRAGMENT_BIT //vertex stage
+                .Binding = 2, //binding
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER, //descriptor type
+                .DescriptorCount = 1, //count
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT //vertex stage
             },
             /* {
                  2,
@@ -777,21 +915,31 @@ namespace psm
              }*/
         };
 
-        vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo },
+        SDescriptorSetLayoutConfig descriptorSetLayoutConfig =
+        {
+            .pLayoutsInfo = shaderDescriptorInfo.data(),
+            .LayoutsCount = 1,
+        };
+
+        mInstanceDescriptorSetLayout = mDeviceInternal->CreateDescriptorSetLayout(descriptorSetLayoutConfig);
+
+        mDescriptorPool->AllocateDescriptorSets({ mInstanceDescriptorSetLayout }, 1);
+
+        /*vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo },
                                       0, &m_InstanceDescriptorSetLayout);
 
         vk::AllocateDescriptorSets(vk::Device, m_DescriptorPool,
                                    { m_InstanceDescriptorSetLayout },
-                                   1, &m_InstanceDescriptorSet);
+                                   1, &m_InstanceDescriptorSet);*/
     }
 
     bool OpaqueInstances::Material::operator==(const Material& lhs)
     {
-        return this->Tex.get() == lhs.Tex.get();
+        return this->Albedo.get() == lhs.Albedo.get();
     }
 
     bool operator==(const OpaqueInstances::Material& lhs, const OpaqueInstances::Material& rhs)
     {
-        return lhs.Tex.get() == rhs.Tex.get();
+        return lhs.Albedo.get() == rhs.Albedo.get();
     }
 }

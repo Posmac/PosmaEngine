@@ -9,7 +9,7 @@
 
 namespace psm
 {
-    CVkSampler::CVkSampler(DevicePtr& device, const SamplerConfig& config)
+    CVkSampler::CVkSampler(DevicePtr device, const SSamplerConfig& config)
     {
         mVkDevice = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
         VkResult result = vk::CreateTextureSampler(mVkDevice, ToVulkan(config.MagFilter), ToVulkan(config.MinFilter), 

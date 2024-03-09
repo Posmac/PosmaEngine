@@ -186,8 +186,8 @@ namespace psm
 
     CVkBuffer::~CVkBuffer()
     {
-        FreeMemory(mDeviceInternal, mVkMemory);
         DestroyBuffer(mDeviceInternal, mVkBuffer);
+        FreeMemory(mDeviceInternal, mVkMemory);
     }
 
     void CVkBuffer::Map(SBufferMapConfig& config)

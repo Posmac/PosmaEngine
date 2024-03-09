@@ -48,5 +48,5 @@ namespace psm
     using PipelinePtr = std::shared_ptr<IPipeline>;
     using DescriptorSetLayoutPtr = std::shared_ptr<IDescriptorSetLayout>;
     using ShaderPtr = std::shared_ptr<IShader>;
-    using PushConstantPtr = std::shared_ptr<IPushConstant>
+    using PushConstantPtr = std::shared_ptr<IPushConstant>;
 }
