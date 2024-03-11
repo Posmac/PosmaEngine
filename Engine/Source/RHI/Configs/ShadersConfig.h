@@ -30,6 +30,14 @@ namespace psm
         POINT = 2,
     };
 
+    struct SDescriptorSetAllocateConfig
+    {
+        DescriptorPoolPtr DescriptorPool;
+        DescriptorSetPtr DescriptorSet;
+        std::vector<DescriptorSetLayoutPtr> DescriptorSetLayouts;
+        uint32_t MaxSets;
+    };
+
     struct SRasterizationConfig
     {
         bool DepthClampEnable;

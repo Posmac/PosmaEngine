@@ -49,6 +49,8 @@ namespace psm
 
         VkResult result = vkBeginCommandBuffer(mCommandBuffers[config.BufferIndex], &begin);
         VK_CHECK_RESULT(result);
+
+        mCurrentCommandBuffer = config.BufferIndex;
     }
 
     void CVkCommandBuffer::EndCommandBuffer(uint32_t index)

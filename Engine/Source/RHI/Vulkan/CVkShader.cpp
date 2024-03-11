@@ -1,13 +1,21 @@
 #include "CVkShader.h"
 
+#include "CVkDevice.h"
+#include "RHI/VkCommon.h"
+
+#include <iostream>
+#include <fstream>
+
 namespace psm
 {
     CVkShader::CVkShader(DevicePtr device, const std::string path, EShaderStageFlag shaderType)
     {
+        mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
+
         std::ifstream fileStream(path, std::ios::ate | std::ios::binary);
         if(!fileStream.is_open())
         {
-            std::cout << "File path: " << path << " is wrong!" << std::endl;
+            LogMessage(MessageSeverity::Error, "File path: " + path + " is wrong!");
             return;
         }
 
@@ -25,12 +33,12 @@ namespace psm
         shaderModuleCreateInfo.codeSize = fileSize;
         shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(buffer.data());
 
-        VkResult result = vkCreateShaderModule(logicalDevice, &shaderModuleCreateInfo,
-            nullptr, module);
+        VkResult result = vkCreateShaderModule(mDeviceInternal, &shaderModuleCreateInfo, nullptr, &mShader);
+        VK_CHECK_RESULT(result);
+    }
 
-        if(result != VK_SUCCESS)
-        {
-            std::cout << "Failed to create shader module" << std::endl;
-        }
+    CVkShader::~CVkShader()
+    {
+        vkDestroyShaderModule(mDeviceInternal, mShader, nullptr);
     }
 }

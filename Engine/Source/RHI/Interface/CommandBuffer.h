@@ -15,7 +15,6 @@ namespace psm
         virtual void ResetAtIndex(uint32_t index) = 0;
         virtual void BeginAtIndex(const SCommandBufferBeginConfig& config) = 0;
         virtual void EndCommandBuffer(uint32_t index) = 0;
-        virtual void GetCommandBuffer(uint32_t index) = 0;
         virtual void* GetRawPointer() = 0;
     };
 }

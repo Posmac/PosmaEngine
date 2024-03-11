@@ -3,10 +3,14 @@
 #include <cassert>
 
 #include "Include/vulkan/vulkan.h"
-#include "../Enums/SamplerFormats.h"
-#include "../Enums/BufferFormats.h"
-#include "../Enums/ImageFormats.h"
-#include "../Enums/RenderPassFormats.h"
+#include "RHI/Enums/SamplerFormats.h"
+#include "RHI/Enums/BufferFormats.h"
+#include "RHI/Enums/ImageFormats.h"
+#include "RHI/Enums/RenderPassFormats.h"
+#include "RHI/Enums/ResourceFormats.h"
+#include "RHI/Enums/PipelineFormats.h"
+#include "RHI/Configs/CommandBuffers.h"
+#include "RHI/Configs/RenderPassConfig.h"
 
 namespace psm
 {
@@ -1248,6 +1252,58 @@ namespace psm
                 VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
             default:
                 VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE;
+        }
+    }
+
+    VkDescriptorType ToVulkan(EDescriptorType DescriptorType)
+    {
+        switch(DescriptorType)
+        {
+            case psm::EDescriptorType::SAMPLER:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_SAMPLER;
+            case psm::EDescriptorType::COMBINED_IMAGE_SAMPLER:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            case psm::EDescriptorType::SAMPLED_IMAGE:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            case psm::EDescriptorType::STORAGE_IMAGE:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+            case psm::EDescriptorType::UNIFORM_TEXEL_BUFFER:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+            case psm::EDescriptorType::STORAGE_TEXEL_BUFFER:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+            case psm::EDescriptorType::UNIFORM_BUFFER:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            case psm::EDescriptorType::STORAGE_BUFFER:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            case psm::EDescriptorType::UNIFORM_BUFFER_DYNAMIC:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            case psm::EDescriptorType::STORAGE_BUFFER_DYNAMIC:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+            case psm::EDescriptorType::INPUT_ATTACHMENT:
+                return VkDescriptorType::VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+        }
+    }
+
+    VkShaderStageFlags ToVulkan(EShaderStageFlag ShaderStage)
+    {
+        switch(ShaderStage)
+        {
+            case psm::EShaderStageFlag::VERTEX_BIT:
+                return VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT;
+            case psm::EShaderStageFlag::TESSELLATION_CONTROL_BIT:
+                return VkShaderStageFlagBits::VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+            case psm::EShaderStageFlag::TESSELLATION_EVALUATION_BIT:
+                return VkShaderStageFlagBits::VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+            case psm::EShaderStageFlag::GEOMETRY_BIT:
+                return VkShaderStageFlagBits::VK_SHADER_STAGE_GEOMETRY_BIT;
+            case psm::EShaderStageFlag::FRAGMENT_BIT:
+                return VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT;
+            case psm::EShaderStageFlag::COMPUTE_BIT:
+                return VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT;
+            case psm::EShaderStageFlag::ALL_GRAPHICS:
+                return VkShaderStageFlagBits::VK_SHADER_STAGE_ALL_GRAPHICS;
+            case psm::EShaderStageFlag::ALL:
+                return VkShaderStageFlagBits::VK_SHADER_STAGE_ALL;
         }
     }
 }

@@ -71,7 +71,9 @@ namespace psm
 
     CVkImage::~CVkImage()
     {
-
+        vkFreeMemory(mDeviceInternal, mImageMemory, nullptr);
+        vkDestroyImageView(mDeviceInternal, mImageView, nullptr);
+        vkDestroyImage(mDeviceInternal, mImage, nullptr);
     }
 
     EImageType CVkImage::GetImageType() const

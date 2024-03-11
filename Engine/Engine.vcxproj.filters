@@ -309,9 +309,6 @@
     <ClInclude Include="Source\RHI\Configs\CommandBuffers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\Vulkan\CVkTexture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\RHI\Interface\Framebuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -516,9 +513,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\RHI\Vulkan\CVkCommandPool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\RHI\Vulkan\CVkTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\RHI\Vulkan\CVkFramebuffer.cpp">

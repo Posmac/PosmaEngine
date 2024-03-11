@@ -181,13 +181,17 @@ namespace psm
 
     ImagePtr CVkDevice::CreateImageWithData(const SImageConfig& config, const SUntypedBuffer& data, const SImageLayoutTransition& transition)
     {
-        vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
+        /*vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
                                { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,
                                VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
                                VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
                                VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
-                               &texture->Image, &texture->ImageMemory, &texture->ImageView);
+                               &texture->Image, &texture->ImageMemory, &texture->ImageView);*/
+
+        ImagePtr image = std::make_shared<CVkImage>(this, config);
+
+
 
         vk::LoadDataIntoImageUsingBuffer(vk::Device, vk::PhysicalDevice,
                                          , m_CommandPool, vk::Queues.GraphicsQueue,
@@ -251,6 +255,11 @@ namespace psm
         return std::make_shared<CVkPipelineLayout>(this, config);
     }
 
+    CommandQueuePtr CVkDevice::CreateCommandQueue(const SCommandQueueConfig& config)
+    {
+        return CommandQueuePtr();
+    }
+
     RenderPassPtr CVkDevice::CreateRenderPass(const SRenderPassConfig& config)
     {
         return std::make_shared<CVkRenderPass>(this, config);
@@ -279,6 +288,30 @@ namespace psm
     DescriptorSetLayoutPtr CVkDevice::CreateDescriptorSetLayout(const SDescriptorSetLayoutConfig& config)
     {
         return std::make_shared<CVkDescriptorSetLayout>(this, config);
+    }
+
+    void CVkDevice::AllocateDescriptorSets(const SDescriptorSetAllocateConfig& config)
+    {
+        VkDescriptorPool vkPool = reinterpret_cast<VkDescriptorPool>(config.DescriptorPool->GetPointer());
+        VkDescriptorSet vkSet = reinterpret_cast<VkDescriptorSet>(config.DescriptorSet->GetPointer());
+
+        std::vector<VkDescriptorSetLayout> layouts;
+        layouts.resize(config.DescriptorSetLayouts.size());
+
+        for(int i = 0; i < layouts.size(); i++)
+        {
+            layouts[i] = reinterpret_cast<VkDescriptorSetLayout>(config.DescriptorSetLayouts[i]->GetPointer());
+        }
+
+        VkDescriptorSetAllocateInfo setsAllocInfo{};
+        setsAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        setsAllocInfo.pNext = nullptr;
+        setsAllocInfo.descriptorPool = vkPool;
+        setsAllocInfo.descriptorSetCount = config.MaxSets;
+        setsAllocInfo.pSetLayouts = layouts.data();
+
+        VkResult result = vkAllocateDescriptorSets(mDevice, &setsAllocInfo, &vkSet);
+        VK_CHECK_RESULT(result);
     }
 
     void CVkDevice::InsertImageMemoryBarrier(const SImageBarrierConfig& config)

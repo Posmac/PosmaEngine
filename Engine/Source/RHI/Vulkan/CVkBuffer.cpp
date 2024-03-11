@@ -1,7 +1,6 @@
 #include "CVkBuffer.h"
 
 #include "../RHICommon.h"
-//#include "RenderBackend/Buffer.h"
 #include "TypeConvertor.h"
 #include "CVkDevice.h"
 #include "RenderBackend/Memory.h"
@@ -13,6 +12,8 @@ namespace psm
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 
         VkPhysicalDevice physicalDevice = reinterpret_cast<VkPhysicalDevice>(device->GetDeviceData().vkData.PhysicalDevice);
+
+        mSize = config.Size;
 
         VkResult result = CreateBuffer(mDeviceInternal,
                          physicalDevice,
@@ -192,13 +193,12 @@ namespace psm
 
     void CVkBuffer::Map(SBufferMapConfig& config)
     {
-        vkMapMemory(mDeviceInternal, vertexStagingBufferMemory, vertexOffset,
-                currentVerticesSize, 0, &vertexData);
+        vkMapMemory(mDeviceInternal, mVkMemory, config.Offset, config.Size, 0, config.pData);
     }
 
     void CVkBuffer::Unmap()
     {
-        vkUnmapMemory(vk::Device, vertexStagingBufferMemory);
+        vkUnmapMemory(mDeviceInternal, mVkMemory);
     }
 
     void CVkBuffer::Flush(SBufferFlushConfig & config)
@@ -207,10 +207,29 @@ namespace psm
         VkMappedMemoryRange range{};
         range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         range.pNext = nullptr;
-        range.memory = vertexStagingBufferMemory;
-        range.offset = vertexOffset;
-        range.size = currentVerticesSize;
+        range.memory = mVkMemory;
+        range.offset = config.Offset;
+        range.size = config.Size;
 
-        vkFlushMappedMemoryRanges(vk::Device, 1, &range);
+        vkFlushMappedMemoryRanges(mDeviceInternal, 1, &range);
+    }
+
+    void CVkBuffer::UpdateBuffer(const SUntypedBuffer& data)
+    {
+        void* pData;
+
+        SBufferMapConfig mapping =
+        {
+            .Size = data.size(),
+            .Offset = 0,
+            .pData = &pData,
+            .Flags = 0
+        };
+
+        Map(mapping);
+
+        memcpy(pData, data.data(), data.size());
+
+        Unmap();
     }
 }

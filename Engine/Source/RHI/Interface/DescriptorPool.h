@@ -7,7 +7,8 @@ namespace psm
     public:
         IDescriptorPool() = default;
         virtual ~IDescriptorPool() = default;
-        virtual DescriptorSetPtr AllocateDescriptorSets(const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts, uint32_t maxSets) = 0;
+
+        virtual void* GetPointer() = 0;
     };
 
     class IDescriptorSetLayout
@@ -15,5 +16,16 @@ namespace psm
     public:
         IDescriptorSetLayout() = default;
         virtual ~IDescriptorSetLayout() = default;
+
+        virtual void* GetPointer() = 0;
+    };
+
+    class IDescriptorSet
+    {
+    public:
+        IDescriptorSet() = default;
+        virtual ~IDescriptorSet() = default;
+
+        virtual void* GetPointer() = 0;
     };
 }

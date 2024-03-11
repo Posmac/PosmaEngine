@@ -16,7 +16,8 @@ namespace psm
     public:
         CVkDescriptorPool(DevicePtr device, const SDescriptorPoolConfig& config);
         virtual ~CVkDescriptorPool();
-        virtual DescriptorSetPtr AllocateDescriptorSets(const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts, uint32_t maxSets) override;
+
+        virtual void* GetPointer() override;
 
     private:
         VkDevice mDeviceInternal;

@@ -20,7 +20,6 @@ namespace psm
         virtual void ResetAtIndex(uint32_t index) override;
         virtual void BeginAtIndex(const SCommandBufferBeginConfig& config) override;
         virtual void EndCommandBuffer(uint32_t index) override;
-        virtual void GetCommandBuffer(uint32_t index) override;
         virtual void* GetRawPointer() override;
 
     private:

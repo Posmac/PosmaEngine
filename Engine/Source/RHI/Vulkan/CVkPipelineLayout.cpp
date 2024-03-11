@@ -11,4 +11,7 @@ namespace psm
            0, //push constants size 
            &m_InstancedPipelineLayout);
     }
+
+    CVkPipelineLayout::~CVkPipelineLayout()
+    {}
 }

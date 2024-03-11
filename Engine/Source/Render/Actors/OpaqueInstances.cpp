@@ -117,13 +117,13 @@ namespace psm
             {
                 uint32_t totalInstances = perModel.PerMaterials[i].Instances.size();
 
-                mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mInstancedPipeline, {mInstanceDescriptorSet, perModel.PerMaterials[i].MaterialDescriptorSet});
+                mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mInstancedPipeline, { mInstanceDescriptorSet, perModel.PerMaterials[i].MaterialDescriptorSet });
 
                 for(int i = 0; i < perModel.Model->Meshes.size(); i++)
                 {
                     MeshRange range = perModel.Model->Meshes[i].Range;
                     mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
-                 
+
                 }
                 firstInstance += totalInstances;
             }
@@ -148,7 +148,7 @@ namespace psm
 
         SVertexBufferBindConfig config =
         {
-            .FirstSlot = 1, 
+            .FirstSlot = 1,
             .BindingCount = 1,
             .Offsets = {0},
             .Buffers = &mInstanceBuffer
@@ -299,7 +299,7 @@ namespace psm
         {
             //vertex attribs input (per vertex input data)
             {
-                .Location =  0,                              // location
+                .Location = 0,                              // location
                 .Binding = 0,                              // binding
                 .Format = EFormat::R32G32B32A32_SFLOAT,  // format
                 .Offset = offsetof(Vertex, Position)      // offset
@@ -349,7 +349,7 @@ namespace psm
         {
             {
                 .Binding = 0,                          // binding
-                .Stride =  sizeof(Vertex),             // stride
+                .Stride = sizeof(Vertex),             // stride
                 .InputRate = EVertexInputRate::VERTEX // input rate
             },
             {
@@ -423,7 +423,7 @@ namespace psm
         //                           &msState, &vertexInputState,
         //                           &inputAssemblyInfo, &rasterizationStateInfo,
         //                           &m_InstancedPipeline);
-        
+
         SPipelineConfig pipelineConfig =
         {
             .RenderPass = renderPass,
@@ -483,7 +483,7 @@ namespace psm
                                "../Engine/Shaders/shadow2D.vert.txt",
                                &vertexShader);*/
 
-        //pipeline layout
+                               //pipeline layout
         constexpr uint32_t descriptorSetLayoutsSize = 1;
         DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
         {
@@ -518,11 +518,11 @@ namespace psm
             },
         };
 
-     /*   VkPipelineShaderStageCreateInfo stages[modulesSize];
-        vk::GetPipelineShaderStages(modules, modulesSize, stages);
+        /*   VkPipelineShaderStageCreateInfo stages[modulesSize];
+           vk::GetPipelineShaderStages(modules, modulesSize, stages);
 
-        VkPipelineMultisampleStateCreateInfo msState{};
-        vk::GetPipelineMultisampleState(false, false, 1, nullptr, VK_SAMPLE_COUNT_1_BIT, &msState);*/
+           VkPipelineMultisampleStateCreateInfo msState{};
+           vk::GetPipelineMultisampleState(false, false, 1, nullptr, VK_SAMPLE_COUNT_1_BIT, &msState);*/
 
         constexpr size_t attribsSize = 5;
         SVertexInputAttributeDescription vertexAttribDescr[attribsSize] =
@@ -530,7 +530,7 @@ namespace psm
             //vertex input (per vertex)
             {
                 .Location = 0,                              // location
-                .Binding =  0,                              // binding
+                .Binding = 0,                              // binding
                 .Format = EFormat::R32G32B32A32_SFLOAT,  // format
                 .Offset = offsetof(Vertex, Position)      // offset
             },
@@ -553,7 +553,7 @@ namespace psm
                 .Format = EFormat::R32G32B32A32_SFLOAT,        // format
                 .Offset = sizeof(glm::vec4) * 2     // offset
             },
-            {   
+            {
                 .Location = 4,                              // location
                 .Binding = 1,                              // binding
                 .Format = EFormat::R32G32B32A32_SFLOAT,  // format
@@ -656,7 +656,7 @@ namespace psm
         std::vector<SDescriptorLayoutInfo> shaderDescriptorInfo =
         {
             {
-                .Binding =  0, //binding
+                .Binding = 0, //binding
                 .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER, //descriptor type
                 .DescriptorCount = 1, //count
                 .ShaderStage = EShaderStageFlag::FRAGMENT_BIT //vertex stage
@@ -676,17 +676,25 @@ namespace psm
 
     void OpaqueInstances::AllocateAndUpdateDescriptors(DescriptorSetPtr descriptorSet, const Material& material)
     {
-        descriptorSet = mDescriptorPool->AllocateDescriptorSets({ mMaterilaSetLayout }, 1);
+        SDescriptorSetAllocateConfig allocateConfig =
+        {
+            .DescriptorPool = mDescriptorPool,
+            .DescriptorSet = descriptorSet,
+            .DescriptorSetLayouts = {mMaterilaSetLayout},
+            .MaxSets = 1
+        };
+
+         mDeviceInternal->AllocateDescriptorSets(allocateConfig);
 
         /*vk::AllocateDescriptorSets(vk::Device, m_DescriptorPool,
                                            { m_MaterialSetLayout },
                                            1, descriptorSet);*/
 
-        /*SamplerPtr Sampler;
-        ImagePtr Image;
-        EImageLayout ImageLayout;
-        uint32_t DstBinding;
-        EDescriptorType  DescriptorType;*/
+                                           /*SamplerPtr Sampler;
+                                           ImagePtr Image;
+                                           EImageLayout ImageLayout;
+                                           uint32_t DstBinding;
+                                           EDescriptorType  DescriptorType;*/
 
         std::vector<SUpdateTextureConfig> texturesUpdateInfo =
         {
@@ -698,7 +706,7 @@ namespace psm
                 .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
             }
         };
-        
+
         mDeviceInternal->UpdateDescriptorSets(&descriptorSet, 1, texturesUpdateInfo, {});
 
         //vk::UpdateDescriptorSets(vk::Device, *descriptorSet, {}, imagesInfo,
@@ -815,42 +823,42 @@ namespace psm
                 .Range = sizeof(glm::mat4) * 3,
                 .DstBinding = 0,
                 .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
-                 //{
-                 //    //VkDescriptorBufferInfo
-                 //    vk::PerFrameBuffer,              // buffer
-                 //    0 , // offset 
-                 //    sizeof(PerFrameData),           // range
-                 //},
+                //{
+                //    //VkDescriptorBufferInfo
+                //    vk::PerFrameBuffer,              // buffer
+                //    0 , // offset 
+                //    sizeof(PerFrameData),           // range
+                //},
 
-                 // 0,                                 // binding
-                 // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
-             },
-             //{
-             //    {
-             //        //VkDescriptorBufferInfo
-             //        m_InstanceBuffer,              // buffer
-             //        0 , // offset
-             //        sizeof(glm::mat4),           // range
-             //    },
-
-             //     1,                                 // binding
-             //     VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
-             //},
-            {
-                 .Buffer = lightsBuffer,  //vk::PerFrameBuffer
-                .Offset = 0,
-                .Range = sizeof(glm::mat4),
-                .DstBinding = 2,
-                .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
-                /*{
-                    lightsBuffer,
-                    0,
-                    sizeof(glm::mat4)
-                },
-
-                2,
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER*/
+                // 0,                                 // binding
+                // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
             },
+            //{
+            //    {
+            //        //VkDescriptorBufferInfo
+            //        m_InstanceBuffer,              // buffer
+            //        0 , // offset
+            //        sizeof(glm::mat4),           // range
+            //    },
+
+            //     1,                                 // binding
+            //     VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // descriptor type
+            //},
+           {
+                .Buffer = lightsBuffer,  //vk::PerFrameBuffer
+               .Offset = 0,
+               .Range = sizeof(glm::mat4),
+               .DstBinding = 2,
+               .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
+               /*{
+                   lightsBuffer,
+                   0,
+                   sizeof(glm::mat4)
+               },
+
+               2,
+               VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER*/
+           },
         };
 
         std::vector<SUpdateTextureConfig> imagesInfo =
@@ -923,7 +931,15 @@ namespace psm
 
         mInstanceDescriptorSetLayout = mDeviceInternal->CreateDescriptorSetLayout(descriptorSetLayoutConfig);
 
-        mDescriptorPool->AllocateDescriptorSets({ mInstanceDescriptorSetLayout }, 1);
+        SDescriptorSetAllocateConfig allocateConfig =
+        {
+            .DescriptorPool = mDescriptorPool,
+            .DescriptorSet = mInstanceDescriptorSet,
+            .DescriptorSetLayouts = {mInstanceDescriptorSetLayout},
+            .MaxSets = 1
+        };
+
+        mDeviceInternal->AllocateDescriptorSets(allocateConfig);
 
         /*vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo },
                                       0, &m_InstanceDescriptorSetLayout);

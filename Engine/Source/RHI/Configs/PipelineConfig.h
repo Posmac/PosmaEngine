@@ -2,8 +2,11 @@
 
 #include <vector>
 
+#include "RHI/VkCommon.h"
 #include "RHI/Interface/Types.h"
 #include "RHI/Enums/PipelineFormats.h"
+#include "RHI/Enums/RenderPassFormats.h"
+#include "RHI/Configs/ShadersConfig.h"
 
 namespace psm
 {

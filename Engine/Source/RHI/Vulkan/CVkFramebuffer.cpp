@@ -36,7 +36,7 @@ namespace psm
 
     CVkFramebuffer::~CVkFramebuffer()
     {
-
+        vkDestroyFramebuffer(mDeviceInternal, mFramebuffer, nullptr);
     }
 
     void* CVkFramebuffer::GetRawPointer()

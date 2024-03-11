@@ -66,6 +66,7 @@ namespace psm
         virtual void DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance) = 0;
         virtual void SetDepthBias(CommandBufferPtr commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) = 0;
         virtual void UpdateDescriptorSets(DescriptorSetPtr* descriptorSets, uint32_t setsCount, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) = 0;
+        virtual void AllocateDescriptorSets(const SDescriptorSetAllocateConfig& config) = 0;
 
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) = 0;
 

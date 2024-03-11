@@ -4,7 +4,7 @@
 
 namespace psm
 {
-    CVkSemaphore::CVkSemaphore(DevicePtr device, const SemaphoreConfig& config/*not used for now*/)
+    CVkSemaphore::CVkSemaphore(DevicePtr device, const SSemaphoreConfig& config/*not used for now*/)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 

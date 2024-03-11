@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <cstdint>
 
 #include "Include/vulkan/vulkan.h"
 #include "RHI/Interface/Buffer.h"
@@ -16,7 +17,6 @@ namespace psm
         virtual void Unmap() override;
         virtual void Flush(SBufferFlushConfig& config) override;
         virtual void UpdateBuffer(const SUntypedBuffer& data) override;
-        virtual void* GetMappedDataPtr() override;
     private:
         VkResult CreateBuffer(VkDevice device,
             VkPhysicalDevice gpu,
@@ -60,6 +60,7 @@ namespace psm
         void DestroyBuffer(VkDevice device, VkBuffer buffer);
         void FreeMemory(VkDevice device, VkDeviceMemory memory);
     private:
+        uint64_t mSize;
         VkDevice mDeviceInternal;
         VkBuffer mVkBuffer;
         VkDeviceMemory mVkMemory;

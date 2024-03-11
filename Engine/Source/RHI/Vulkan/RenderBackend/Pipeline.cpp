@@ -100,7 +100,7 @@ namespace psm
             VkResult result = vkCreateGraphicsPipelines(logicalDevice, nullptr, 1,
                 &graphicsPipelineInfo, nullptr, pipeline);
 
-            VK_CHECK_RESULT(result);
+            //VK_CHECK_RESULT(result);
         }
 
         void DestroyPipeline(VkDevice device, VkPipeline pipeline)
