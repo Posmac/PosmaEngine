@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../VkCommon.h"
-#include "../Enums/BufferFormats.h"
+#include "RHI/VkCommon.h"
+#include "RHI/Enums/BufferFormats.h"
 
 namespace psm
 {

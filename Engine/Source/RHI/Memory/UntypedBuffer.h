@@ -1,12 +1,14 @@
 #pragma once
 
+#include <cstdint>
+
 namespace psm
 {
-    struct SUntypedBuffer //mutable
-    {
-        void* DataPtr;
-        size_t DataSize;
-    };
+    //struct SUntypedBuffer //mutable
+    //{
+    //    void* DataPtr;
+    //    size_t DataSize;
+    //};
 
     struct SUntypedBuffer //immutable
     {

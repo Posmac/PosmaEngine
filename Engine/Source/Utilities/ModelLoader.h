@@ -6,13 +6,13 @@
 #include <cassert>
 #include <unordered_map>
 
-#include "Core/Log.h"
-
 #include "tiny_obj_loader.h"
 
 #include "Model/Mesh.h"
 #include "Model/Vertex.h"
 #include "Model/Model.h"
+
+#include "RHI/Interface/Types.h"
 
 namespace psm
 {
@@ -28,10 +28,10 @@ namespace psm
         static ModelLoader* s_Instance;
         //class specific
     public:
-        void Init(VkCommandPool commandPool);
-
+        void Init(DevicePtr device, CommandPoolPtr commandPool);
         void LoadModel(const std::string& path, Model* model);
     private:
-        VkCommandPool m_CommandPool;
+        DevicePtr mDevice;
+        CommandPoolPtr mCommandPool;
     };
 }

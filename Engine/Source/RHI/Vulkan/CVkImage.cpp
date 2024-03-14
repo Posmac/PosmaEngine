@@ -65,7 +65,7 @@ namespace psm
         imageViewCreateInfo.subresourceRange.levelCount = config.MipLevels;
         imageViewCreateInfo.subresourceRange.layerCount = 1;
 
-        VkResult result = vkCreateImageView(mDeviceInternal, &imageViewCreateInfo, nullptr, &mImageView);
+        result = vkCreateImageView(mDeviceInternal, &imageViewCreateInfo, nullptr, &mImageView);
         VK_CHECK_RESULT(result);
     }
 

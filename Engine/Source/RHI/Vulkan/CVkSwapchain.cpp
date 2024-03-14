@@ -4,6 +4,7 @@
 //#include "RenderBackend/SwapChain.h"
 
 #include "CVkDevice.h"
+#include "CVkSemaphore.h"
 #include "RHI/RHICommon.h"
 #include "CVkSurface.h"
 #include "RHI/Enums/ImageFormats.h"
@@ -27,7 +28,7 @@ namespace psm
         swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapchainCreateInfo.pNext = nullptr;
         swapchainCreateInfo.flags = 0;
-        swapchainCreateInfo.surface = vkSurface->GetSurface();
+        swapchainCreateInfo.surface = reinterpret_cast<VkSurfaceKHR>(vkSurface->GetSurface());
         swapchainCreateInfo.minImageCount = 
             (data.Capabilities.minImageCount + 1 <= data.Capabilities.maxImageCount) ?
             data.Capabilities.minImageCount + 1 : data.Capabilities.maxImageCount;
@@ -80,25 +81,42 @@ namespace psm
 
     void CVkSwapchain::GetNextImage(const SSwapchainAquireNextImageConfig& config, uint32_t* index)
     {
-        VkResult result = vkAcquireNextImageKHR(vk::Device, m_SwapChain, UINT64_MAX,
-                                                m_ImageAvailableSemaphores[m_CurrentFrame],
-                                                nullptr, &imageIndex);
+        VkResult result = vkAcquireNextImageKHR(mDeviceInternal, mSwapChain, config.Timeout, 
+                                                reinterpret_cast<VkSemaphore>(config.Semaphore->GetRawData()),
+                                                nullptr, index);
 
         VK_CHECK_RESULT(result);
     }
 
-    ImagePtr& CVkSwapchain::ImageAtIndex(uint32_t index)
+    ImagePtr CVkSwapchain::ImageAtIndex(uint32_t index)
     {
-        // TODO: insert return statement here
+        return nullptr;
     }
 
-    void CVkSwapchain::Present(const SSwapchainPresentConfig& config)
+    void CVkSwapchain::Present(const SPresentConfig& config)
     {
+        std::vector<VkSemaphore> waitSemaphores(config.WaitSemaphoresCount);
+        for(int i = 0; i < config.WaitSemaphoresCount; i++)
+        {
+            waitSemaphores[i] = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[i]->GetRawData());
+        }
 
+        VkPresentInfoKHR presentInfo = {};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        presentInfo.waitSemaphoreCount = waitSemaphores.size();
+        presentInfo.pWaitSemaphores = waitSemaphores.data();
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = &mSwapChain;
+        presentInfo.pImageIndices = &config.ImageIndex;
+
+        VkResult result = vkQueuePresentKHR(reinterpret_cast<VkQueue>(config.Queue), &presentInfo);
+        VK_CHECK_RESULT(result);
     }
 
     void CVkSwapchain::SetVsyncMode(bool enabled)
-    {}
+    {
+
+    }
 
     uint32_t CVkSwapchain::GetImagesCount()
     {

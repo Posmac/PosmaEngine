@@ -1,6 +1,7 @@
 #include "CVkCommandPool.h"
 
 #include "CVkDevice.h"
+#include "CVkCommandBuffer.h"
 
 namespace psm
 {
@@ -21,6 +22,18 @@ namespace psm
     CVkCommandPool::~CVkCommandPool()
     {
         vkDestroyCommandPool(mDeviceInternal, mCommandPool, nullptr);
+    }
+
+    void CVkCommandPool::FreeCommandBuffers(const std::vector<CommandBufferPtr>& commandBuffers)
+    {
+        std::vector<VkCommandBuffer> vkCmdBuffers(commandBuffers.size());
+        for(int i = 0; i < commandBuffers.size(); i++)
+        {
+            vkCmdBuffers[i] = reinterpret_cast<VkCommandBuffer>(commandBuffers[i]->GetRawPointer());
+        }
+
+        //we are not freeing all command buffers
+        vkFreeCommandBuffers(mDeviceInternal, mCommandPool, vkCmdBuffers.size(), vkCmdBuffers.data());
     }
 
     void* CVkCommandPool::GetCommandPool()

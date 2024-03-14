@@ -39,6 +39,8 @@ namespace psm
         {
             LogMessage(severity, pCallbackData->pMessage);
         }
+
+        return false;
     }
 
     void InitVk(const InitOptions& options)

@@ -6,7 +6,7 @@
 
 namespace psm
 {
-    static SeverityMessageCallback CallbackFn = [](MessageSeverity severity, const std::string& message)
+    void LogMessage(MessageSeverity severity, const std::string& message)
     {
         constexpr auto severityToStr = [](MessageSeverity severity)
         {
@@ -28,11 +28,7 @@ namespace psm
         std::string str = std::format("RGL [{}] - {}\n", severityToStr(severity), message);
         OutputDebugStringA(str.c_str());
 #endif
-    };
 
-    void LogMessage(MessageSeverity severity, const std::string& message)
-    {
-        CallbackFn(severity, message);
         if(severity == MessageSeverity::Fatal)
         {
             throw std::runtime_error(message);

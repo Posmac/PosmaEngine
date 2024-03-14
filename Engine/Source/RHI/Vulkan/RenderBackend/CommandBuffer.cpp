@@ -17,7 +17,6 @@ namespace psm
             commandPoolCreateInfo.queueFamilyIndex = graphicsFamilyIndex;
 
             VkResult result = vkCreateCommandPool(logicalDevice, &commandPoolCreateInfo, nullptr, commandPool);
-            VK_CHECK_RESULT(result);
         }
 
         void CreateCommandBuffers(VkDevice logicalDevice,

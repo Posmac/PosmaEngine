@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(RHI_VULKAN)
+//#if defined(RHI_VULKAN)
 
 #include "Include/vulkan/vulkan.h"
 #include "Include/vulkan/vk_enum_string_helper.h"
@@ -25,4 +25,4 @@ true;
 false;
 #endif
 
-#endif
+//#endif

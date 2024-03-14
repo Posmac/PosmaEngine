@@ -2,6 +2,10 @@
 
 #include <memory>
 
+#include "Include/vulkan/vulkan.h"
+
+#include "RHI/Interface/Types.h"
+
 #include "RHI/Interface/Sampler.h"
 #include "RHI/Configs/SamplerConfig.h"
 
@@ -12,6 +16,8 @@ namespace psm
     public:
         CVkSampler(DevicePtr device, const SSamplerConfig& config);
         virtual ~CVkSampler();
+
+        virtual void* GetPointer() override;
     private:
         VkDevice mVkDevice;
         VkSampler mVkSampler;

@@ -78,32 +78,32 @@ namespace psm
         BY_REGION_BIT = 0x00000001,
     };
 
-    EPipelineStageFlags operator | (const EPipelineStageFlags& rhs, const EPipelineStageFlags& lhs)
+    inline EPipelineStageFlags operator | (const EPipelineStageFlags& rhs, const EPipelineStageFlags& lhs)
     {
         return static_cast<EPipelineStageFlags>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
     }
 
-    EPipelineStageFlags operator & (const EPipelineStageFlags& rhs, const EPipelineStageFlags& lhs)
+    inline EPipelineStageFlags operator & (const EPipelineStageFlags& rhs, const EPipelineStageFlags& lhs)
     {
         return static_cast<EPipelineStageFlags>(static_cast<uint32_t>(rhs) & static_cast<uint32_t>(lhs));
     }
 
-    bool operator != (const EPipelineStageFlags rhs, uint32_t lhs)
+    inline bool operator != (const EPipelineStageFlags rhs, uint32_t lhs)
     {
         return static_cast<uint32_t>(rhs) != lhs;
     }
 
-    EAccessFlags operator | (const EAccessFlags& rhs, const EAccessFlags& lhs)
+    inline EAccessFlags operator | (const EAccessFlags& rhs, const EAccessFlags& lhs)
     {
         return static_cast<EAccessFlags>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
     }
 
-    EAccessFlags operator & (const EAccessFlags& rhs, const EAccessFlags& lhs)
+    inline EAccessFlags operator & (const EAccessFlags& rhs, const EAccessFlags& lhs)
     {
         return static_cast<EAccessFlags>(static_cast<uint32_t>(rhs) & static_cast<uint32_t>(lhs));
     }
 
-    bool operator != (const EAccessFlags rhs, uint32_t lhs)
+    inline bool operator != (const EAccessFlags rhs, uint32_t lhs)
     {
         return static_cast<uint32_t>(rhs) != lhs;
     }

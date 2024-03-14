@@ -27,7 +27,7 @@ namespace psm
     struct SPipelineConfig
     {
         RenderPassPtr RenderPass;
-        SResourceExtent2D Extent;
+        SResourceExtent2D ViewPortExtent;
         PipelineLayoutPtr PipelineLayout;
         SVertexInputAttributeDescription* pVertexInputAttributes;
         uint32_t VertexInputAttributeCount;

@@ -17,6 +17,8 @@ namespace psm
         virtual void Wait(const SFenceWaitConfig& config) override;
         virtual void Reset() override;
         virtual void Signal() override;
+
+        virtual void* GetPointer() override;
     private:
         VkFence mFence;
         VkDevice mDeviceInternal;

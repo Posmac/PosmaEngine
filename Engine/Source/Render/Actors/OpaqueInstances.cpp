@@ -99,7 +99,7 @@ namespace psm
             .Buffers = &mInstanceBuffer
         };
 
-        mDeviceInternal->BindVertexBuffers(vertexBufferBind);
+        mDeviceInternal->BindVertexBuffers(commandBuffer, vertexBufferBind);
         //VkDeviceSize offset = { 0 };
         //vkCmdBindVertexBuffers(commandBuffer,
         //                       1, //first binding 
@@ -117,7 +117,7 @@ namespace psm
             {
                 uint32_t totalInstances = perModel.PerMaterials[i].Instances.size();
 
-                mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mInstancedPipeline, { mInstanceDescriptorSet, perModel.PerMaterials[i].MaterialDescriptorSet });
+                mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mInstancedPipelineLayout, { mInstanceDescriptorSet, perModel.PerMaterials[i].MaterialDescriptorSet });
 
                 for(int i = 0; i < perModel.Model->Meshes.size(); i++)
                 {
@@ -154,7 +154,7 @@ namespace psm
             .Buffers = &mInstanceBuffer
         };
 
-        mDeviceInternal->BindVertexBuffers(config);
+        mDeviceInternal->BindVertexBuffers(commandBuffer, config);
         //VkDeviceSize offset = { 0 };
         //vkCmdBindVertexBuffers(commandBuffer,
         //                       1, //first binding 
@@ -173,7 +173,7 @@ namespace psm
             {
                 uint32_t totalInstances = perModel.PerMaterials[i].Instances.size();
 
-                mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mShadowsPipeline, { mShadowDescriptorSet });
+                mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mShadowsPipelineLayout, { mShadowDescriptorSet });
 
                 /*vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                            m_ShadowPipelineLayout, { m_ShadowDescriptorSet });*/
@@ -427,7 +427,7 @@ namespace psm
         SPipelineConfig pipelineConfig =
         {
             .RenderPass = renderPass,
-            .Extent = extent,
+            .ViewPortExtent = extent,
             .PipelineLayout = mInstancedPipelineLayout,
             .pVertexInputAttributes = vertexAttribDescr,
             .VertexInputAttributeCount = perVertexAttribsSize,
@@ -633,7 +633,7 @@ namespace psm
         SPipelineConfig pipelineConfig =
         {
             .RenderPass = renderPass,
-            .Extent = size,
+            .ViewPortExtent = size,
             .PipelineLayout = mInstancedPipelineLayout,
             .pVertexInputAttributes = vertexAttribDescr,
             .VertexInputAttributeCount = attribsSize,
@@ -666,7 +666,7 @@ namespace psm
         SDescriptorSetLayoutConfig config =
         {
             .pLayoutsInfo = shaderDescriptorInfo.data(),
-            .LayoutsCount = shaderDescriptorInfo.size()
+            .LayoutsCount = static_cast<uint32_t>(shaderDescriptorInfo.size())
         };
 
         mMaterilaSetLayout = mDeviceInternal->CreateDescriptorSetLayout(config);
@@ -707,7 +707,7 @@ namespace psm
             }
         };
 
-        mDeviceInternal->UpdateDescriptorSets(&descriptorSet, 1, texturesUpdateInfo, {});
+        mDeviceInternal->UpdateDescriptorSets(descriptorSet, texturesUpdateInfo, {});
 
         //vk::UpdateDescriptorSets(vk::Device, *descriptorSet, {}, imagesInfo,
         //    imagesInfo.size());
@@ -739,7 +739,7 @@ namespace psm
              //},
         };
 
-        mDeviceInternal->UpdateDescriptorSets(&mShadowDescriptorSet, 1, {}, buffersInfo);
+        mDeviceInternal->UpdateDescriptorSets(mShadowDescriptorSet, {}, buffersInfo);
 
         //vk::UpdateDescriptorSets(vk::Device, m_ShadowDescriptorSet, buffersInfo, {},
         //    buffersInfo.size() /*+ imagesInfo.size()*/);
@@ -880,7 +880,7 @@ namespace psm
             },
         };
 
-        mDeviceInternal->UpdateDescriptorSets(&mInstanceDescriptorSet, 1, imagesInfo, buffersInfo);
+        mDeviceInternal->UpdateDescriptorSets(mInstanceDescriptorSet, imagesInfo, buffersInfo);
         /*vk::UpdateDescriptorSets(vk::Device, m_InstanceDescriptorSet, buffersInfo, imagesInfo,
             buffersInfo.size() + imagesInfo.size());*/
     }

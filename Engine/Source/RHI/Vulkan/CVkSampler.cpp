@@ -12,19 +12,41 @@ namespace psm
     CVkSampler::CVkSampler(DevicePtr device, const SSamplerConfig& config)
     {
         mVkDevice = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
-        VkResult result = vk::CreateTextureSampler(mVkDevice, ToVulkan(config.MagFilter), ToVulkan(config.MinFilter), 
-                                                   ToVulkan(config.UAddress), ToVulkan(config.VAddress), 
-                                                   ToVulkan(config.WAddress), config.EnableAniso, config.MaxAniso,
-                                                   ToVulkan(config.BorderColor), config.EnableComparision, 
-                                                   ToVulkan(config.CompareOp), 0, //sampler flags 
-                                                   config.MaxLod, config.MinLod, config.MipLodBias, ToVulkan(config.SamplerMode),
-                                                   config.UnnormalizedCoords, &mVkSampler);
+
+        VkSamplerCreateInfo info = 
+        {
+            .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .magFilter = ToVulkan(config.MagFilter),
+            .minFilter = ToVulkan(config.MinFilter),
+            .mipmapMode = ToVulkan(config.SamplerMode),
+            .addressModeU = ToVulkan(config.UAddress),
+            .addressModeV = ToVulkan(config.VAddress),
+            .addressModeW = ToVulkan(config.WAddress),
+            .mipLodBias = config.MipLodBias,
+            .anisotropyEnable = config.EnableAniso,
+            .maxAnisotropy = config.MaxAniso,
+            .compareEnable = config.EnableComparision,
+            .compareOp = ToVulkan(config.CompareOp),
+            .minLod = config.MinLod,
+            .maxLod = config.MaxLod,
+            .borderColor = ToVulkan(config.BorderColor),
+            .unnormalizedCoordinates = config.UnnormalizedCoords,
+        };
+
+        VkResult result =  vkCreateSampler(mVkDevice, &info, nullptr, &mVkSampler);;
         VK_CHECK_RESULT(result);
     }
 
     CVkSampler::~CVkSampler()
     {
         vk::DestroySampler(mVkDevice, mVkSampler);
+    }
+
+    void* CVkSampler::GetPointer()
+    {
+        return mVkSampler;
     }
 }
 

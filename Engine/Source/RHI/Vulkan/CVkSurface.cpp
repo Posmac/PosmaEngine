@@ -27,29 +27,29 @@ namespace psm
         mInstanceInternal = reinterpret_cast<VkInstance>(data.vkData.Instance);
         VkPhysicalDevice physicalDevice = reinterpret_cast<VkPhysicalDevice>(data.vkData.PhysicalDevice);
 
-        std::shared_ptr<CVkSurface> vkSurface = std::static_pointer_cast<CVkSurface>(surface);
+        VkSurfaceKHR vkSurface = reinterpret_cast<VkSurfaceKHR>(surface->GetSurface());
 
         //get surface capabilities, formats and present modes
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, vkSurface->GetSurface(), &mSurfaceData.Capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, vkSurface, &mSurfaceData.Capabilities);
 
         uint32_t surfaceSuportedFormatsCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, vkSurface->GetSurface(), &surfaceSuportedFormatsCount, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, vkSurface, &surfaceSuportedFormatsCount, nullptr);
 
         Assert(surfaceSuportedFormatsCount == 0, "Failed to enumerate physical device surface formats");
 
         mSurfaceData.Formats.resize(surfaceSuportedFormatsCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, vkSurface->GetSurface(), &surfaceSuportedFormatsCount, mSurfaceData.Formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, vkSurface, &surfaceSuportedFormatsCount, mSurfaceData.Formats.data());
 
         uint32_t surfaceSupportedPresentModesCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, vkSurface->GetSurface(), &surfaceSupportedPresentModesCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, vkSurface, &surfaceSupportedPresentModesCount, nullptr);
 
         Assert(surfaceSupportedPresentModesCount == 0, "Failed to get supported surface present modes");
 
         mSurfaceData.PresentModes.resize(surfaceSupportedPresentModesCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, vkSurface->GetSurface(), &surfaceSupportedPresentModesCount, mSurfaceData.PresentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, vkSurface, &surfaceSupportedPresentModesCount, mSurfaceData.PresentModes.data());
     }
 
-    VkSurfaceKHR CVkSurface::GetSurface()
+    void* CVkSurface::GetSurface()
     {
         return mSurface;
     }

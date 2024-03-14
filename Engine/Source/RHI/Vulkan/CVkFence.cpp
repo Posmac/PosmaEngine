@@ -38,5 +38,10 @@ namespace psm
     {
         ///not used in case of fences
     }
+
+    void* CVkFence::GetPointer()
+    {
+        return mFence;
+    }
 }
 

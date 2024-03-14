@@ -6,7 +6,6 @@
 #include "RHI/VkCommon.h"
 #include "RHI/Interface/Types.h"
 
-//#include "Core/Log.h"
 #include "Model/Model.h"
 
 #include "glm/glm.hpp"

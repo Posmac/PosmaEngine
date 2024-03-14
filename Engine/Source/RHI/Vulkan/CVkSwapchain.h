@@ -12,7 +12,7 @@
 
 namespace psm
 {
-    class CVkSwapchain final : public ISwapchain, public std::enable_shared_from_this<CVkSwapchain>
+    class CVkSwapchain : public ISwapchain, public std::enable_shared_from_this<CVkSwapchain>
     {
     public:
         CVkSwapchain(DevicePtr device, const SSwapchainConfig& config);
@@ -20,8 +20,8 @@ namespace psm
 
         virtual void Resize(uint32_t width, uint32_t height) override;
         virtual void GetNextImage(const SSwapchainAquireNextImageConfig& config, uint32_t* index) override;
-        virtual ImagePtr& ImageAtIndex(uint32_t index) override;
-        virtual void Present(const SSwapchainPresentConfig& config) override;
+        virtual ImagePtr ImageAtIndex(uint32_t index) override;
+        virtual void Present(const SPresentConfig& config) override;
         virtual void SetVsyncMode(bool enabled) override;
         virtual uint32_t GetImagesCount() override;
         virtual EFormat GetSwapchainImageFormat() override;

@@ -11,6 +11,7 @@
 
 namespace psm
 {
+    //TODO: Rewrite this class to hold only 1 VkCommandBuffer!!
     class CVkCommandBuffer : public ICommandBuffer, std::enable_shared_from_this<CVkCommandBuffer>
     {
     public:

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "RHI/Interface/Types.h"
 #include "RHI/Interface/Pipeline.h"
@@ -16,7 +17,11 @@ namespace psm
     public:
         CVkPipelineLayout(DevicePtr device, const SPipelineLayoutConfig& config);
         virtual ~CVkPipelineLayout();
+
+        virtual void* GetPointer() override;
+
     private:
+        VkDevice mDeviceInternal;
         VkPipelineLayout mPipelineLayout;
     };
 }

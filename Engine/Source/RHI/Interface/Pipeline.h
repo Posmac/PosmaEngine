@@ -16,6 +16,8 @@ namespace psm
     public:
         IPipelineLayout() = default;
         virtual ~IPipelineLayout() = default;
+
+        virtual void* GetPointer() = 0;
     };
 
     class IPipeline
@@ -25,5 +27,6 @@ namespace psm
         virtual ~IPipeline() = default;
 
         virtual void Bind(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint) = 0;
+        virtual void* GetPointer() = 0;
     };
 }

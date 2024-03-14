@@ -25,11 +25,24 @@ namespace psm
         uint32_t MipLevels;
     };
 
-    struct SImageLayoutTransition
+    struct SImageToBufferCopyConfig
     {
         EFormat FormatBeforeTransition;
         EImageLayout LayoutBeforeTransition;
         EFormat FormatAfterTransition;
         EImageLayout LayoutAfterTransition;
+    };
+
+    struct SImageLayoutTransition
+    {
+        EFormat Format;
+        EImageLayout OldLayout;
+        EImageLayout NewLayout;
+        EPipelineStageFlags SourceStage;
+        EPipelineStageFlags DestinationStage;
+        EAccessFlags SourceMask;
+        EAccessFlags DestinationMask;
+        EImageAspect ImageAspectFlags;
+        uint32_t MipLevel;
     };
 }

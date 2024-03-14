@@ -9,19 +9,13 @@
 
 namespace psm
 {
-    struct SRenderPassConfig
-    {
-        std::vector<SAttachmentDescription> ColorAttachements;
-        std::optional<SAttachmentDescription> DepthAttachment;
-        std::optional<SAttachmentDescription> ResolveAttachment;
-
-        std::optional<SAttachmentReference> ColorAttachmentReference;
-        std::optional<SAttachmentReference> DepthStencilAttachmentReference;
-        std::optional<SAttachmentReference> ResolveAttachemntReference;
-
-        std::vector<SSubpassDescription> SubpassDescriptions;
-        std::vector<SSubpassDependency> SubpassDependensies;
-    };
+    struct SRenderPassBeginConfig;
+    struct SAttachmentDescription;
+    struct SAttachmentReference;
+    struct SRenderPassConfig;
+    struct SSubpassDependency;
+    struct SSubpassDescription;
+    struct DepthStencilClearValues;
 
     struct SAttachmentDescription
     {
@@ -42,17 +36,18 @@ namespace psm
         EImageLayout Layout;
     };
 
-    struct SSubpassDescription
+    struct SRenderPassConfig
     {
-        EPipelineBindPoint PipelineBindPoint;
-        uint32_t InputAttachmentCount;
-        const SAttachmentReference* pInputAttachments;
-        uint32_t ColorAttachmentCount;
-        const SAttachmentReference* pColorAttachments;
-        const SAttachmentReference* pResolveAttachments;
-        const SAttachmentReference* pDepthStencilAttachment;
-        uint32_t PreserveAttachmentCount;
-        const uint32_t* pPreserveAttachments;
+        std::vector<SAttachmentDescription> ColorAttachements;
+        std::optional<SAttachmentDescription> DepthAttachment;
+        std::optional<SAttachmentDescription> ResolveAttachment;
+
+        std::optional<SAttachmentReference> ColorAttachmentReference;
+        std::optional<SAttachmentReference> DepthStencilAttachmentReference;
+        std::optional<SAttachmentReference> ResolveAttachemntReference;
+
+        std::vector<SSubpassDescription> SubpassDescriptions;
+        std::vector<SSubpassDependency> SubpassDependensies;
     };
 
     struct SSubpassDependency
@@ -64,6 +59,19 @@ namespace psm
         EAccessFlags SrcAccessMask;
         EAccessFlags DstAccessMask;
         EDependencyFlags DependencyFlags;
+    };
+    
+    struct SSubpassDescription
+    {
+        EPipelineBindPoint PipelineBindPoint;
+        uint32_t InputAttachmentCount;
+        const SAttachmentReference* pInputAttachments;
+        uint32_t ColorAttachmentCount;
+        const SAttachmentReference* pColorAttachments;
+        const SAttachmentReference* pResolveAttachments;
+        const SAttachmentReference* pDepthStencilAttachment;
+        uint32_t PreserveAttachmentCount;
+        const uint32_t* pPreserveAttachments;
     };
 
     enum class ESubpassContents : uint8_t

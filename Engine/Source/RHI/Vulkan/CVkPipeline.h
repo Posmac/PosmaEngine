@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-
+#include <vector>
 
 #include "RHI/Interface/Types.h"
 #include "RHI/Interface/Pipeline.h"
@@ -20,6 +20,8 @@ namespace psm
         virtual ~CVkPipeline();
 
         virtual void Bind(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint) override;
+        virtual void* GetPointer() override;
+
     private:
         VkDevice mDeviceInternal;
         VkPipeline mPipeline;

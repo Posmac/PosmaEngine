@@ -13,21 +13,21 @@ class CVkSurface;
 
 namespace psm
 {
-    class CVkDevice final : public IDevice, public std::enable_shared_from_this<CVkDevice>
+    class CVkDevice : public IDevice, public std::enable_shared_from_this<CVkDevice>
     {
     public:
-        CVkDevice(VkPhysicalDevice physicalDevice, std::shared_ptr<CVkSurface> surface);
+        CVkDevice(VkPhysicalDevice physicalDevice, SurfacePtr surface);
         virtual ~CVkDevice();
     public:
         virtual ImagePtr CreateImage(const SImageConfig& config) override;
-        virtual ImagePtr CreateImageWithData(const SImageConfig& config, const SUntypedBuffer& data, const SImageLayoutTransition& transition) override;
+        virtual ImagePtr CreateImageWithData(CommandPoolPtr commandPool, const SImageConfig& config, const SUntypedBuffer& data, const SImageToBufferCopyConfig& copyConfig) override;
         virtual BufferPtr CreateBuffer(const SBufferConfig& config) override;
         virtual SamplerPtr CreateSampler(const SSamplerConfig& config) override;
         virtual SwapchainPtr CreateSwapchain(const SSwapchainConfig& config) override;
         virtual PipelineLayoutPtr CreatePipelineLayout(const SPipelineLayoutConfig& config) override;
         virtual CommandQueuePtr CreateCommandQueue(const SCommandQueueConfig& config) override;
         virtual PipelinePtr CreateRenderPipeline(const SPipelineConfig& config) override;
-        virtual ShaderPtr CreateShaderFromFilename(const std::filesystem::path& path, EShaderStageFlag shaderType) override;
+        virtual ShaderPtr CreateShaderFromFilename(const std::string& path, EShaderStageFlag shaderType) override;
         virtual FencePtr CreateFence(const SFenceConfig& config) override;
         virtual SemaphorePtr CreateSemaphore(const SSemaphoreConfig& config) override;
         virtual RenderPassPtr CreateRenderPass(const SRenderPassConfig& config) override;
@@ -41,14 +41,16 @@ namespace psm
         virtual void Submit(const SSubmitConfig& config) override;
         virtual void Present(const SPresentConfig& config) override;
         virtual void WaitIndle() override;
-        virtual void BindVertexBuffers(const SVertexBufferBindConfig& config) override;
-        virtual void BindIndexBuffer(const SIndexBufferBindConfig& config) override;
-        virtual void CopyBuffer(BufferPtr sourceBuffer, BufferPtr destinationBuffer) override;//copy buffer fully
-        virtual void BindDescriptorSets(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint, PipelinePtr pipeline, const std::vector<DescriptorSetPtr>& descriptors) override;
+        virtual void BindVertexBuffers(CommandBufferPtr commandBuffer, const SVertexBufferBindConfig& config) override;
+        virtual void BindIndexBuffer(CommandBufferPtr commandBuffer, const SIndexBufferBindConfig& config) override;
+        virtual void CopyBuffer(CommandBufferPtr commandBuffer, uint64_t size, BufferPtr sourceBuffer, BufferPtr destinationBuffer) override;//copy buffer fully
+        virtual void CopyBufferToImage(CommandBufferPtr commandBuffer, BufferPtr sourceBuffer, ImagePtr destrinationImage, SResourceExtent3D copySize, EImageAspect imageAspect, EImageLayout imageLayoutAfterCopy) override;
+        virtual void BindDescriptorSets(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint, PipelineLayoutPtr pipelineLayout, const std::vector<DescriptorSetPtr>& descriptors) override;
         virtual void DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance) override;
         virtual void SetDepthBias(CommandBufferPtr commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) override;
-        virtual void UpdateDescriptorSets(DescriptorSetPtr* descriptorSets, uint32_t setsCount, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) override;
+        virtual void UpdateDescriptorSets(DescriptorSetPtr descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) override;
         virtual void AllocateDescriptorSets(const SDescriptorSetAllocateConfig& config) override;
+        virtual void ImageLayoutTransition(CommandBufferPtr commandBuffer, ImagePtr image, const SImageLayoutTransition& config) override;
 
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) override;
 
@@ -57,15 +59,20 @@ namespace psm
 
         void SetDebugNameForResource(void* resource, VkDebugReportObjectTypeEXT type, const char* debugName);
     private:
+        DevicePtr mInternalDevice;
+
         VkDevice mDevice;
         VkPhysicalDevice mPhysicalDevice;
         VkPhysicalDeviceProperties mPhysicalDeviceProperties;
         VkPhysicalDeviceFeatures mPhysicalDeviceFeatures;
 
+        DeviceData mDeviceData;
+
         vk::QueueFamilyIndices mQueues;
 
-        std::shared_ptr<CVkSurface> mVkSurface; //not sure if it should stay there
+        SwapchainPtr mSwapchain;
+        SurfacePtr mVkSurface;
     };
 
-    DevicePtr CreateDefaultDeviceVk(PlatformConfig& config);
+    DevicePtr CreateDefaultDeviceVk(const PlatformConfig& config);
 }

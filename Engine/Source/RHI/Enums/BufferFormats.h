@@ -17,7 +17,7 @@ namespace psm
         //not complete
     };
 
-    EBufferUsage operator | (const EBufferUsage rhs, const EBufferUsage lhs)
+    inline EBufferUsage operator | (const EBufferUsage rhs, const EBufferUsage lhs)
     {
         return static_cast<EBufferUsage>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
     }
@@ -37,7 +37,7 @@ namespace psm
         MAX = 0x0FFFFFFF
     };
 
-    EMemoryProperties operator | (const EMemoryProperties rhs, const EMemoryProperties lhs)
+    inline EMemoryProperties operator | (const EMemoryProperties rhs, const EMemoryProperties lhs)
     {
         return static_cast<EMemoryProperties>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
     }

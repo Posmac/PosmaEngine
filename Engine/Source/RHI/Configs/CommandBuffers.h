@@ -2,6 +2,9 @@
 
 #include <cstdint>
 
+#include "RHI/Interface/Types.h"
+#include "RHI/Enums/RenderPassFormats.h"
+
 namespace psm
 {
     enum class EQueueType : uint8_t
@@ -44,7 +47,7 @@ namespace psm
         uint32_t SubmitCount;
         EPipelineStageFlags WaitStageFlags;
         uint32_t WaitSemaphoresCount;
-        SemaphorePtr* pSemaphoresCount;
+        SemaphorePtr* pWaitSemaphores;
         uint32_t CommandBuffersCount;
         CommandBufferPtr* pCommandBuffers;
         uint32_t SignalSemaphoresCount;

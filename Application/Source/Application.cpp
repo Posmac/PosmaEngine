@@ -3,6 +3,8 @@
 #include "Systems/InputSystem.h"
 #include "Systems/TimeSystem.h"
 
+#include "RHI/VkCommon.h"
+
 namespace psm
 {
     void Application::Init()
@@ -22,20 +24,20 @@ namespace psm
 
         uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(skullData.Height, skullData.Width)))) + 1;
 
-        std::shared_ptr<Texture> skullTexture = std::make_shared<Texture>();
-        Renderer::Instance()->LoadTextureIntoMemory(skullData, mipLevels, skullTexture.get());
+        ImagePtr skullTexture;
+        Renderer::Instance()->LoadTextureIntoMemory(skullData, mipLevels, skullTexture);
 
         RawTextureData cubeData{ Rgb_alpha };
         TextureLoader::Instance()->LoadRawTextureData("../Engine/Models/untitled.png", &cubeData);
 
-        std::shared_ptr<Texture> cubeTexture = std::make_shared<Texture>();
-        Renderer::Instance()->LoadTextureIntoMemory(cubeData, 1, cubeTexture.get());
+        ImagePtr cubeTexture;
+        Renderer::Instance()->LoadTextureIntoMemory(cubeData, 1, cubeTexture);
 
         OpaqueInstances::Material material {};
         OpaqueInstances::Instance instance;
 
         //cube
-        material.Tex = cubeTexture;
+        material.Albedo = cubeTexture;
         glm::mat4 instanceMatrix = glm::mat4(1.0);
         //small cubes
         for(int x = -100; x < 100; x++)
@@ -58,7 +60,7 @@ namespace psm
 
         instance.InstanceMatrix = instanceMatrix;
 
-        material.Tex = skullTexture;
+        material.Albedo = skullTexture;
 
         OpaqueInstances::GetInstance()->AddInstance(skullModel, material, instance);
         OpaqueInstances::GetInstance()->PrepareInstances();
@@ -79,7 +81,7 @@ namespace psm
         data.ProjectionMatrix = m_Camera.GetProjectionMatrix();
         data.ViewProjectionMatrix = m_Camera.GetViewProjectionMatrix();
 
-        Renderer::Instance()->Render(data);
+        Renderer::Instance()->Render();
     }
 
     void Application::Deinit()

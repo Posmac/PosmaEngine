@@ -5,18 +5,22 @@
 
 #include "Include/vulkan/vulkan.h"
 #include "RHI/Interface/Buffer.h"
+#include "../Memory/UntypedBuffer.h"
 
 namespace psm
 {
     class CVkBuffer : public IBuffer, std::enable_shared_from_this<CVkBuffer>
     {
     public:
-        CVkBuffer(DevicePtr& device, const SBufferConfig& config);
+        CVkBuffer(DevicePtr device, const SBufferConfig& config);
         virtual ~CVkBuffer();
         virtual void Map(SBufferMapConfig& config) override;
         virtual void Unmap() override;
         virtual void Flush(SBufferFlushConfig& config) override;
         virtual void UpdateBuffer(const SUntypedBuffer& data) override;
+
+        virtual void* GetPointer() override;
+
     private:
         VkResult CreateBuffer(VkDevice device,
             VkPhysicalDevice gpu,

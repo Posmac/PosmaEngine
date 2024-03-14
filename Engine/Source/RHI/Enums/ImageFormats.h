@@ -212,17 +212,6 @@ namespace psm
         TYPE_CUBE_ARRAY = 6,
     };
 
-    enum class EImageViewType : uint8_t
-    {
-        VIEW_TYPE_1D = 0,
-        VIEW_TYPE_2D = 1,
-        VIEW_TYPE_3D = 2,
-        VIEW_TYPE_CUBE = 3,
-        VIEW_TYPE_1D_ARRAY = 4,
-        VIEW_TYPE_2D_ARRAY = 5,
-        VIEW_TYPE_CUBE_ARRAY = 6,
-    };
-
     enum class EImageUsageType : uint32_t
     {
         USAGE_TRANSFER_SRC_BIT = 0x00000001,
@@ -235,17 +224,17 @@ namespace psm
         USAGE_INPUT_ATTACHMENT_BIT = 0x00000080,
     };
 
-    EImageUsageType operator &(const EImageUsageType& rhs, const EImageUsageType& lhs)
+    inline EImageUsageType operator &(const EImageUsageType& rhs, const EImageUsageType& lhs)
     {
         return static_cast<EImageUsageType>(static_cast<uint32_t>(rhs) & static_cast<uint32_t>(lhs));
     }
 
-    EImageUsageType operator | (const EImageUsageType& rhs, const EImageUsageType& lhs)
+    inline EImageUsageType operator | (const EImageUsageType& rhs, const EImageUsageType& lhs)
     {
         return static_cast<EImageUsageType>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
     }
 
-    bool operator != (const EImageUsageType& rhs, const uint32_t lhs)
+    inline bool operator != (const EImageUsageType& rhs, const uint32_t lhs)
     {
         return static_cast<uint32_t>(rhs) != lhs;
     }
@@ -275,12 +264,12 @@ namespace psm
         TRANSFER_DST_BIT = 0x00008000,
     };
 
-    EFeatureFormat operator & (const EFeatureFormat& rhs, const EFeatureFormat& lhs)
+    inline EFeatureFormat operator & (const EFeatureFormat& rhs, const EFeatureFormat& lhs)
     {
         return static_cast<EFeatureFormat>(static_cast<uint32_t>(rhs) & static_cast<uint32_t>(lhs));
     }
 
-    bool operator != (const EFeatureFormat& rhs, const uint32_t& lhs)
+    inline bool operator != (const EFeatureFormat& rhs, const uint32_t& lhs)
     {
         return static_cast<uint32_t>(rhs) != lhs;
     }

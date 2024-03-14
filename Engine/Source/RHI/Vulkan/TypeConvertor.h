@@ -11,6 +11,7 @@
 #include "RHI/Enums/PipelineFormats.h"
 #include "RHI/Configs/CommandBuffers.h"
 #include "RHI/Configs/RenderPassConfig.h"
+#include "RHI/Configs/ShadersConfig.h"
 
 namespace psm
 {
@@ -799,10 +800,10 @@ namespace psm
     {
         switch(storeOp)
         {
-            case psm::EAttachmentStoreOp::STORE_OP_STORE:
-                VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
-            case psm::EAttachmentStoreOp::STORE_OP_DONT_CARE:
-                VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            case EAttachmentStoreOp::STORE_OP_STORE:
+                return VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
+            case EAttachmentStoreOp::STORE_OP_DONT_CARE:
+                return VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_DONT_CARE;
         }
     }
 
@@ -810,41 +811,41 @@ namespace psm
     {
         switch(layout)
         {
-            case psm::EImageLayout::UNDEFINED:
+            case EImageLayout::UNDEFINED:
                 return VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
-            case psm::EImageLayout::GENERAL:
+            case EImageLayout::GENERAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
-            case psm::EImageLayout::COLOR_ATTACHMENT_OPTIMAL:
+            case EImageLayout::COLOR_ATTACHMENT_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            case psm::EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+            case EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            case psm::EImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+            case EImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-            case psm::EImageLayout::SHADER_READ_ONLY_OPTIMAL:
+            case EImageLayout::SHADER_READ_ONLY_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            case psm::EImageLayout::TRANSFER_SRC_OPTIMAL:
+            case EImageLayout::TRANSFER_SRC_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            case psm::EImageLayout::TRANSFER_DST_OPTIMAL:
+            case EImageLayout::TRANSFER_DST_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            case psm::EImageLayout::PREINITIALIZED:
+            case EImageLayout::PREINITIALIZED:
                 return VkImageLayout::VK_IMAGE_LAYOUT_PREINITIALIZED;
-            case psm::EImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL:
+            case EImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL;
-            case psm::EImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL:
+            case EImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
-            case psm::EImageLayout::DEPTH_ATTACHMENT_OPTIMAL:
+            case EImageLayout::DEPTH_ATTACHMENT_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-            case psm::EImageLayout::DEPTH_READ_ONLY_OPTIMAL:
+            case EImageLayout::DEPTH_READ_ONLY_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
-            case psm::EImageLayout::STENCIL_ATTACHMENT_OPTIMAL:
+            case EImageLayout::STENCIL_ATTACHMENT_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;
-            case psm::EImageLayout::STENCIL_READ_ONLY_OPTIMAL:
+            case EImageLayout::STENCIL_READ_ONLY_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL;
-            case psm::EImageLayout::READ_ONLY_OPTIMAL:
+            case EImageLayout::READ_ONLY_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
-            case psm::EImageLayout::ATTACHMENT_OPTIMAL:
+            case EImageLayout::ATTACHMENT_OPTIMAL:
                 return VkImageLayout::VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
-            case psm::EImageLayout::PRESENT_SRC_KHR:
+            case EImageLayout::PRESENT_SRC_KHR:
                 return VkImageLayout::VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
             default:
                 return VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
@@ -855,9 +856,9 @@ namespace psm
     {
         switch(bindPoint)
         {
-            case psm::EPipelineBindPoint::GRAPHICS:
+            case EPipelineBindPoint::GRAPHICS:
                 return VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS;
-            case psm::EPipelineBindPoint::COMPUTE:
+            case EPipelineBindPoint::COMPUTE:
                 return VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_COMPUTE;
             default:
                 return VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -1020,9 +1021,9 @@ namespace psm
     {
         switch(dependencyFlags)
         {
-            case psm::EDependencyFlags::NONE:
+            case EDependencyFlags::NONE:
                 return 0;
-            case psm::EDependencyFlags::BY_REGION_BIT:
+            case EDependencyFlags::BY_REGION_BIT:
                 VkDependencyFlagBits::VK_DEPENDENCY_BY_REGION_BIT;
             default:
                 break;
@@ -1101,11 +1102,11 @@ namespace psm
     {
         switch(type)
         {
-            case psm::EImageType::TYPE_1D:
+            case EImageType::TYPE_1D:
                 return VkImageType::VK_IMAGE_TYPE_1D;
-            case psm::EImageType::TYPE_2D:
+            case EImageType::TYPE_2D:
                 return VkImageType::VK_IMAGE_TYPE_2D;
-            case psm::EImageType::TYPE_3D:
+            case EImageType::TYPE_3D:
                 return VkImageType::VK_IMAGE_TYPE_3D;
             default:
                 return VkImageType::VK_IMAGE_TYPE_2D;
@@ -1116,12 +1117,12 @@ namespace psm
     {
         switch(tiling)
         {
-            case psm::EImageTiling::OPTIMAL:
-                VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
-            case psm::EImageTiling::LINEAR:
-                VkImageTiling::VK_IMAGE_TILING_LINEAR;
+            case EImageTiling::OPTIMAL:
+                return VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
+            case EImageTiling::LINEAR:
+                return VkImageTiling::VK_IMAGE_TILING_LINEAR;
             default:
-                VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
+                return VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
         }
     }
 
@@ -1168,13 +1169,15 @@ namespace psm
     {
         switch(mode)
         {
-            case psm::ESharingMode::EXCLUSIVE:
+            case ESharingMode::EXCLUSIVE:
                 VkSharingMode::VK_SHARING_MODE_EXCLUSIVE;
-            case psm::ESharingMode::CONCURRENT:
+            case ESharingMode::CONCURRENT:
                 VkSharingMode::VK_SHARING_MODE_CONCURRENT;
             default:
                 VkSharingMode::VK_SHARING_MODE_EXCLUSIVE;
         }
+
+        return VkSharingMode::VK_SHARING_MODE_EXCLUSIVE;
     }
 
     VkImageCreateFlags ToVulkan(EImageCreateFlags flags)
@@ -1186,19 +1189,19 @@ namespace psm
     {
         switch(type)
         {
-            case psm::EImageViewType::TYPE_1D:
+            case EImageViewType::TYPE_1D:
                 return VkImageViewType::VK_IMAGE_VIEW_TYPE_1D;
-            case psm::EImageViewType::TYPE_2D:
+            case EImageViewType::TYPE_2D:
                 return VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
-            case psm::EImageViewType::TYPE_3D:
+            case EImageViewType::TYPE_3D:
                 return VkImageViewType::VK_IMAGE_VIEW_TYPE_3D;
-            case psm::EImageViewType::TYPE_CUBE:
+            case EImageViewType::TYPE_CUBE:
                 return VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
-            case psm::EImageViewType::TYPE_1D_ARRAY:
+            case EImageViewType::TYPE_1D_ARRAY:
                 return VkImageViewType::VK_IMAGE_VIEW_TYPE_1D_ARRAY;
-            case psm::EImageViewType::TYPE_2D_ARRAY:
+            case EImageViewType::TYPE_2D_ARRAY:
                 return VkImageViewType::VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-            case psm::EImageViewType::TYPE_CUBE_ARRAY:
+            case EImageViewType::TYPE_CUBE_ARRAY:
                 return VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
             default:
                 return VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
@@ -1209,11 +1212,11 @@ namespace psm
     {
         switch(aspect)
         {
-            case psm::EImageAspect::COLOR_BIT:
+            case EImageAspect::COLOR_BIT:
                 return VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
-            case psm::EImageAspect::DEPTH_BIT:
+            case EImageAspect::DEPTH_BIT:
                 return VkImageAspectFlagBits::VK_IMAGE_ASPECT_DEPTH_BIT;
-            case psm::EImageAspect::STENCIL_BIT:
+            case EImageAspect::STENCIL_BIT:
                 return VkImageAspectFlagBits::VK_IMAGE_ASPECT_STENCIL_BIT;
             default:
                 return VkImageAspectFlagBits::VK_IMAGE_ASPECT_NONE;
@@ -1227,13 +1230,13 @@ namespace psm
         
         switch(usage)
         {
-            case psm::ECommandBufferUsage::NONE:
+            case ECommandBufferUsage::NONE:
                 return 0;
-            case psm::ECommandBufferUsage::ONE_TIME_SUBMIT_BIT:
+            case ECommandBufferUsage::ONE_TIME_SUBMIT_BIT:
                 VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-            case psm::ECommandBufferUsage::RENDER_PASS_CONTINUE_BIT:
+            case ECommandBufferUsage::RENDER_PASS_CONTINUE_BIT:
                 VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
-            case psm::ECommandBufferUsage::SIMULTANEOUS_USE_BIT:
+            case ECommandBufferUsage::SIMULTANEOUS_USE_BIT:
                 VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
             default:
                 return 0;
@@ -1246,12 +1249,12 @@ namespace psm
     {
         switch(contents)
         {
-            case psm::ESubpassContents::INLINE:
-                VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE;
-            case psm::ESubpassContents::SECONDARY_COMMAND_BUFFERS:
-                VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
+            case ESubpassContents::INLINE:
+                return VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE;
+            case ESubpassContents::SECONDARY_COMMAND_BUFFERS:
+                return VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
             default:
-                VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE;
+                return VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE;
         }
     }
 
@@ -1259,51 +1262,158 @@ namespace psm
     {
         switch(DescriptorType)
         {
-            case psm::EDescriptorType::SAMPLER:
+            case EDescriptorType::SAMPLER:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_SAMPLER;
-            case psm::EDescriptorType::COMBINED_IMAGE_SAMPLER:
+            case EDescriptorType::COMBINED_IMAGE_SAMPLER:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            case psm::EDescriptorType::SAMPLED_IMAGE:
+            case EDescriptorType::SAMPLED_IMAGE:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            case psm::EDescriptorType::STORAGE_IMAGE:
+            case EDescriptorType::STORAGE_IMAGE:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-            case psm::EDescriptorType::UNIFORM_TEXEL_BUFFER:
+            case EDescriptorType::UNIFORM_TEXEL_BUFFER:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
-            case psm::EDescriptorType::STORAGE_TEXEL_BUFFER:
+            case EDescriptorType::STORAGE_TEXEL_BUFFER:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
-            case psm::EDescriptorType::UNIFORM_BUFFER:
+            case EDescriptorType::UNIFORM_BUFFER:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            case psm::EDescriptorType::STORAGE_BUFFER:
+            case EDescriptorType::STORAGE_BUFFER:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            case psm::EDescriptorType::UNIFORM_BUFFER_DYNAMIC:
+            case EDescriptorType::UNIFORM_BUFFER_DYNAMIC:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-            case psm::EDescriptorType::STORAGE_BUFFER_DYNAMIC:
+            case EDescriptorType::STORAGE_BUFFER_DYNAMIC:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
-            case psm::EDescriptorType::INPUT_ATTACHMENT:
+            case EDescriptorType::INPUT_ATTACHMENT:
                 return VkDescriptorType::VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
         }
     }
 
-    VkShaderStageFlags ToVulkan(EShaderStageFlag ShaderStage)
+    VkShaderStageFlagBits ToVulkan(EShaderStageFlag ShaderStage)
     {
         switch(ShaderStage)
         {
-            case psm::EShaderStageFlag::VERTEX_BIT:
+            case EShaderStageFlag::VERTEX_BIT:
                 return VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT;
-            case psm::EShaderStageFlag::TESSELLATION_CONTROL_BIT:
+            case EShaderStageFlag::TESSELLATION_CONTROL_BIT:
                 return VkShaderStageFlagBits::VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-            case psm::EShaderStageFlag::TESSELLATION_EVALUATION_BIT:
+            case EShaderStageFlag::TESSELLATION_EVALUATION_BIT:
                 return VkShaderStageFlagBits::VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-            case psm::EShaderStageFlag::GEOMETRY_BIT:
+            case EShaderStageFlag::GEOMETRY_BIT:
                 return VkShaderStageFlagBits::VK_SHADER_STAGE_GEOMETRY_BIT;
-            case psm::EShaderStageFlag::FRAGMENT_BIT:
+            case EShaderStageFlag::FRAGMENT_BIT:
                 return VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT;
-            case psm::EShaderStageFlag::COMPUTE_BIT:
+            case EShaderStageFlag::COMPUTE_BIT:
                 return VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT;
-            case psm::EShaderStageFlag::ALL_GRAPHICS:
+            case EShaderStageFlag::ALL_GRAPHICS:
                 return VkShaderStageFlagBits::VK_SHADER_STAGE_ALL_GRAPHICS;
-            case psm::EShaderStageFlag::ALL:
+            case EShaderStageFlag::ALL:
                 return VkShaderStageFlagBits::VK_SHADER_STAGE_ALL;
+        }
+    }
+
+    VkVertexInputRate ToVulkan(EVertexInputRate rate)
+    {
+        switch(rate)
+        {
+            case EVertexInputRate::VERTEX:
+                return VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX;
+            case EVertexInputRate::INSTANCE:
+                return VkVertexInputRate::VK_VERTEX_INPUT_RATE_INSTANCE;
+            default:
+                return VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX;
+        }
+    }
+
+    VkPrimitiveTopology ToVulkan(EPrimitiveTopology topology)
+    {
+        switch(topology)
+        {
+            case EPrimitiveTopology::POINT_LIST:
+                return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+            case EPrimitiveTopology::LINE_LIST:
+                return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+            case EPrimitiveTopology::LINE_STRIP:
+                return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+            case EPrimitiveTopology::TRIANGLE_LIST:
+                return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            case EPrimitiveTopology::TRIANGLE_STRIP:
+                return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+            case EPrimitiveTopology::TRIANGLE_FAN:
+                return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+            default:
+                return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        }
+    }
+
+    VkCullModeFlagBits ToVulkan(ECullMode CullMode)
+    {
+        switch(CullMode)
+        {
+            case ECullMode::NONE:
+                return VkCullModeFlagBits::VK_CULL_MODE_NONE;
+            case ECullMode::FRONT_BIT:
+                return VkCullModeFlagBits::VK_CULL_MODE_FRONT_BIT;
+            case ECullMode::BACK_BIT:
+                return VkCullModeFlagBits::VK_CULL_MODE_BACK_BIT;
+            case ECullMode::FRONT_AND_BACK:
+                return VkCullModeFlagBits::VK_CULL_MODE_FRONT_AND_BACK;
+            default:
+                return VkCullModeFlagBits::VK_CULL_MODE_NONE;
+        }
+    }
+
+    VkPolygonMode ToVulkan(EPolygonMode PolygonMode)
+    {
+        switch(PolygonMode)
+        {
+            case EPolygonMode::FILL:
+                return VkPolygonMode::VK_POLYGON_MODE_FILL;
+            case EPolygonMode::LINE:
+                return VkPolygonMode::VK_POLYGON_MODE_LINE;
+            case EPolygonMode::POINT:
+                return VkPolygonMode::VK_POLYGON_MODE_POINT;
+            default:
+                return VkPolygonMode::VK_POLYGON_MODE_FILL;
+        }
+    }
+
+    VkFrontFace ToVulkan(EFrontFace FrontFace)
+    {
+        switch(FrontFace)
+        {
+            case EFrontFace::COUNTER_CLOCKWISE:
+                return VkFrontFace::VK_FRONT_FACE_COUNTER_CLOCKWISE;
+            case EFrontFace::CLOCKWISE:
+                return VkFrontFace::VK_FRONT_FACE_CLOCKWISE;
+            default:
+                return VkFrontFace::VK_FRONT_FACE_CLOCKWISE;
+        }
+    }
+
+    VkDynamicState ToVulkan(EDynamicState dynamicState)
+    {
+        switch(dynamicState)
+        {
+            case EDynamicState::VIEWPORT:
+                return VkDynamicState::VK_DYNAMIC_STATE_VIEWPORT;
+            case EDynamicState::SCISSOR:
+                return VkDynamicState::VK_DYNAMIC_STATE_SCISSOR;
+            case EDynamicState::LINE_WIDTH:
+                return VkDynamicState::VK_DYNAMIC_STATE_LINE_WIDTH;
+            case EDynamicState::DEPTH_BIAS:
+                return VkDynamicState::VK_DYNAMIC_STATE_DEPTH_BIAS;
+        }
+    }
+
+    VkIndexType ToVulkan(EIndexType indexType)
+    {
+        switch(indexType)
+        {
+            case EIndexType::UINT16:
+                return VkIndexType::VK_INDEX_TYPE_UINT16;
+            case EIndexType::UINT32:
+                return VkIndexType::VK_INDEX_TYPE_UINT32;
+            default:
+                return VkIndexType::VK_INDEX_TYPE_UINT32;
         }
     }
 }

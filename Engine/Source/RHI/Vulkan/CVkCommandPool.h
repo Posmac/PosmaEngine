@@ -1,10 +1,11 @@
 #pragma once
 
-#include "../VkCommon.h"
+#include "RHI/VkCommon.h"
 #include <memory>
 
 #include "RHI/Interface/CommandPool.h"
 #include "RHI/Interface/Types.h"
+#include "RHI/Configs/CommandBuffers.h"
 
 namespace psm
 {
@@ -14,6 +15,7 @@ namespace psm
         CVkCommandPool(DevicePtr device, const SCommandPoolConfig& config);
         virtual ~CVkCommandPool();
 
+        virtual void FreeCommandBuffers(const std::vector<CommandBufferPtr>& commandBuffers) override;
         virtual void* GetCommandPool() override;
 
     private:

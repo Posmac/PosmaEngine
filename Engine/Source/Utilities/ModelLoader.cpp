@@ -1,5 +1,7 @@
 #include "ModelLoader.h"
 
+#include "RHI/VkCommon.h"
+
 namespace psm
 {
 
@@ -24,7 +26,7 @@ namespace psm
 
         if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str()))
         {
-            LOG_ERROR("Failed to load model: " + path);
+            LogMessage(MessageSeverity::Error ,"Failed to load model: " + path);
             assert(true);
             return;
         }
@@ -83,11 +85,12 @@ namespace psm
         model->Name = path;
         model->Meshes.push_back(mesh);
 
-        model->Init(m_CommandPool);
+        model->Init(mDevice, mCommandPool);
     }
 
-    void ModelLoader::Init(VkCommandPool commandPool)
+    void ModelLoader::Init(DevicePtr device, CommandPoolPtr commandPool)
     {
-        m_CommandPool = commandPool;
+        mDevice = device;
+        mCommandPool = commandPool;
     }
 }

@@ -246,26 +246,6 @@
     <ClInclude Include="Source\Systems\TimeSystem.h" />
     <ClInclude Include="Source\Utilities\ModelLoader.h" />
     <ClInclude Include="Source\Utilities\TextureLoader.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Buffer.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\CommandBuffer.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Common.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\DebugUtilsMessenger.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Descriptors.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Framebuffer.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Image.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Instance.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\LogicalDevice.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Memory.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\PhysicalDevice.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Pipeline.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Queue.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\RenderPass.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Sampler.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Shader.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\SwapChain.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Synchronization.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\VulkanImGui.h" />
-    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Win32Surface.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\RHI\RHI.cpp" />
@@ -311,25 +291,6 @@
     <ClCompile Include="Source\Systems\TimeSystem.cpp" />
     <ClCompile Include="Source\Utilities\ModelLoader.cpp" />
     <ClCompile Include="Source\Utilities\TextureLoader.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Buffer.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\CommandBuffer.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\DebugUtilsMessenger.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Descriptors.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Framebuffer.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Image.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Instance.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\LogicalDevice.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Memory.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\PhysicalDevice.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Pipeline.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Queue.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\RenderPass.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Sampler.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Shader.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\SwapChain.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Synchronization.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\VulkanImGui.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Win32Surface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

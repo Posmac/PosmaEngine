@@ -11,5 +11,7 @@ namespace psm
     public:
         ISurface() = default;
         virtual ~ISurface() = default;
+
+        virtual void* GetSurface() = 0;
     };
 }

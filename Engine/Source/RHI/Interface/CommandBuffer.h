@@ -2,10 +2,10 @@
 
 #include <cstdint>
 
+#include "RHI/Configs/CommandBuffers.h"
+
 namespace psm
 {
-    struct CommandBufferBeginConfig;
-
     class ICommandBuffer
     {
     public:

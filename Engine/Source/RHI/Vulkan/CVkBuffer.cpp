@@ -3,11 +3,12 @@
 #include "../RHICommon.h"
 #include "TypeConvertor.h"
 #include "CVkDevice.h"
+#include "../Memory/UntypedBuffer.h"
 #include "RenderBackend/Memory.h"
 
 namespace psm
 {
-    CVkBuffer::CVkBuffer(DevicePtr& device, const SBufferConfig& config)
+    CVkBuffer::CVkBuffer(DevicePtr device, const SBufferConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 
@@ -231,5 +232,10 @@ namespace psm
         memcpy(pData, data.data(), data.size());
 
         Unmap();
+    }
+
+    void* CVkBuffer::GetPointer()
+    {
+        return mVkBuffer;
     }
 }

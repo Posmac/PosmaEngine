@@ -12,5 +12,7 @@ namespace psm
         virtual void Wait(const SFenceWaitConfig& config) = 0;
         virtual void Reset() = 0;
         virtual void Signal() = 0;
+
+        virtual void* GetPointer() = 0;
     };
 }

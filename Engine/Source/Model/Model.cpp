@@ -30,7 +30,7 @@ namespace psm
             .Buffers = &mVertexBuffer,
         };
 
-        device->BindVertexBuffers(vertexBindConfig);
+        device->BindVertexBuffers(commandBuffer, vertexBindConfig);
 
         SIndexBufferBindConfig indexBindConfig =
         {
@@ -38,7 +38,7 @@ namespace psm
             .Buffer = mIndexBuffer
         };
 
-        device->BindIndexBuffer(indexBindConfig);
+        device->BindIndexBuffer(commandBuffer, indexBindConfig);
 
         /*VkDeviceSize offset = { 0 };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_VertexBuffer, &offset);
@@ -197,8 +197,49 @@ namespace psm
             indexOffset += currentIndicesSize;
         };
 
-        device->CopyBuffer(vertexStagingBuffer, mVertexBuffer);
-        device->CopyBuffer(indexStagingBuffer, mIndexBuffer);
+        SCommandBufferConfig commandBufferConfig =
+        {
+            .Size = 1,
+            .IsBufferLevelPrimary = true
+        };
+
+        CommandBufferPtr commandBuffer = device->CreateCommandBuffers(commandPool, commandBufferConfig);
+
+        SCommandBufferBeginConfig beginConfig =
+        {
+            .BufferIndex = 0,
+            .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
+        };
+
+        commandBuffer->BeginAtIndex(beginConfig);
+
+        device->CopyBuffer(commandBuffer, vertexBufferConfig.Size, vertexStagingBuffer, mVertexBuffer);
+        device->CopyBuffer(commandBuffer, indexBufferConfig.Size ,indexStagingBuffer, mIndexBuffer);
+
+        commandBuffer->EndCommandBuffer(0);
+
+        SFenceConfig fenceConfig =
+        {
+            .Signaled = false
+        };
+
+        FencePtr submitFence = device->CreateFence(fenceConfig);
+
+        SSubmitConfig submitConfig =
+        {
+            .Queue = device->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .SubmitCount = 1,
+            .WaitStageFlags = EPipelineStageFlags::NONE,
+            .WaitSemaphoresCount = 0,
+            .pWaitSemaphores = nullptr,
+            .CommandBuffersCount = 1,
+            .pCommandBuffers = &commandBuffer,
+            .SignalSemaphoresCount = 0,
+            .pSignalSemaphores = nullptr,
+            .Fence = submitFence,
+        };
+
+        device->Submit(submitConfig);
 
         /*VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(vk::Device, commandPool);
 

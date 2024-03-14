@@ -15,7 +15,7 @@
 
 namespace psm
 {
-    class CVkSurface final : ISurface
+    class CVkSurface : public ISurface
     {
     public:
         struct SurfaceData
@@ -28,10 +28,12 @@ namespace psm
     public:
         CVkSurface(const PlatformConfig& config);
         virtual ~CVkSurface() = default;
+
+        virtual void* GetSurface() override;
+
     public:
         void DestroySurface();
         void PopulateSurfaceData(const DeviceData& data, SurfacePtr surface);
-        VkSurfaceKHR GetSurface();
         SurfaceData& GetSurfaceData();
     private:
         VkInstance mInstanceInternal;

@@ -17,5 +17,7 @@ namespace psm
         virtual void Unmap() = 0;
         virtual void Flush(SBufferFlushConfig& config) = 0;
         virtual void UpdateBuffer(const SUntypedBuffer& data) = 0;
+
+        virtual void* GetPointer() = 0;
     };
 }

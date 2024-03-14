@@ -41,4 +41,9 @@ namespace psm
     {
         vkDestroyShaderModule(mDeviceInternal, mShader, nullptr);
     }
+
+    void* CVkShader::GetPointer()
+    {
+        return mShader;
+    }
 }

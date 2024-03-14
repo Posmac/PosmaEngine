@@ -7,5 +7,7 @@ namespace psm
     public:
         IShader() = default;
         virtual ~IShader() = default;
+
+        virtual void* GetPointer() = 0;
     };
 }

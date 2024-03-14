@@ -1,5 +1,7 @@
 #include "CVkDevice.h"
 
+#include <memory>
+
 #include "CVkSurface.h"
 #include "CVkSwapchain.h"
 #include "CVkFence.h"
@@ -16,12 +18,15 @@
 #include "CVkSampler.h"
 #include "CVkPipeline.h"
 #include "CVkDescriptorSetLayout.h"
+#include "../Memory/UntypedBuffer.h"
 
 #include <Windows.h>
 #include <set>
 
 #include "../RHICommon.h"
 #include "../VkCommon.h"
+
+#include "Model/Mesh.h"
 
 #include "RenderBackend/BackedInfo.h"
 //#include "RenderBackend/PhysicalDevice.h"
@@ -31,12 +36,14 @@ extern VkInstance Instance;
 
 namespace psm
 {
-    DevicePtr CreateDefaultDeviceVk(PlatformConfig& config)
+    void VerifyDeviceExtensionsSupport(std::vector<const char*>& extensionsToEnable, VkPhysicalDevice gpu);
+
+    DevicePtr CreateDefaultDeviceVk(const PlatformConfig& config)
     {
         HINSTANCE hInstance = reinterpret_cast<HINSTANCE>(config.win32.hInstance);
         HWND hWnd = reinterpret_cast<HWND>(config.win32.hWnd);
 
-        VkPhysicalDevice gpu;
+        VkPhysicalDevice gpu = nullptr;
 
         //select physical device
         uint32_t physicalDevicesCount;
@@ -78,10 +85,10 @@ namespace psm
 
         //create surface
         std::shared_ptr<CVkSurface> surface = std::make_shared<CVkSurface>(config);
-        return std::make_shared<CVkDevice>(gpu, surface);
+        return std::make_shared<CVkDevice>(gpu, std::static_pointer_cast<ISurface>(surface));
     }
 
-    CVkDevice::CVkDevice(VkPhysicalDevice physicalDevice, std::shared_ptr<CVkSurface> surface)
+    CVkDevice::CVkDevice(VkPhysicalDevice physicalDevice, SurfacePtr surface)
     {
         mPhysicalDevice = physicalDevice;
         mVkSurface = surface;
@@ -124,7 +131,7 @@ namespace psm
         for(const auto& family : availableQueueFamilyProperties)
         {
             VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface->GetSurface(), &presentSupport);
+            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, reinterpret_cast<VkSurfaceKHR>(surface->GetSurface()), &presentSupport);
             if(family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
                 mQueues.GraphicsFamily = i;
@@ -167,6 +174,8 @@ namespace psm
 
         vkGetDeviceQueue(mDevice, mQueues.GraphicsFamily.value(), 0, &mQueues.GraphicsQueue);
         vkGetDeviceQueue(mDevice, mQueues.PresentFamily.value(), 0, &mQueues.PresentQueue);
+        
+        //mInternalDevice = std::make_shared<CVkDevice>(this);
     }
 
     CVkDevice::~CVkDevice()
@@ -176,10 +185,10 @@ namespace psm
 
     ImagePtr CVkDevice::CreateImage(const SImageConfig& config)
     {
-        return std::make_shared<CVkImage>(this, config);
+        return std::make_shared<CVkImage>(mInternalDevice, config);
     }
 
-    ImagePtr CVkDevice::CreateImageWithData(const SImageConfig& config, const SUntypedBuffer& data, const SImageLayoutTransition& transition)
+    ImagePtr CVkDevice::CreateImageWithData(CommandPoolPtr commandPool, const SImageConfig& config, const SUntypedBuffer& data, const SImageToBufferCopyConfig& copyConfig)
     {
         /*vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
                                { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,
@@ -189,26 +198,205 @@ namespace psm
                                VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
                                &texture->Image, &texture->ImageMemory, &texture->ImageView);*/
 
-        ImagePtr image = std::make_shared<CVkImage>(this, config);
+        ImagePtr image = std::make_shared<CVkImage>(mInternalDevice, config);
 
+        SBufferConfig stagingBufferConfig =
+        {
+            .Size = data.size(),
+            .Usage = EBufferUsage::USAGE_TRANSFER_SRC_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
 
+        BufferPtr stagingBuffer = CreateBuffer(stagingBufferConfig);
 
-        vk::LoadDataIntoImageUsingBuffer(vk::Device, vk::PhysicalDevice,
+        /*CreateBuffer(device, physicalDevice, dataToLoadSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               &stagingBuffer, &stagingBufferMemory);*/
+
+        void* pData;
+        SBufferMapConfig mapping =
+        {
+            .Size = data.size(),
+            .Offset = 0,
+            .pData = &pData,
+            .Flags = 0,
+        };
+
+        stagingBuffer->Map(mapping);
+
+        //void* data;
+        //VkResult result = vkMapMemory(device, stagingBufferMemory, 0, dataToLoadSize, 0, &data);
+        //VK_CHECK_RESULT(result);
+
+        memcpy(pData, data.data(), static_cast<size_t>(data.size()));
+
+        stagingBuffer->Unmap();
+        //vkUnmapMemory(device, stagingBufferMemory);
+
+        SCommandBufferConfig commandBufferConfig =
+        {
+            .Size = 1,
+            .IsBufferLevelPrimary = true
+        };
+
+        CommandBufferPtr commandBuffer = CreateCommandBuffers(commandPool, commandBufferConfig);
+
+        SCommandBufferBeginConfig beginConfig =
+        {
+            .BufferIndex = 0,
+            .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
+        };
+
+        commandBuffer->BeginAtIndex(beginConfig);
+
+        /*vk::ImageLayoutTransition(vk::Device,
+                             m_CommandBuffers[m_CurrentFrame],
+                             m_DirDepthImage[m_CurrentFrame],
+                             m_DirDepthFormat,
+                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                             VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                             VK_ACCESS_SHADER_READ_BIT,
+                             VK_IMAGE_ASPECT_DEPTH_BIT,
+                             1);*/
+
+        SImageLayoutTransition imageLayoutTransition =
+        {
+            .Format = copyConfig.FormatBeforeTransition,
+            .OldLayout = copyConfig.LayoutBeforeTransition,
+            .NewLayout = EImageLayout::TRANSFER_DST_OPTIMAL,
+            .SourceStage = EPipelineStageFlags::TOP_OF_PIPE_BIT,
+            .DestinationStage = EPipelineStageFlags::TRANSFER_BIT,
+            .SourceMask = EAccessFlags::NONE,
+            .DestinationMask = EAccessFlags::TRANSFER_WRITE_BIT,
+            .ImageAspectFlags = EImageAspect::COLOR_BIT,
+            .MipLevel = 0,
+        };
+
+        ImageLayoutTransition(commandBuffer, image, imageLayoutTransition);
+
+        /*imageFormatBeforeTransition,
+        imageLayoutBeforeTransition,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0,
+        VK_ACCESS_TRANSFER_WRITE_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        1);*/
+
+        CopyBufferToImage(commandBuffer, stagingBuffer, image, config.ImageSize, EImageAspect::COLOR_BIT, EImageLayout::TRANSFER_DST_OPTIMAL);
+
+        if(config.MipLevels > 1)
+        {
+            /* GenerateMipMaps(physicalDevice, commandBuffer, *dstImage,
+                  VK_FORMAT_R8G8B8A8_SRGB, size.width, size.height, mipLevels);*/
+        }
+        else
+        {
+            SImageLayoutTransition layoutTransition =
+            {
+                .Format = copyConfig.FormatAfterTransition,
+                .OldLayout = copyConfig.LayoutAfterTransition,
+                .NewLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .SourceStage = EPipelineStageFlags::TRANSFER_BIT,
+                .DestinationStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
+                .SourceMask = EAccessFlags::TRANSFER_WRITE_BIT,
+                .DestinationMask = EAccessFlags::SHADER_READ_BIT,
+                .ImageAspectFlags = EImageAspect::COLOR_BIT,
+                .MipLevel = 0,
+            };
+
+            ImageLayoutTransition(commandBuffer, image, layoutTransition);
+            /*device, commandBuffer, *dstImage,
+              imageFormatBeforeTransition,
+              imageLayoutBeforeTransition,
+              VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+              VK_PIPELINE_STAGE_TRANSFER_BIT,
+              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+              VK_ACCESS_TRANSFER_WRITE_BIT,
+              VK_ACCESS_SHADER_READ_BIT,
+              VK_IMAGE_ASPECT_COLOR_BIT,
+              1);*/
+        }
+
+        //VkResult result = vkEndCommandBuffer(commandBuffer);
+        //VK_CHECK_RESULT(result);
+
+        commandBuffer->EndCommandBuffer(0);
+
+        SFenceConfig fenceConfig =
+        {
+            .Signaled = false
+        };
+
+        FencePtr submitFence = CreateFence(fenceConfig);
+
+        SSubmitConfig submitConfig =
+        {
+            .Queue = mQueues.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .SubmitCount = 1,
+            .WaitStageFlags = EPipelineStageFlags::NONE,
+            .WaitSemaphoresCount = 0,
+            .pWaitSemaphores = nullptr,
+            .CommandBuffersCount = 1,
+            .pCommandBuffers = &commandBuffer,
+            .SignalSemaphoresCount = 0,
+            .pSignalSemaphores = nullptr,
+            .Fence = submitFence,
+        };
+
+        Submit(submitConfig);
+        //VkSubmitInfo submitInfo = {};
+        //submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        //submitInfo.commandBufferCount = 1;
+        //submitInfo.pCommandBuffers = &commandBuffer;
+
+        //// Submit to the queue
+        //result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence);
+        //VK_CHECK_RESULT(result);
+        // Wait for the fence to signal that command buffer has finished executing
+
+        SFenceWaitConfig waitConfig =
+        {
+            .WaitAll = true,
+            .Timeout = static_cast<float>(100000000000)
+        };
+
+        submitFence->Wait(waitConfig);
+
+        //result = vkWaitForFences(device, 1, &fence, VK_TRUE, 100000000000);
+        //VK_CHECK_RESULT(result);
+
+        //vkDestroyFence(device, fence, nullptr);
+        //vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+        commandPool->FreeCommandBuffers({ commandBuffer });
+
+        //putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, commandQueue);
+
+        /*vk::FreeMemory(device, stagingBufferMemory);
+        vk::DestroyBuffer(device, stagingBuffer);*/
+
+        /*vk::LoadDataIntoImageUsingBuffer(vk::Device, vk::PhysicalDevice,
                                          , m_CommandPool, vk::Queues.GraphicsQueue,
                                          { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
                                          mipLevels,
                                          VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_FORMAT_R8G8B8A8_SRGB,
-                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &texture->Image);
+                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &texture->Image);*/
+
+        return image;
     }
 
     BufferPtr CVkDevice::CreateBuffer(const SBufferConfig& config)
     {
-        return std::make_shared<CVkBuffer>(this, config);
+        return std::make_shared<CVkBuffer>(mInternalDevice, config);
     }
 
     SamplerPtr CVkDevice::CreateSampler(const SSamplerConfig& config)
     {
-        return std::make_shared<CVkSampler>(this, config);
+        return std::make_shared<CVkSampler>(mInternalDevice, config);
     }
 
     void VerifyDeviceExtensionsSupport(std::vector<const char*>& extensionsToEnable, VkPhysicalDevice gpu)
@@ -247,12 +435,12 @@ namespace psm
 
     SwapchainPtr CVkDevice::CreateSwapchain(const SSwapchainConfig& config)
     {
-        return std::make_shared<CVkSwapchain>(this, config);
+        return std::make_shared<CVkSwapchain>(mInternalDevice, config);
     }
 
     PipelineLayoutPtr CVkDevice::CreatePipelineLayout(const SPipelineLayoutConfig& config)
     {
-        return std::make_shared<CVkPipelineLayout>(this, config);
+        return std::make_shared<CVkPipelineLayout>(mInternalDevice, config);
     }
 
     CommandQueuePtr CVkDevice::CreateCommandQueue(const SCommandQueueConfig& config)
@@ -262,32 +450,32 @@ namespace psm
 
     RenderPassPtr CVkDevice::CreateRenderPass(const SRenderPassConfig& config)
     {
-        return std::make_shared<CVkRenderPass>(this, config);
+        return std::make_shared<CVkRenderPass>(mInternalDevice, config);
     }
 
     CommandPoolPtr CVkDevice::CreateCommandPool(const SCommandPoolConfig& config)
     {
-        return std::make_shared<CVkCommandPool>(this, config);
+        return std::make_shared<CVkCommandPool>(mInternalDevice, config);
     }
 
     CommandBufferPtr CVkDevice::CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config)
     {
-        return std::make_shared<CVkCommandBuffer>(this, commandPool, config);
+        return std::make_shared<CVkCommandBuffer>(mInternalDevice, commandPool, config);
     }
 
     FramebufferPtr CVkDevice::CreateFramebuffer(const SFramebufferConfig& config)
     {
-        return std::make_shared<CVkFramebuffer>(this, config);
+        return std::make_shared<CVkFramebuffer>(mInternalDevice, config);
     }
 
     DescriptorPoolPtr CVkDevice::CreateDescriptorPool(const SDescriptorPoolConfig& config)
     {
-        return std::make_shared<CVkDescriptorPool>(this, config);
+        return std::make_shared<CVkDescriptorPool>(mInternalDevice, config);
     }
 
     DescriptorSetLayoutPtr CVkDevice::CreateDescriptorSetLayout(const SDescriptorSetLayoutConfig& config)
     {
-        return std::make_shared<CVkDescriptorSetLayout>(this, config);
+        return std::make_shared<CVkDescriptorSetLayout>(mInternalDevice, config);
     }
 
     void CVkDevice::AllocateDescriptorSets(const SDescriptorSetAllocateConfig& config)
@@ -312,6 +500,33 @@ namespace psm
 
         VkResult result = vkAllocateDescriptorSets(mDevice, &setsAllocInfo, &vkSet);
         VK_CHECK_RESULT(result);
+    }
+
+    void CVkDevice::ImageLayoutTransition(CommandBufferPtr commandBuffer, ImagePtr image, const SImageLayoutTransition& config)
+    {
+        VkImageMemoryBarrier barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.pNext = nullptr;
+        barrier.oldLayout = ToVulkan(config.OldLayout);
+        barrier.newLayout = ToVulkan(config.NewLayout);
+        barrier.image = reinterpret_cast<VkImage>(image->GetImage());
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.subresourceRange.aspectMask = ToVulkan(config.ImageAspectFlags);
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.baseMipLevel = 0;
+        barrier.subresourceRange.levelCount = config.MipLevel;
+        barrier.subresourceRange.layerCount = 1;
+        barrier.srcAccessMask = ToVulkan(config.SourceMask);
+        barrier.dstAccessMask = ToVulkan(config.DestinationMask);
+
+        vkCmdPipelineBarrier(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
+            ToVulkan(config.SourceStage),
+            ToVulkan(config.DestinationStage),
+            0,
+            0, nullptr,
+            0, nullptr,
+            1, &barrier);
     }
 
     void CVkDevice::InsertImageMemoryBarrier(const SImageBarrierConfig& config)
@@ -346,27 +561,43 @@ namespace psm
 
     void CVkDevice::Submit(const SSubmitConfig& config)
     {
+        std::vector<VkSemaphore> waitSemapthores(config.WaitSemaphoresCount);
+        for(int i = 0; i < waitSemapthores.size(); i++)
+        {
+            waitSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[i]->GetRawData());
+        }
+
+        std::vector<VkSemaphore> signalSemapthores(config.WaitSemaphoresCount);
+        for(int i = 0; i < signalSemapthores.size(); i++)
+        {
+            signalSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pSignalSemaphores[i]->GetRawData());
+        }
+
+        std::vector<VkCommandBuffer> cmdBuffers(config.CommandBuffersCount);
+        for(int i = 0; i < cmdBuffers.size(); i++)
+        {
+            cmdBuffers[i] = reinterpret_cast<VkCommandBuffer>(config.pCommandBuffers[i]->GetRawPointer());
+        }
+
+        VkPipelineStageFlags stageFlags = ToVulkan(config.WaitStageFlags);
+
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.pNext = nullptr;
-        submitInfo.waitSemaphoreCount = waitSemaphoresCount;
-        submitInfo.pWaitSemaphores = pWaitSemaphores;
-        submitInfo.pWaitDstStageMask = &waitStageFlags;
-        submitInfo.commandBufferCount = commandBuffersCount;
-        submitInfo.pCommandBuffers = pCommandBuffers;
-        submitInfo.signalSemaphoreCount = signalSemaphoresCount;
-        submitInfo.pSignalSemaphores = pSignalSemaphores;
+        submitInfo.waitSemaphoreCount = waitSemapthores.size();
+        submitInfo.pWaitSemaphores = waitSemapthores.data();
+        submitInfo.pWaitDstStageMask = &stageFlags;
+        submitInfo.commandBufferCount = cmdBuffers.size();
+        submitInfo.pCommandBuffers = cmdBuffers.data();
+        submitInfo.signalSemaphoreCount = signalSemapthores.size();
+        submitInfo.pSignalSemaphores = signalSemapthores.data();
 
-        VkResult result = vkQueueSubmit(queue, submitCount, &submitInfo, fence);
+        VkResult result = vkQueueSubmit(reinterpret_cast<VkQueue>(config.Queue), config.SubmitCount, &submitInfo, reinterpret_cast<VkFence>(config.Fence->GetPointer()));
     }
 
     void CVkDevice::Present(const SPresentConfig& config)
     {
-        VkSemaphore vkSemaphore = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[0]->GetRawData());
-        VkSwapchainKHR vkSwapchain = reinterpret_cast<VkSwapchainKHR>(config.pSwapchains[0]->Present)
-            VkResult result = vk::Present(mQueues.GraphicsQueue, &vkSemaphore, 1,
-                        &m_SwapChain, 1, config.ImageIndices);
-        VK_CHECK_RESULT(result);
+        mSwapchain->Present(config);
     }
 
     void CVkDevice::WaitIndle()
@@ -374,59 +605,156 @@ namespace psm
         vkDeviceWaitIdle(mDevice);
     }
 
-    void CVkDevice::BindVertexBuffers(const SVertexBufferBindConfig& config)
+    void CVkDevice::BindVertexBuffers(CommandBufferPtr commandBuffer, const SVertexBufferBindConfig& config)
     {
-        VkDeviceSize offset = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer,
-                               1, //first binding 
-                               1, //binding count
-                               &m_InstanceBuffer,
-                               &offset);
+        std::vector<VkBuffer> buffers(config.BindingCount);
+        for(int i = 0; i < buffers.size(); i++)
+        {
+            buffers[i] = reinterpret_cast<VkBuffer>(config.Buffers[i]->GetPointer());
+        }
+
+        vkCmdBindVertexBuffers(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
+                               config.FirstSlot, //first binding 
+                               config.BindingCount, //binding count
+                               buffers.data(),
+                               config.Offsets.data());
     }
 
-    void CVkDevice::BindIndexBuffer(const SIndexBufferBindConfig& config)
+    void CVkDevice::BindIndexBuffer(CommandBufferPtr commandBuffer, const SIndexBufferBindConfig& config)
     {
-        vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()), 
+                             reinterpret_cast<VkBuffer>(config.Buffer->GetPointer()), 
+                             0, ToVulkan(config.Type));
     }
 
-    void CVkDevice::CopyBuffer(BufferPtr sourceBuffer, BufferPtr destinationBuffer)
+    void CVkDevice::CopyBuffer(CommandBufferPtr commandBuffer, uint64_t size, BufferPtr sourceBuffer, BufferPtr destinationBuffer)
     {
-        VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(vk::Device, commandPool);
+        //command buffer should be bind at this time!!
 
-        vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
-            vertexStagingBuffer, m_VertexBuffer, vertexBufferSize);
+        VkBufferCopy copyRegion{};
+        copyRegion.size = size;
+        copyRegion.srcOffset = 0;
+        copyRegion.dstOffset = 0;
 
-        vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
-            indexStagingBuffer, m_IndexBuffer, indexBufferSize);
+        /* vk::InsertBufferMemoryBarrier(commandBuffer, srcBuffer, size,
+             VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+             VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);*/
 
-        putils::EndSingleTimeCommandBuffer(vk::Device, commandPool, commandBuffer, vk::Queues.GraphicsQueue);
+        vkCmdCopyBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()), 
+                        reinterpret_cast<VkBuffer>(sourceBuffer->GetPointer()), 
+                        reinterpret_cast<VkBuffer>(destinationBuffer->GetPointer()),
+                        1, &copyRegion);
+
+        //vk::InsertBufferMemoryBarrier(commandBuffer, dstBuffer, size,
+        //    VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+        //    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);
     }
 
-    void CVkDevice::BindDescriptorSets(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint, PipelinePtr pipeline, const std::vector<DescriptorSetPtr>& descriptors)
+    void CVkDevice::CopyBufferToImage(CommandBufferPtr commandBuffer, BufferPtr sourceBuffer, ImagePtr destrinationImage, SResourceExtent3D copySize,
+                                      EImageAspect imageAspect, EImageLayout imageLayoutAfterCopy)
     {
-        vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+        VkBufferImageCopy copy{};
+        copy.bufferOffset = 0;
+        copy.bufferImageHeight = 0;
+        copy.bufferRowLength = 0;
+
+        copy.imageOffset = { 0, 0, 0 };
+        copy.imageExtent = copySize;
+        copy.imageSubresource.aspectMask = ToVulkan(imageAspect);
+        copy.imageSubresource.baseArrayLayer = 0;
+        copy.imageSubresource.layerCount = 1;
+        copy.imageSubresource.mipLevel = 0;
+
+        vkCmdCopyBufferToImage(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()), 
+                               reinterpret_cast<VkBuffer>(sourceBuffer->GetPointer()),
+                               reinterpret_cast<VkImage>(destrinationImage->GetImage()),
+                               ToVulkan(imageLayoutAfterCopy), 1, &copy);
+    }
+
+    void CVkDevice::BindDescriptorSets(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint, PipelineLayoutPtr pipelineLayout, const std::vector<DescriptorSetPtr>& descriptors)
+    {
+        std::vector<VkDescriptorSet> vkDescriptors(descriptors.size());
+        for(int i = 0; i < vkDescriptors.size(); i++)
+        {
+            vkDescriptors[i] = reinterpret_cast<VkDescriptorSet>(descriptors[i]->GetPointer());
+        }
+
+        vkCmdBindDescriptorSets(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()), 
+                                ToVulkan(bindPoint), 
+                                reinterpret_cast<VkPipelineLayout>(pipelineLayout->GetPointer()), 0, 
+                                vkDescriptors.size(), vkDescriptors.data(), 0, nullptr);
+
+       /* vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                         m_InstancedPipelineLayout, { m_InstanceDescriptorSet,
-                                        perModel.PerMaterials[i].MaterialDescriptorSet });
+                                        perModel.PerMaterials[i].MaterialDescriptorSet });*/
     }
 
-    void CVkDevice::DrawIndexed(CommandBufferPtr commandBuffer, const Mesh Range& range, uint32_t totalInstances, uint32_t firstInstance)
+    void CVkDevice::DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance)
     {
-        vkCmdDrawIndexed(commandBuffer, range.IndicesCount, totalInstances,
+        vkCmdDrawIndexed(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()), range.IndicesCount, totalInstances,
                      range.IndicesOffset, range.VerticesOffset, firstInstance);
     }
 
     void CVkDevice::SetDepthBias(CommandBufferPtr commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
     {
-        vkCmdSetDepthBias(commandBuffer,
-                 depthBias,
-                 1.0f,
-                 depthSlope);
+        vkCmdSetDepthBias(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
+                 depthBiasConstantFactor,
+                 depthBiasClamp,
+                 depthBiasSlopeFactor);
     }
 
-    void CVkDevice::UpdateDescriptorSets(DescriptorSetPtr* descriptorSets, uint32_t setsCount, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers)
+    void CVkDevice::UpdateDescriptorSets(DescriptorSetPtr descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers)
     {
-        vk::UpdateDescriptorSets(vk::Device, *descriptorSet, {}, imagesInfo,
-            imagesInfo.size());
+        std::vector<VkWriteDescriptorSet> writeDescriptors(updateTextures.size() + updateBuffers.size());
+
+        std::vector<VkDescriptorBufferInfo> buffersInfo(updateBuffers.size());
+        for(int i = 0; i < updateBuffers.size(); i++)
+        {
+            buffersInfo[i] =
+            {
+                .buffer = reinterpret_cast<VkBuffer>(updateBuffers[i].Buffer->GetPointer()),
+                .offset = updateBuffers[i].Offset,
+                .range = updateBuffers[i].Range
+            };
+
+            writeDescriptors[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeDescriptors[i].pNext = nullptr;
+            writeDescriptors[i].dstBinding = updateBuffers[i].DstBinding;
+            writeDescriptors[i].dstArrayElement = 0;
+            writeDescriptors[i].descriptorType = ToVulkan(updateBuffers[i].DescriptorType);
+            writeDescriptors[i].descriptorCount = 1;
+            writeDescriptors[i].pBufferInfo = &buffersInfo[i];
+            writeDescriptors[i].pImageInfo = nullptr;
+            writeDescriptors[i].pTexelBufferView = nullptr;
+            writeDescriptors[i].dstSet = reinterpret_cast<VkDescriptorSet>(descriptorSet->GetPointer());
+        }
+
+        std::vector<VkDescriptorImageInfo> imagesInfo(updateTextures.size());
+        for(int i = 0; i < updateTextures.size(); i++)
+        {
+            imagesInfo[i] =
+            {
+                .sampler = reinterpret_cast<VkSampler>(updateTextures[i].Sampler->GetPointer()),
+                .imageView = reinterpret_cast<VkImageView>(updateTextures[i].Image->GetImageView()),
+                .imageLayout = ToVulkan(updateTextures[i].ImageLayout)
+            };
+
+            writeDescriptors[i + buffersInfo.size()].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeDescriptors[i + buffersInfo.size()].pNext = nullptr;
+            writeDescriptors[i + buffersInfo.size()].dstBinding = updateTextures[i].DstBinding;
+            writeDescriptors[i + buffersInfo.size()].dstArrayElement = 0;
+            writeDescriptors[i + buffersInfo.size()].descriptorType = ToVulkan(updateTextures[i].DescriptorType);
+            writeDescriptors[i + buffersInfo.size()].descriptorCount = 1;
+            writeDescriptors[i + buffersInfo.size()].pBufferInfo = nullptr;
+            writeDescriptors[i + buffersInfo.size()].pImageInfo = &imagesInfo[i];
+            writeDescriptors[i + buffersInfo.size()].pTexelBufferView = nullptr;
+            writeDescriptors[i + buffersInfo.size()].dstSet = reinterpret_cast<VkDescriptorSet>(descriptorSet->GetPointer());
+        }
+
+        vkUpdateDescriptorSets(mDevice, writeDescriptors.size(), writeDescriptors.data(), 0, nullptr);
+
+        /*vk::UpdateDescriptorSets(vk::Device, *descriptorSet, {}, imagesInfo,
+            imagesInfo.size());*/
     }
 
     EFormat CVkDevice::FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature)
@@ -453,28 +781,37 @@ namespace psm
         __debugbreak();
     }
 
+    DeviceData CVkDevice::GetDeviceData()
+    {
+        return mDeviceData;
+    }
+
     SurfacePtr CVkDevice::GetSurface()
     {
-        return std::static_pointer_cast<ISurface>(mVkSurface);
+        return mVkSurface;
+    }
+
+    void CVkDevice::SetDebugNameForResource(void* resource, VkDebugReportObjectTypeEXT type, const char* debugName)
+    {
     }
 
     PipelinePtr CVkDevice::CreateRenderPipeline(const SPipelineConfig& config)
     {
-        return std::make_shared<CVkPipeline>(this, config);
+        return std::make_shared<CVkPipeline>(mInternalDevice, config);
     }
 
-    ShaderPtr CVkDevice::CreateShaderFromFilename(const std::filesystem::path& path, EShaderStageFlag shaderType)
+    ShaderPtr CVkDevice::CreateShaderFromFilename(const std::string& path, EShaderStageFlag shaderType)
     {
-        return std::make_shared<CVkShader>(this, path, shaderType);
+        return std::make_shared<CVkShader>(mInternalDevice, path, shaderType);
     }
 
     FencePtr CVkDevice::CreateFence(const SFenceConfig& config)
     {
-        return std::make_shared<CVkFence>(this, config);
+        return std::make_shared<CVkFence>(mInternalDevice, config);
     }
 
     SemaphorePtr CVkDevice::CreateSemaphore(const SSemaphoreConfig& config)
     {
-        return std::make_shared<CVkSemaphore>(this, config);
+        return std::make_shared<CVkSemaphore>(mInternalDevice, config);
     }
 }

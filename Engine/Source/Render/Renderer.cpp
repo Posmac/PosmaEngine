@@ -184,7 +184,6 @@ namespace psm
         PrepareDirDepth();
         PrepareOffscreenRenderpass();
 
-
         //init other things bellow
         __debugbreak();
 
@@ -508,7 +507,7 @@ namespace psm
             .SubmitCount = 1,
             .WaitStageFlags = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT,
             .WaitSemaphoresCount = 1,
-            .pSemaphoresCount = &mImageAvailableSemaphores[mCurrentFrame],
+            .pWaitSemaphores = &mImageAvailableSemaphores[mCurrentFrame],
             .CommandBuffersCount = 1,
             .pCommandBuffers = &mCommandBuffers,
             .SignalSemaphoresCount = 1,
@@ -529,9 +528,7 @@ namespace psm
             .Queue = nullptr,
             .WaitSemaphoresCount = 1,
             .pWaitSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
-            .SwapchainsCount = 1,
-            .pSwapchains = &mSwapchain,
-            .ImageIndices = &imageIndex
+            .ImageIndex = imageIndex
         };
 
         mDevice->Present(presentConfig);
@@ -556,7 +553,7 @@ namespace psm
         SImageConfig imageConfig =
         {
             .ImageSize = { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
-            .MipLevels = mipLevels,
+            .MipLevels = static_cast<int>(mipLevels),
             .ArrayLevels = 1,
             .Type = EImageType::TYPE_2D,
             .Format = EFormat::R8G8B8A8_SRGB,
@@ -573,7 +570,7 @@ namespace psm
 
         SUntypedBuffer textureBuffer(textureData.Width * textureData.Height * textureData.Type, textureData.Data);
 
-        SImageLayoutTransition layoutTransition =
+        SImageToBufferCopyConfig layoutTransition =
         {
             .FormatBeforeTransition = EFormat::R8G8B8A8_SRGB,
             .LayoutBeforeTransition = EImageLayout::UNDEFINED,
@@ -581,7 +578,7 @@ namespace psm
             .LayoutAfterTransition = EImageLayout::SHADER_READ_ONLY_OPTIMAL
         };
 
-        image = mDevice->CreateImageWithData(imageConfig, textureBuffer, layoutTransition);
+        image = mDevice->CreateImageWithData(mCommandPool, imageConfig, textureBuffer, layoutTransition);
 
         /*vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
                                { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,
