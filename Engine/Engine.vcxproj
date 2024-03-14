@@ -235,6 +235,9 @@
     <ClInclude Include="Source\RHI\Vulkan\CVkSwapchain.h" />
     <ClInclude Include="Source\RHI\Vulkan\RenderBackend\BackedInfo.h" />
     <ClInclude Include="Source\RHI\VkCommon.h" />
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\DebugUtilsMessenger.h" />
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Instance.h" />
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Memory.h" />
     <ClInclude Include="Source\RHI\Vulkan\TypeConvertor.h" />
     <ClInclude Include="Source\RHI\Interface\Device.h" />
     <ClInclude Include="Source\RHI\Interface\Image.h" />
@@ -248,6 +251,7 @@
     <ClInclude Include="Source\Utilities\TextureLoader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\RHI\Enums\Formats.cpp" />
     <ClCompile Include="Source\RHI\RHI.cpp" />
     <ClCompile Include="Source\RHI\RHICommon.cpp" />
     <ClCompile Include="Source\RHI\RHIVulkan.cpp" />
@@ -287,6 +291,9 @@
     <ClCompile Include="Source\RHI\Vulkan\CVkImage.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkSampler.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkSwapchain.cpp" />
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\DebugUtilsMessenger.cpp" />
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Instance.cpp" />
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Memory.cpp" />
     <ClCompile Include="Source\Systems\InputSystem.cpp" />
     <ClCompile Include="Source\Systems\TimeSystem.cpp" />
     <ClCompile Include="Source\Utilities\ModelLoader.cpp" />

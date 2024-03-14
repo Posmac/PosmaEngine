@@ -35,7 +35,7 @@ namespace psm
         void operator=(const Shadows&) = delete;
         static Shadows* Instance();
     private:
-        Shadows();
+        Shadows() {};
         static Shadows* s_Instance;
         //class specific
     public:

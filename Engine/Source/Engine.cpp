@@ -19,7 +19,7 @@ namespace psm
 
     void Engine::Init(HWND hWnd, HINSTANCE hInstance)
     {
-        Log::Init();
+        //Log::Init();
 
         InitOptions options = 
         {

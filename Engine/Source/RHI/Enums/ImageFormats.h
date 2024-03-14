@@ -224,20 +224,11 @@ namespace psm
         USAGE_INPUT_ATTACHMENT_BIT = 0x00000080,
     };
 
-    inline EImageUsageType operator &(const EImageUsageType& rhs, const EImageUsageType& lhs)
-    {
-        return static_cast<EImageUsageType>(static_cast<uint32_t>(rhs) & static_cast<uint32_t>(lhs));
-    }
+    EImageUsageType operator &(const EImageUsageType& rhs, const EImageUsageType& lhs);
 
-    inline EImageUsageType operator | (const EImageUsageType& rhs, const EImageUsageType& lhs)
-    {
-        return static_cast<EImageUsageType>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
-    }
+    EImageUsageType operator | (const EImageUsageType& rhs, const EImageUsageType& lhs);
 
-    inline bool operator != (const EImageUsageType& rhs, const uint32_t lhs)
-    {
-        return static_cast<uint32_t>(rhs) != lhs;
-    }
+    bool operator != (const EImageUsageType& rhs, const uint32_t lhs);
 
     enum class EImageTiling : uint8_t
     {
@@ -264,15 +255,9 @@ namespace psm
         TRANSFER_DST_BIT = 0x00008000,
     };
 
-    inline EFeatureFormat operator & (const EFeatureFormat& rhs, const EFeatureFormat& lhs)
-    {
-        return static_cast<EFeatureFormat>(static_cast<uint32_t>(rhs) & static_cast<uint32_t>(lhs));
-    }
+    EFeatureFormat operator & (const EFeatureFormat& rhs, const EFeatureFormat& lhs);
 
-    inline bool operator != (const EFeatureFormat& rhs, const uint32_t& lhs)
-    {
-        return static_cast<uint32_t>(rhs) != lhs;
-    }
+    bool operator != (const EFeatureFormat& rhs, const uint32_t& lhs);
 
     enum class EImageAspect : uint8_t
     {

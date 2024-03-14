@@ -3,7 +3,7 @@
 #include <vector>
 
 //extensions and layers
-std::vector<const char*> ValidationLayers =
+inline std::vector<const char*> ValidationLayers =
 {
     "VK_LAYER_KHRONOS_validation",
     "VK_LAYER_LUNARG_monitor",
@@ -12,7 +12,7 @@ std::vector<const char*> ValidationLayers =
     "VK_LAYER_LUNARG_object_tracker",
 };
 
-std::vector<const char*> InstanceExtensions =
+inline std::vector<const char*> InstanceExtensions =
 {
     "VK_KHR_surface",
     "VK_KHR_get_physical_device_properties2",
@@ -21,7 +21,7 @@ std::vector<const char*> InstanceExtensions =
     "VK_EXT_debug_report"
 };
 
-std::vector<const char*> DeviceExtensions =
+inline std::vector<const char*> DeviceExtensions =
 {
     "VK_KHR_swapchain",
 };

@@ -41,7 +41,7 @@ namespace psm
 
     CVkSampler::~CVkSampler()
     {
-        vk::DestroySampler(mVkDevice, mVkSampler);
+        vkDestroySampler(mVkDevice, mVkSampler, nullptr);
     }
 
     void* CVkSampler::GetPointer()

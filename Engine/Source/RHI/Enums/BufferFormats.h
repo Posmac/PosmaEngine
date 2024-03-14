@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace psm
 {
     enum class EBufferUsage : uint32_t
@@ -17,10 +19,7 @@ namespace psm
         //not complete
     };
 
-    inline EBufferUsage operator | (const EBufferUsage rhs, const EBufferUsage lhs)
-    {
-        return static_cast<EBufferUsage>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
-    }
+    EBufferUsage operator | (const EBufferUsage rhs, const EBufferUsage lhs);
 
     enum class EMemoryProperties : uint32_t
     {
@@ -37,8 +36,5 @@ namespace psm
         MAX = 0x0FFFFFFF
     };
 
-    inline EMemoryProperties operator | (const EMemoryProperties rhs, const EMemoryProperties lhs)
-    {
-        return static_cast<EMemoryProperties>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
-    }
+    EMemoryProperties operator | (const EMemoryProperties rhs, const EMemoryProperties lhs);
 }

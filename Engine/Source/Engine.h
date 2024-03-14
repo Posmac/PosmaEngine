@@ -3,7 +3,7 @@
 #include <Windows.h>
 
 #include "Render/Renderer.h"
-#include "Core/Log.h"
+//#include "Core/Log.h"
 
 namespace psm
 {
@@ -15,7 +15,7 @@ namespace psm
         void operator=(const Engine&) = delete;
         static Engine* Instance();
     private:
-        Engine();
+        Engine() {};
         static Engine* s_Instance;
     public:
         void Init(HWND hWnd, HINSTANCE hInstance);

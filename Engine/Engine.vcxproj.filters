@@ -285,6 +285,15 @@
     <ClInclude Include="Source\RHI\Vulkan\CVkDescriptorSetLayout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\DebugUtilsMessenger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Instance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\RenderBackend\Memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine.cpp">
@@ -414,6 +423,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\RHI\Vulkan\CVkDescriptorSetLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Enums\Formats.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\DebugUtilsMessenger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Instance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\RenderBackend\Memory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

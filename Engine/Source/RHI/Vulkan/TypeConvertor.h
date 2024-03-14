@@ -15,7 +15,7 @@
 
 namespace psm
 {
-    VkFilter ToVulkan(EFilterMode mode)
+    inline VkFilter ToVulkan(EFilterMode mode)
     {
         switch(mode)
         {
@@ -28,7 +28,7 @@ namespace psm
         }
     }
 
-    VkSamplerMipmapMode ToVulkan(ESamplerMipmapMode mode)
+    inline VkSamplerMipmapMode ToVulkan(ESamplerMipmapMode mode)
     {
         switch(mode)
         {
@@ -41,7 +41,7 @@ namespace psm
         }
     }
 
-    VkSamplerAddressMode ToVulkan(ESamplerAddressMode mode)
+    inline VkSamplerAddressMode ToVulkan(ESamplerAddressMode mode)
     {
         switch(mode)
         {
@@ -60,7 +60,7 @@ namespace psm
         }
     }
 
-    VkBorderColor ToVulkan(EBorderColor color)
+    inline VkBorderColor ToVulkan(EBorderColor color)
     {
         switch(color)
         {
@@ -81,7 +81,7 @@ namespace psm
         }
     }
 
-    VkCompareOp ToVulkan(ECompareOp operation)
+    inline VkCompareOp ToVulkan(ECompareOp operation)
     {
         switch(operation)
         {
@@ -106,7 +106,7 @@ namespace psm
         }
     }
 
-    VkBufferUsageFlags ToVulkan(EBufferUsage usage)
+    inline VkBufferUsageFlags ToVulkan(EBufferUsage usage)
     {
         switch(usage)
         {
@@ -133,7 +133,7 @@ namespace psm
         }
     }
 
-    VkMemoryPropertyFlags ToVulkan(EMemoryProperties properties)
+    inline VkMemoryPropertyFlags ToVulkan(EMemoryProperties properties)
     {
         switch(properties)
         {
@@ -160,7 +160,7 @@ namespace psm
         }
     }
 
-    EImageType FromVulkan(VkImageType type)
+    inline EImageType FromVulkan(VkImageType type)
     {
         switch(type)
         {
@@ -175,7 +175,7 @@ namespace psm
         }
     }
 
-    EFormat FromVulkan(VkFormat format)
+    inline EFormat FromVulkan(VkFormat format)
     {
         switch(format)
         {
@@ -478,7 +478,7 @@ namespace psm
         }
     }
 
-    VkFormat ToVulkan(EFormat imageFormat)
+    inline VkFormat ToVulkan(EFormat imageFormat)
     {
         switch(imageFormat)
         {
@@ -749,7 +749,7 @@ namespace psm
         }
     }
 
-    VkAttachmentDescriptionFlags ToVulkan(EAttachmentDescriptionFlags flags)
+    inline VkAttachmentDescriptionFlags ToVulkan(EAttachmentDescriptionFlags flags)
     {
         switch(flags)
         {
@@ -760,7 +760,7 @@ namespace psm
         }
     }
 
-    VkSampleCountFlagBits ToVulkan(ESamplesCount samples)
+    inline VkSampleCountFlagBits ToVulkan(ESamplesCount samples)
     {
         switch(samples)
         {
@@ -783,7 +783,7 @@ namespace psm
         }
     }
 
-    VkAttachmentLoadOp ToVulkan(EAttachmentLoadOp loadOp)
+    inline VkAttachmentLoadOp ToVulkan(EAttachmentLoadOp loadOp)
     {
         switch(loadOp)
         {
@@ -796,7 +796,7 @@ namespace psm
         }
     }
 
-    VkAttachmentStoreOp ToVulkan(EAttachmentStoreOp storeOp)
+    inline VkAttachmentStoreOp ToVulkan(EAttachmentStoreOp storeOp)
     {
         switch(storeOp)
         {
@@ -807,7 +807,7 @@ namespace psm
         }
     }
 
-    VkImageLayout ToVulkan(EImageLayout layout)
+    inline VkImageLayout ToVulkan(EImageLayout layout)
     {
         switch(layout)
         {
@@ -852,7 +852,7 @@ namespace psm
         }
     }
 
-    VkPipelineBindPoint ToVulkan(EPipelineBindPoint bindPoint)
+    inline VkPipelineBindPoint ToVulkan(EPipelineBindPoint bindPoint)
     {
         switch(bindPoint)
         {
@@ -865,7 +865,7 @@ namespace psm
         }
     }
 
-    VkPipelineStageFlags ToVulkan(EPipelineStageFlags stageFlags)
+    inline VkPipelineStageFlags ToVulkan(EPipelineStageFlags stageFlags)
     {
         VkPipelineStageFlags flags = VkPipelineStageFlagBits::VK_PIPELINE_STAGE_NONE;
 
@@ -941,7 +941,7 @@ namespace psm
         return flags;
     }
 
-    VkAccessFlags ToVulkan(EAccessFlags accessFlags)
+    inline VkAccessFlags ToVulkan(EAccessFlags accessFlags)
     {
         VkAccessFlags flags = VkAccessFlagBits::VK_ACCESS_NONE;
 
@@ -1017,7 +1017,7 @@ namespace psm
         return flags;
     }
 
-    VkDependencyFlags ToVulkan(EDependencyFlags dependencyFlags)
+    inline VkDependencyFlags ToVulkan(EDependencyFlags dependencyFlags)
     {
         switch(dependencyFlags)
         {
@@ -1030,7 +1030,7 @@ namespace psm
         }
     }
 
-    VkFormatFeatureFlags ToVulkan(EFeatureFormat feature)
+    inline VkFormatFeatureFlags ToVulkan(EFeatureFormat feature)
     {
         VkFormatFeatureFlags flags = 0;
 
@@ -1098,7 +1098,7 @@ namespace psm
         return flags;
     }
 
-    VkImageType ToVulkan(EImageType type)
+    inline VkImageType ToVulkan(EImageType type)
     {
         switch(type)
         {
@@ -1113,7 +1113,7 @@ namespace psm
         }
     }
 
-    VkImageTiling ToVulkan(EImageTiling tiling)
+    inline VkImageTiling ToVulkan(EImageTiling tiling)
     {
         switch(tiling)
         {
@@ -1126,7 +1126,7 @@ namespace psm
         }
     }
 
-    VkImageUsageFlags ToVulkan(EImageUsageType usage)
+    inline VkImageUsageFlags ToVulkan(EImageUsageType usage)
     {
         VkImageUsageFlags flags = 0;
         if((usage & EImageUsageType::USAGE_TRANSFER_SRC_BIT) != 0)
@@ -1165,7 +1165,7 @@ namespace psm
         return flags;
     }
 
-    VkSharingMode ToVulkan(ESharingMode mode)
+    inline VkSharingMode ToVulkan(ESharingMode mode)
     {
         switch(mode)
         {
@@ -1180,12 +1180,12 @@ namespace psm
         return VkSharingMode::VK_SHARING_MODE_EXCLUSIVE;
     }
 
-    VkImageCreateFlags ToVulkan(EImageCreateFlags flags)
+    inline VkImageCreateFlags ToVulkan(EImageCreateFlags flags)
     {
         return 0;
     }
 
-    VkImageViewType ToVulkan(EImageViewType type)
+    inline VkImageViewType ToVulkan(EImageViewType type)
     {
         switch(type)
         {
@@ -1208,7 +1208,7 @@ namespace psm
         }
     }
 
-    VkImageAspectFlags ToVulkan(EImageAspect aspect)
+    inline VkImageAspectFlags ToVulkan(EImageAspect aspect)
     {
         switch(aspect)
         {
@@ -1224,10 +1224,10 @@ namespace psm
         }
     }
 
-    VkCommandBufferUsageFlags ToVulkan(ECommandBufferUsage usage)
+    inline VkCommandBufferUsageFlags ToVulkan(ECommandBufferUsage usage)
     {
         VkCommandBufferUsageFlags flags = 0;
-        
+
         switch(usage)
         {
             case ECommandBufferUsage::NONE:
@@ -1245,7 +1245,7 @@ namespace psm
         return flags;
     }
 
-    VkSubpassContents ToVulkan(ESubpassContents contents)
+    inline VkSubpassContents ToVulkan(ESubpassContents contents)
     {
         switch(contents)
         {
@@ -1258,7 +1258,7 @@ namespace psm
         }
     }
 
-    VkDescriptorType ToVulkan(EDescriptorType DescriptorType)
+    inline VkDescriptorType ToVulkan(EDescriptorType DescriptorType)
     {
         switch(DescriptorType)
         {
@@ -1287,7 +1287,7 @@ namespace psm
         }
     }
 
-    VkShaderStageFlagBits ToVulkan(EShaderStageFlag ShaderStage)
+    inline VkShaderStageFlagBits ToVulkan(EShaderStageFlag ShaderStage)
     {
         switch(ShaderStage)
         {
@@ -1310,7 +1310,7 @@ namespace psm
         }
     }
 
-    VkVertexInputRate ToVulkan(EVertexInputRate rate)
+    inline VkVertexInputRate ToVulkan(EVertexInputRate rate)
     {
         switch(rate)
         {
@@ -1323,7 +1323,7 @@ namespace psm
         }
     }
 
-    VkPrimitiveTopology ToVulkan(EPrimitiveTopology topology)
+    inline VkPrimitiveTopology ToVulkan(EPrimitiveTopology topology)
     {
         switch(topology)
         {
@@ -1344,7 +1344,7 @@ namespace psm
         }
     }
 
-    VkCullModeFlagBits ToVulkan(ECullMode CullMode)
+    inline VkCullModeFlagBits ToVulkan(ECullMode CullMode)
     {
         switch(CullMode)
         {
@@ -1361,7 +1361,7 @@ namespace psm
         }
     }
 
-    VkPolygonMode ToVulkan(EPolygonMode PolygonMode)
+    inline VkPolygonMode ToVulkan(EPolygonMode PolygonMode)
     {
         switch(PolygonMode)
         {
@@ -1376,7 +1376,7 @@ namespace psm
         }
     }
 
-    VkFrontFace ToVulkan(EFrontFace FrontFace)
+    inline VkFrontFace ToVulkan(EFrontFace FrontFace)
     {
         switch(FrontFace)
         {
@@ -1389,7 +1389,7 @@ namespace psm
         }
     }
 
-    VkDynamicState ToVulkan(EDynamicState dynamicState)
+    inline VkDynamicState ToVulkan(EDynamicState dynamicState)
     {
         switch(dynamicState)
         {
@@ -1404,7 +1404,7 @@ namespace psm
         }
     }
 
-    VkIndexType ToVulkan(EIndexType indexType)
+    inline VkIndexType ToVulkan(EIndexType indexType)
     {
         switch(indexType)
         {

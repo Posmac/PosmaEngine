@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Enums/SamplerFormats.h"
+#include "RHI/Enums/SamplerFormats.h"
 
 namespace psm
 {
