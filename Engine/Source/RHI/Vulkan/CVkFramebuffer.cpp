@@ -8,7 +8,9 @@ namespace psm
     CVkFramebuffer::CVkFramebuffer(DevicePtr device, const SFramebufferConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
+        assert(mDeviceInternal != nullptr);
         VkRenderPass vkRenderPass = reinterpret_cast<VkRenderPass>(config.RenderPass->GetNativeRawPtr());
+        assert(vkRenderPass != nullptr);
 
         std::vector<VkImageView> attachments;
         attachments.resize(config.Attachments.size());
@@ -17,6 +19,11 @@ namespace psm
         {
             attachments[i] = reinterpret_cast<VkImageView>(config.Attachments[i]->GetImageView());
         }
+        
+        if(config.SwapchainImage != nullptr)
+        {
+            attachments.push_back(reinterpret_cast<VkImageView>(config.SwapchainImage));
+        }
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -24,7 +31,7 @@ namespace psm
         framebufferInfo.flags = 0;
         framebufferInfo.width = config.Size.width;
         framebufferInfo.height = config.Size.height;
-        framebufferInfo.attachmentCount = config.Attachments.size();
+        framebufferInfo.attachmentCount = attachments.size();
         framebufferInfo.pAttachments = attachments.data();
         framebufferInfo.renderPass = vkRenderPass;
         framebufferInfo.layers = 1;

@@ -10,6 +10,7 @@ namespace psm
     struct SFramebufferConfig
     {
         std::vector<ImagePtr> Attachments;
+        void* SwapchainImage;
         SResourceExtent2D Size;
         RenderPassPtr RenderPass;
     };

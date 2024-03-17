@@ -13,7 +13,9 @@ namespace psm
         mImageConfig = config;
 
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
+        assert(mDeviceInternal != nullptr);
         VkPhysicalDevice gpu = reinterpret_cast<VkPhysicalDevice>(device->GetDeviceData().vkData.PhysicalDevice);
+        assert(gpu != nullptr);
 
         mImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         mImageInfo.pNext = nullptr;

@@ -36,7 +36,6 @@ namespace psm
         void PopulateSurfaceData(const DeviceData& data, SurfacePtr surface);
         SurfaceData& GetSurfaceData();
     private:
-        VkInstance mInstanceInternal;
         VkSurfaceKHR mSurface;
 
         SurfaceData mSurfaceData;

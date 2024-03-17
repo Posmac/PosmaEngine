@@ -15,17 +15,16 @@ namespace psm
     class CVkCommandBuffer : public ICommandBuffer, std::enable_shared_from_this<CVkCommandBuffer>
     {
     public:
-        CVkCommandBuffer(DevicePtr device, CommandPoolPtr commandPool, const SCommandBufferConfig& config);
+        CVkCommandBuffer(DevicePtr device, VkCommandBuffer commandBuffer);
         virtual ~CVkCommandBuffer();
 
-        virtual void ResetAtIndex(uint32_t index) override;
-        virtual void BeginAtIndex(const SCommandBufferBeginConfig& config) override;
-        virtual void EndCommandBuffer(uint32_t index) override;
+        virtual void Reset() override;
+        virtual void Begin(const SCommandBufferBeginConfig& config) override;
+        virtual void End() override;
         virtual void* GetRawPointer() override;
 
     private:
         VkDevice mDeviceInternal;
-        uint32_t mCurrentCommandBuffer;
-        std::vector<VkCommandBuffer> mCommandBuffers;
+        VkCommandBuffer mCommandBuffer;
     };
 }

@@ -8,6 +8,7 @@ namespace psm
     CVkCommandPool::CVkCommandPool(DevicePtr device, const SCommandPoolConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
+        assert(mDeviceInternal != nullptr);
 
         VkCommandPoolCreateInfo commandPoolCreateInfo{};
         commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;

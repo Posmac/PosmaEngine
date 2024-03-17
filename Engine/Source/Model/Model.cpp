@@ -203,7 +203,8 @@ namespace psm
             .IsBufferLevelPrimary = true
         };
 
-        CommandBufferPtr commandBuffer = device->CreateCommandBuffers(commandPool, commandBufferConfig);
+        std::vector<CommandBufferPtr> commandBuffers = device->CreateCommandBuffers(commandPool, commandBufferConfig);
+        CommandBufferPtr commandBuffer = commandBuffers[0];
 
         SCommandBufferBeginConfig beginConfig =
         {
@@ -211,12 +212,12 @@ namespace psm
             .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
         };
 
-        commandBuffer->BeginAtIndex(beginConfig);
+        commandBuffer->Begin(beginConfig);
 
         device->CopyBuffer(commandBuffer, vertexBufferConfig.Size, vertexStagingBuffer, mVertexBuffer);
         device->CopyBuffer(commandBuffer, indexBufferConfig.Size ,indexStagingBuffer, mIndexBuffer);
 
-        commandBuffer->EndCommandBuffer(0);
+        commandBuffer->End();
 
         SFenceConfig fenceConfig =
         {

@@ -32,10 +32,10 @@ namespace psm
 #endif
     }
 
-    void IDevice::CreateSystemDefaultDevice(DevicePtr device, const PlatformConfig& config)
+    DevicePtr IDevice::CreateSystemDefaultDevice(const PlatformConfig& config)
     {
 #ifdef RHI_VULKAN
-        device = CreateDefaultDeviceVk(config);
+        return CreateDefaultDeviceVk(config);
 #endif
     }
 }

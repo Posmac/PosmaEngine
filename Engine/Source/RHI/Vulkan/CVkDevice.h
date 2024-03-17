@@ -32,7 +32,7 @@ namespace psm
         virtual SemaphorePtr CreateSemaphore(const SSemaphoreConfig& config) override;
         virtual RenderPassPtr CreateRenderPass(const SRenderPassConfig& config) override;
         virtual CommandPoolPtr CreateCommandPool(const SCommandPoolConfig& config) override;
-        virtual CommandBufferPtr CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config) override;
+        virtual std::vector<CommandBufferPtr> CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config) override;
         virtual FramebufferPtr CreateFramebuffer(const SFramebufferConfig& config) override;
         virtual DescriptorPoolPtr CreateDescriptorPool(const SDescriptorPoolConfig& config) override;
         virtual DescriptorSetLayoutPtr CreateDescriptorSetLayout(const SDescriptorSetLayoutConfig& config) override;
@@ -59,8 +59,6 @@ namespace psm
 
         void SetDebugNameForResource(void* resource, VkDebugReportObjectTypeEXT type, const char* debugName);
     private:
-        DevicePtr mInternalDevice;
-
         VkDevice mDevice;
         VkPhysicalDevice mPhysicalDevice;
         VkPhysicalDeviceProperties mPhysicalDeviceProperties;

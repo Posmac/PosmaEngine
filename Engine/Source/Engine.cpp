@@ -5,6 +5,8 @@
 
 namespace psm
 {
+    DevicePtr RenderDevice;
+
     Engine* Engine::s_Instance = nullptr;
 
     Engine* Engine::Instance()
@@ -50,9 +52,8 @@ namespace psm
            }
         };
 
-        DevicePtr device;
-        IDevice::CreateSystemDefaultDevice(device, config);
-        Renderer::Instance()->Init(device, config);
+        RenderDevice = IDevice::CreateSystemDefaultDevice(config);
+        Renderer::Instance()->Init(RenderDevice, config);
     }
 
     void Engine::Dispose()

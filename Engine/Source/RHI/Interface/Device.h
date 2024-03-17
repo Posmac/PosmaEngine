@@ -35,7 +35,7 @@ namespace psm
         IDevice() = default;
         virtual ~IDevice() = default;
     public:
-        static void CreateSystemDefaultDevice(DevicePtr device, const PlatformConfig& config);
+        static DevicePtr CreateSystemDefaultDevice(const PlatformConfig& config);
 
         virtual ImagePtr CreateImage(const SImageConfig& config) = 0;
         virtual ImagePtr CreateImageWithData(CommandPoolPtr commandPool, const SImageConfig& config, const SUntypedBuffer& data, const SImageToBufferCopyConfig& copyConfig) = 0;
@@ -50,7 +50,7 @@ namespace psm
         virtual SemaphorePtr CreateSemaphore(const SSemaphoreConfig& config) = 0;
         virtual RenderPassPtr CreateRenderPass(const SRenderPassConfig& config) = 0;
         virtual CommandPoolPtr CreateCommandPool(const SCommandPoolConfig& config) = 0;
-        virtual CommandBufferPtr CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config) = 0;
+        virtual std::vector<CommandBufferPtr> CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config) = 0;
         virtual FramebufferPtr CreateFramebuffer(const SFramebufferConfig& config) = 0;
         virtual DescriptorPoolPtr CreateDescriptorPool(const SDescriptorPoolConfig& config) = 0;
         virtual DescriptorSetLayoutPtr CreateDescriptorSetLayout(const SDescriptorSetLayoutConfig& config) = 0;

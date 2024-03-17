@@ -29,13 +29,13 @@
 #include "Model/Mesh.h"
 
 #include "RenderBackend/BackedInfo.h"
-//#include "RenderBackend/PhysicalDevice.h"
-//#include "RenderBackend/LogicalDevice.h"
 
 extern VkInstance Instance;
 
 namespace psm
 {
+    extern DevicePtr RenderDevice;
+
     void VerifyDeviceExtensionsSupport(std::vector<const char*>& extensionsToEnable, VkPhysicalDevice gpu);
 
     DevicePtr CreateDefaultDeviceVk(const PlatformConfig& config)
@@ -70,7 +70,7 @@ namespace psm
             }
         }
 
-        if(gpu != VK_NULL_HANDLE)
+        if(gpu == VK_NULL_HANDLE)
         {
             VkPhysicalDeviceProperties deviceProps{};
             vkGetPhysicalDeviceProperties(physicalDevicesAvailable[0], &deviceProps);
@@ -121,7 +121,7 @@ namespace psm
 
         if(queueFamilyPropertyCount == 0)
         {
-            std::cout << "Failed to get physical device queue family properties" << std::endl;
+            LogMessage(psm::MessageSeverity::Fatal, "Failed to get physical device queue family properties");
         }
 
         std::vector<VkQueueFamilyProperties> availableQueueFamilyProperties(queueFamilyPropertyCount);
@@ -175,7 +175,14 @@ namespace psm
         vkGetDeviceQueue(mDevice, mQueues.GraphicsFamily.value(), 0, &mQueues.GraphicsQueue);
         vkGetDeviceQueue(mDevice, mQueues.PresentFamily.value(), 0, &mQueues.PresentQueue);
         
-        //mInternalDevice = std::make_shared<CVkDevice>(this);
+        mDeviceData.vkData =
+        {
+            .Device = mDevice,
+            .Instance = Instance,
+            .PhysicalDevice = physicalDevice,
+            .GraphicsQueueIndex = mQueues.GraphicsFamily.value(),
+            .GraphicsQueue = mQueues.GraphicsQueue,
+        };
     }
 
     CVkDevice::~CVkDevice()
@@ -185,7 +192,7 @@ namespace psm
 
     ImagePtr CVkDevice::CreateImage(const SImageConfig& config)
     {
-        return std::make_shared<CVkImage>(mInternalDevice, config);
+        return std::make_shared<CVkImage>(RenderDevice, config);
     }
 
     ImagePtr CVkDevice::CreateImageWithData(CommandPoolPtr commandPool, const SImageConfig& config, const SUntypedBuffer& data, const SImageToBufferCopyConfig& copyConfig)
@@ -198,7 +205,7 @@ namespace psm
                                VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
                                &texture->Image, &texture->ImageMemory, &texture->ImageView);*/
 
-        ImagePtr image = std::make_shared<CVkImage>(mInternalDevice, config);
+        ImagePtr image = std::make_shared<CVkImage>(RenderDevice, config);
 
         SBufferConfig stagingBufferConfig =
         {
@@ -239,7 +246,8 @@ namespace psm
             .IsBufferLevelPrimary = true
         };
 
-        CommandBufferPtr commandBuffer = CreateCommandBuffers(commandPool, commandBufferConfig);
+        std::vector<CommandBufferPtr> commandBuffers = CreateCommandBuffers(commandPool, commandBufferConfig);
+        CommandBufferPtr commandBuffer = commandBuffers[0];
 
         SCommandBufferBeginConfig beginConfig =
         {
@@ -247,7 +255,7 @@ namespace psm
             .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
         };
 
-        commandBuffer->BeginAtIndex(beginConfig);
+        commandBuffer->Begin(beginConfig);
 
         /*vk::ImageLayoutTransition(vk::Device,
                              m_CommandBuffers[m_CurrentFrame],
@@ -325,7 +333,7 @@ namespace psm
         //VkResult result = vkEndCommandBuffer(commandBuffer);
         //VK_CHECK_RESULT(result);
 
-        commandBuffer->EndCommandBuffer(0);
+        commandBuffer->End();
 
         SFenceConfig fenceConfig =
         {
@@ -391,12 +399,12 @@ namespace psm
 
     BufferPtr CVkDevice::CreateBuffer(const SBufferConfig& config)
     {
-        return std::make_shared<CVkBuffer>(mInternalDevice, config);
+        return std::make_shared<CVkBuffer>(RenderDevice, config);
     }
 
     SamplerPtr CVkDevice::CreateSampler(const SSamplerConfig& config)
     {
-        return std::make_shared<CVkSampler>(mInternalDevice, config);
+        return std::make_shared<CVkSampler>(RenderDevice, config);
     }
 
     void VerifyDeviceExtensionsSupport(std::vector<const char*>& extensionsToEnable, VkPhysicalDevice gpu)
@@ -421,11 +429,11 @@ namespace psm
                 if(strcmp(property.extensionName, extension) == 0)
                 {
                     actualExtensionsToEnable.push_back(extension);
-                    LogMessage(psm::MessageSeverity::Info, "Supported device extension: " + std::string(extension));
+                    LogMessage(psm::MessageSeverity::Info, "Supported device extension: " + std::string(property.extensionName));
                 }
                 else
                 {
-                    LogMessage(psm::MessageSeverity::Warning, "Extension isn`t supported: " + std::string(extension));
+                    LogMessage(psm::MessageSeverity::Warning, "Extension isn`t supported: " + std::string(property.extensionName));
                 }
             }
         }
@@ -435,12 +443,12 @@ namespace psm
 
     SwapchainPtr CVkDevice::CreateSwapchain(const SSwapchainConfig& config)
     {
-        return std::make_shared<CVkSwapchain>(mInternalDevice, config);
+        return std::make_shared<CVkSwapchain>(RenderDevice, config);
     }
 
     PipelineLayoutPtr CVkDevice::CreatePipelineLayout(const SPipelineLayoutConfig& config)
     {
-        return std::make_shared<CVkPipelineLayout>(mInternalDevice, config);
+        return std::make_shared<CVkPipelineLayout>(RenderDevice, config);
     }
 
     CommandQueuePtr CVkDevice::CreateCommandQueue(const SCommandQueueConfig& config)
@@ -450,32 +458,52 @@ namespace psm
 
     RenderPassPtr CVkDevice::CreateRenderPass(const SRenderPassConfig& config)
     {
-        return std::make_shared<CVkRenderPass>(mInternalDevice, config);
+        return std::make_shared<CVkRenderPass>(RenderDevice, config);
     }
 
     CommandPoolPtr CVkDevice::CreateCommandPool(const SCommandPoolConfig& config)
     {
-        return std::make_shared<CVkCommandPool>(mInternalDevice, config);
+        return std::make_shared<CVkCommandPool>(RenderDevice, config);
     }
 
-    CommandBufferPtr CVkDevice::CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config)
+    std::vector<CommandBufferPtr> CVkDevice::CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config)
     {
-        return std::make_shared<CVkCommandBuffer>(mInternalDevice, commandPool, config);
+        std::vector<CommandBufferPtr> commandBuffers(config.Size);
+        std::vector<VkCommandBuffer> vkCommandBuffers(config.Size);
+
+        VkCommandPool vkPool = reinterpret_cast<VkCommandPool>(commandPool->GetCommandPool());
+
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.pNext = nullptr;
+        allocInfo.commandPool = vkPool;
+        allocInfo.level = config.IsBufferLevelPrimary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+        allocInfo.commandBufferCount = config.Size;
+
+        VkResult result = vkAllocateCommandBuffers(mDevice, &allocInfo, vkCommandBuffers.data());
+        VK_CHECK_RESULT(result);
+
+        for(int i = 0; i < commandBuffers.size(); i++)
+        {
+            commandBuffers[i] = std::make_shared<CVkCommandBuffer>(RenderDevice, vkCommandBuffers[i]);
+        }
+
+        return commandBuffers;
     }
 
     FramebufferPtr CVkDevice::CreateFramebuffer(const SFramebufferConfig& config)
     {
-        return std::make_shared<CVkFramebuffer>(mInternalDevice, config);
+        return std::make_shared<CVkFramebuffer>(RenderDevice, config);
     }
 
     DescriptorPoolPtr CVkDevice::CreateDescriptorPool(const SDescriptorPoolConfig& config)
     {
-        return std::make_shared<CVkDescriptorPool>(mInternalDevice, config);
+        return std::make_shared<CVkDescriptorPool>(RenderDevice, config);
     }
 
     DescriptorSetLayoutPtr CVkDevice::CreateDescriptorSetLayout(const SDescriptorSetLayoutConfig& config)
     {
-        return std::make_shared<CVkDescriptorSetLayout>(mInternalDevice, config);
+        return std::make_shared<CVkDescriptorSetLayout>(RenderDevice, config);
     }
 
     void CVkDevice::AllocateDescriptorSets(const SDescriptorSetAllocateConfig& config)
@@ -797,21 +825,21 @@ namespace psm
 
     PipelinePtr CVkDevice::CreateRenderPipeline(const SPipelineConfig& config)
     {
-        return std::make_shared<CVkPipeline>(mInternalDevice, config);
+        return std::make_shared<CVkPipeline>(RenderDevice, config);
     }
 
     ShaderPtr CVkDevice::CreateShaderFromFilename(const std::string& path, EShaderStageFlag shaderType)
     {
-        return std::make_shared<CVkShader>(mInternalDevice, path, shaderType);
+        return std::make_shared<CVkShader>(RenderDevice, path, shaderType);
     }
 
     FencePtr CVkDevice::CreateFence(const SFenceConfig& config)
     {
-        return std::make_shared<CVkFence>(mInternalDevice, config);
+        return std::make_shared<CVkFence>(RenderDevice, config);
     }
 
     SemaphorePtr CVkDevice::CreateSemaphore(const SSemaphoreConfig& config)
     {
-        return std::make_shared<CVkSemaphore>(mInternalDevice, config);
+        return std::make_shared<CVkSemaphore>(RenderDevice, config);
     }
 }

@@ -20,7 +20,7 @@ namespace psm
 
         virtual void Resize(uint32_t width, uint32_t height) override;
         virtual void GetNextImage(const SSwapchainAquireNextImageConfig& config, uint32_t* index) override;
-        virtual ImagePtr ImageAtIndex(uint32_t index) override;
+        virtual void* ImageAtIndex(uint32_t index) override;
         virtual void Present(const SPresentConfig& config) override;
         virtual void SetVsyncMode(bool enabled) override;
         virtual uint32_t GetImagesCount() override;
@@ -31,9 +31,7 @@ namespace psm
         void CheckFormatSupport(VkFormat& format, const std::vector<VkSurfaceFormatKHR>& formats);
         void CheckColorSpaceSupport(VkColorSpaceKHR& colorSpace, const std::vector<VkSurfaceFormatKHR>& formats);
         void CheckPresentModeSupport(VkPresentModeKHR& presentMode, const std::vector<VkPresentModeKHR>& presentModes);
-        void QuerrySwapchainImages(VkDevice device, VkSwapchainKHR swapchain,
-            VkFormat swapchainImagesFormat, std::vector<VkImage>* swapchainImages,
-            std::vector<VkImageView>* swapchainImageViews);
+        void QuerrySwapchainImages();
         void DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain);
     private:
         VkDevice mDeviceInternal;
@@ -41,11 +39,8 @@ namespace psm
         VkSwapchainKHR mSwapChain;
         VkFormat mSwapChainImageFormat;
         VkExtent2D mSwapChainExtent;
-
-        //should be moved to renderer
+        
         std::vector<VkImage> mSwapChainImages;
         std::vector<VkImageView> mSwapchainImageViews;
-
-        VkSampleCountFlagBits mMaxMsaaSamples; //temporary
     };
 }

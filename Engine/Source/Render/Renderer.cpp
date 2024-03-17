@@ -43,6 +43,7 @@ namespace psm
         {
             device->GetSurface()
         };
+
         mSwapchain = mDevice->CreateSwapchain(swapchainConfig);
 
         //swapchain creation
@@ -167,7 +168,7 @@ namespace psm
 
         SCommandPoolConfig cmdPoolConfig =
         {
-            .QueueFamilyIndex = 1, //get from somewhere
+            .QueueFamilyIndex = 0, //get from somewhere
             .QueueType = EQueueType::GRAHPICS
         };
 
@@ -185,14 +186,15 @@ namespace psm
         PrepareOffscreenRenderpass();
 
         //init other things bellow
-        __debugbreak();
+        //__debugbreak();
 
         //init shadow system
-        //Shadows::Instance()->Init();
+        Shadows::Instance()->Init(mDevice, mSwapchain->GetImagesCount());
 
         //init mesh systems
-        //OpaqueInstances::GetInstance()->Init(m_RenderPass, m_ShadowRenderPass, m_SwapChainExtent);
-        //ModelLoader::Instance()->Init(m_CommandPool);
+        SResourceExtent3D swapchainSize = mSwapchain->GetSwapchainSize();
+        OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, mShadowRenderPass, { swapchainSize.width, swapchainSize.height });
+        ModelLoader::Instance()->Init(mDevice, mCommandPool);
 
         //InitImGui(hWnd);
 
@@ -201,7 +203,7 @@ namespace psm
 
     void Renderer::CreateDepthImage()
     {
-        mDepthStencilFormat = EFormat::D32_SFLOAT_S8_UINT;
+        //mDepthStencilFormat = EFormat::D32_SFLOAT_S8_UINT;
 
         /*if(mDepthRenderTargetTexture == nullptr)
         {
@@ -266,12 +268,37 @@ namespace psm
             .ViewAspect = EImageAspect::COLOR_BIT
         };
 
-        mRenderTarget = mDevice->CreateImage(imageConfig);
+        mMSAARenderTarget = mDevice->CreateImage(imageConfig);
     }
 
     void Renderer::PrepareDirDepth()
     {
-      
+        mShadowMapSize = { 2048, 2048 };
+
+        SImageConfig imageConfig =
+        {
+            .ImageSize = { (uint32_t)mShadowMapSize.width, (uint32_t)mShadowMapSize.height, 1 },
+            .MipLevels = 1,
+            .ArrayLevels = 1,
+            .Type = EImageType::TYPE_2D,
+            .Format = mDepthStencilFormat,
+            .Tiling = EImageTiling::OPTIMAL,
+            .InitialLayout = EImageLayout::UNDEFINED,
+            .Usage = EImageUsageType::USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | EImageUsageType::USAGE_SAMPLED_BIT,
+            .SharingMode = ESharingMode::EXCLUSIVE,
+            .SamplesCount = ESamplesCount::COUNT_1,
+            .Flags = EImageCreateFlags::NONE,
+            .ViewFormat = mDepthStencilFormat,
+            .ViewType = EImageViewType::TYPE_2D,
+            .ViewAspect = EImageAspect::DEPTH_BIT
+        };
+
+        mDirectionalDepthImages.resize(mSwapchain->GetImagesCount());
+
+        for(auto& image : mDirectionalDepthImages)
+        {
+            image = mDevice->CreateImage(imageConfig);
+        }
     }
 
     void Renderer::Deinit()
@@ -338,7 +365,7 @@ namespace psm
 
         //vkResetFences(vk::Device, 1, &m_FlightFences[m_CurrentFrame]);
 
-        mCommandBuffers->ResetAtIndex(mCurrentFrame);
+        mCommandBuffers[mCurrentFrame]->Reset();
 
        /* result = vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
         VK_CHECK_RESULT(result);*/
@@ -349,7 +376,7 @@ namespace psm
             .Usage = ECommandBufferUsage::NONE,
         };
 
-        mCommandBuffers->BeginAtIndex(commandBufferBegin);
+        mCommandBuffers[mCurrentFrame]->Begin(commandBufferBegin);
         //vk::BeginCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -364,7 +391,7 @@ namespace psm
         {
             .RenderPass = mShadowRenderPass,
             .Framebuffer = mDirectionalDepthFramebuffers[imageIndex],
-            .CommandBuffer = mCommandBuffers,
+            .CommandBuffer = mCommandBuffers[mCurrentFrame],
             .Offset = {0, 0},
             .Extent = mShadowMapSize,
             .ClearValuesCount = 1,
@@ -377,8 +404,8 @@ namespace psm
                             { m_DirDepthSize.width, m_DirDepthSize.height }, &depthClearColor, 1, m_CommandBuffers[m_CurrentFrame],
                             VK_SUBPASS_CONTENTS_INLINE);*/
 
-        mRenderPass->SetViewport(mCommandBuffers, 0.0f, 0.0f, static_cast<float>(mShadowMapSize.width), static_cast<float>(mShadowMapSize.height), 0.0f, 1.0f);
-        mRenderPass->SetScissors(mCommandBuffers, { 0, 0 }, mShadowMapSize);
+        mRenderPass->SetViewport(mCommandBuffers[mCurrentFrame], 0.0f, 0.0f, static_cast<float>(mShadowMapSize.width), static_cast<float>(mShadowMapSize.height), 0.0f, 1.0f);
+        mRenderPass->SetScissors(mCommandBuffers[mCurrentFrame], { 0, 0 }, mShadowMapSize);
 
        /* vk::SetViewPortAndScissors(m_CommandBuffers[m_CurrentFrame],
                                  0.0f, 0.0f, static_cast<float>(m_DirDepthSize.width),
@@ -386,9 +413,9 @@ namespace psm
                                  );*/
 
         //related to specific pipeline
-        //OpaqueInstances::GetInstance()->RenderDepth2D(mCommandBuffers);
+        //OpaqueInstances::GetInstance()->RenderDepth2D(mCommandBuffers[mCurrentFrame]);
 
-        mShadowRenderPass->EndRenderPass(mCommandBuffers);
+        mShadowRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);
         //vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -399,8 +426,8 @@ namespace psm
 
         SImageBarrierConfig imageBarrierConfig =
         {
-            .CommandBuffer = mCommandBuffers,
-            .Image = mDirectionalDepthImageViews[mCurrentFrame],
+            .CommandBuffer = mCommandBuffers[mCurrentFrame],
+            .Image = mDirectionalDepthImages[mCurrentFrame],
             .OldLayout = EImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL,
             .NewLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
             .SrcAccessMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
@@ -432,7 +459,7 @@ namespace psm
         {
             .RenderPass = mRenderPass,
             .Framebuffer = mFramebuffers[imageIndex],
-            .CommandBuffer = mCommandBuffers,
+            .CommandBuffer = mCommandBuffers[mCurrentFrame],
             .Offset = {0, 0},
             .Extent = {mSwapchain->GetSwapchainSize().width, mSwapchain->GetSwapchainSize().height},
             .ClearValuesCount = clearColor.size(),
@@ -445,9 +472,9 @@ namespace psm
         /*vk::BeginRenderPass(m_RenderPass, m_Framebuffers[imageIndex],
                             { 0, 0 }, m_SwapChainExtent, clearColor.data(), clearColor.size(),
                             m_CommandBuffers[m_CurrentFrame], VK_SUBPASS_CONTENTS_INLINE);*/
-        mRenderPass->SetViewport(mCommandBuffers, 0.0f, 0.0f, static_cast<float>(mSwapchain->GetSwapchainSize().width),
+        mRenderPass->SetViewport(mCommandBuffers[mCurrentFrame], 0.0f, 0.0f, static_cast<float>(mSwapchain->GetSwapchainSize().width),
                                    static_cast<float>(mSwapchain->GetSwapchainSize().width), 0.0f, 1.0f);
-        mRenderPass->SetScissors(mCommandBuffers, { 0, 0 }, { mSwapchain->GetSwapchainSize().width, mSwapchain->GetSwapchainSize().height } );
+        mRenderPass->SetScissors(mCommandBuffers[mCurrentFrame], { 0, 0 }, { mSwapchain->GetSwapchainSize().width, mSwapchain->GetSwapchainSize().height } );
 
         /*vk::SetViewPortAndScissors(m_CommandBuffers[m_CurrentFrame],
                                    0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width),
@@ -456,7 +483,7 @@ namespace psm
 
         //render default
         //OpaqueInstances::GetInstance()->UpdateDescriptorSets(m_DirDepthImageView[0], m_DirShadowBuffer);
-        //OpaqueInstances::GetInstance()->Render(mCommandBuffers);
+        //OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame]);
 
         //render IMGui
         //vkimgui::PrepareNewFrame();
@@ -482,7 +509,7 @@ namespace psm
         //vkimgui::Render(m_CommandBuffers[m_CurrentFrame]);
 
         //continue
-        mRenderPass->EndRenderPass(mCommandBuffers);
+        mRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);
         //vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
 
         /*vk::ImageLayoutTransition(vk::Device, m_CommandBuffers[m_CurrentFrame],
@@ -497,7 +524,7 @@ namespace psm
                                   VK_IMAGE_ASPECT_DEPTH_BIT,
                                   1);*/
 
-        mCommandBuffers->EndCommandBuffer(mCurrentFrame);
+        mCommandBuffers[mCurrentFrame]->End();
 
         //vk::EndCommandBuffer(m_CommandBuffers[m_CurrentFrame]);
         
@@ -509,7 +536,7 @@ namespace psm
             .WaitSemaphoresCount = 1,
             .pWaitSemaphores = &mImageAvailableSemaphores[mCurrentFrame],
             .CommandBuffersCount = 1,
-            .pCommandBuffers = &mCommandBuffers,
+            .pCommandBuffers = &mCommandBuffers[mCurrentFrame],
             .SignalSemaphoresCount = 1,
             .pSignalSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
             .Fence = mFlightFences[mCurrentFrame],
@@ -644,12 +671,12 @@ namespace psm
         auto swapchainSize = mSwapchain->GetSwapchainSize();
         mFramebuffers.resize(frameBufferAttachmentCount);
 
-
         for(int i = 0; i < frameBufferAttachmentCount; i++)
         {
             SFramebufferConfig framebufferConfig =
             {
-                .Attachments = { mMSAARenderTarget, mDepthRenderTargetTexture, mSwapchain->ImageAtIndex(i) },
+                .Attachments = { mMSAARenderTarget, mDepthRenderTargetTexture },
+                .SwapchainImage = mSwapchain->ImageAtIndex(i),
                 .Size = { swapchainSize.width, swapchainSize.height },
                 .RenderPass = mRenderPass
             };
@@ -743,7 +770,7 @@ namespace psm
             .SubpassDependensies = dependencies
         };
 
-        mDepthRenderPass = mDevice->CreateRenderPass(renderPassConfig);
+        mShadowRenderPass = mDevice->CreateRenderPass(renderPassConfig);
 
         //vk::CreateRenderPass(vk::Device, attachmentsDescriptions, attachmentsDescriptionCount,
         //                     subpassDescr, subpassDescrCount, dependency, dependenciesCount, &m_ShadowRenderPass);
@@ -756,7 +783,7 @@ namespace psm
         {
             SFramebufferConfig framebufferConfig =
             {
-                .Attachments = { mDirectionalDepthImageViews[i] },
+                .Attachments = { mDirectionalDepthImages[i] },
                 .Size = mShadowMapSize,
                 .RenderPass = mShadowRenderPass,
             };

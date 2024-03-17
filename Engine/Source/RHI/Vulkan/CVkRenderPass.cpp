@@ -163,8 +163,7 @@ namespace psm
 
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 
-        VkResult result = vkCreateRenderPass(mDeviceInternal, &renderPassInfo, nullptr,
-            &mRenderPass);
+        VkResult result = vkCreateRenderPass(mDeviceInternal, &renderPassInfo, nullptr, &mRenderPass);
 
         VK_CHECK_RESULT(result);
     }

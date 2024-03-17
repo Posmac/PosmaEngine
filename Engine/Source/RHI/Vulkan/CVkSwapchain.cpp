@@ -67,6 +67,8 @@ namespace psm
 
         LogMessage(psm::MessageSeverity::Info, "Created swapchain: width = " + std::to_string(mSwapChainExtent.width) 
                    + ", height: " + std::to_string(mSwapChainExtent.height));
+
+        QuerrySwapchainImages();
     }
 
     CVkSwapchain::~CVkSwapchain()
@@ -88,9 +90,9 @@ namespace psm
         VK_CHECK_RESULT(result);
     }
 
-    ImagePtr CVkSwapchain::ImageAtIndex(uint32_t index)
+    void* CVkSwapchain::ImageAtIndex(uint32_t index)
     {
-        return nullptr;
+        return mSwapchainImageViews[index];
     }
 
     void CVkSwapchain::Present(const SPresentConfig& config)
@@ -175,20 +177,45 @@ namespace psm
         presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
     }
 
-    void CVkSwapchain::QuerrySwapchainImages(VkDevice device, VkSwapchainKHR swapchain,
-        VkFormat swapchainImagesFormat, std::vector<VkImage>* swapchainImages,
-        std::vector<VkImageView>* swapchainImageViews)
+    void CVkSwapchain::QuerrySwapchainImages()
     {
         uint32_t imagesCount;
-        vkGetSwapchainImagesKHR(device, swapchain, &imagesCount, nullptr);
-        swapchainImages->resize(imagesCount);
-        vkGetSwapchainImagesKHR(device, swapchain, &imagesCount, swapchainImages->data());
+        vkGetSwapchainImagesKHR(mDeviceInternal, mSwapChain, &imagesCount, nullptr);
+        mSwapChainImages.resize(imagesCount);
+        mSwapchainImageViews.resize(imagesCount);
+        vkGetSwapchainImagesKHR(mDeviceInternal, mSwapChain, &imagesCount, mSwapChainImages.data());
 
-        LogMessage(psm::MessageSeverity::Warning, "Total swapchain images retrived is: " +  std::to_string(swapchainImages->size()));
+        for(int i = 0; i < mSwapChainImages.size(); i++)
+        {
+            VkImageViewCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            createInfo.pNext = nullptr;
+            createInfo.flags = 0;
+            createInfo.image = mSwapChainImages[i];
+            createInfo.format = mSwapChainImageFormat;
+            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            createInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+            createInfo.components.g = VK_COMPONENT_SWIZZLE_G;
+            createInfo.components.b = VK_COMPONENT_SWIZZLE_B;
+            createInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            createInfo.subresourceRange.baseMipLevel = 0;
+            createInfo.subresourceRange.baseArrayLayer = 0;
+            createInfo.subresourceRange.levelCount = 1;
+            createInfo.subresourceRange.layerCount = 1;
+
+            VkResult result = vkCreateImageView(mDeviceInternal, &createInfo, nullptr, &mSwapchainImageViews[i]);
+            VK_CHECK_RESULT(result);
+        }
+
+        LogMessage(psm::MessageSeverity::Warning, "Total swapchain images retrived is: " +  std::to_string(mSwapChainImages.size()));
     }
 
     void CVkSwapchain::DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain)
     {
+        for(auto& imageView : mSwapchainImageViews)
+            vkDestroyImageView(mDeviceInternal, imageView, nullptr);
+
         vkDestroySwapchainKHR(device, swapchain, nullptr);
     }
 }

@@ -12,7 +12,7 @@
 //#include "../RHI/Interface/Image.h"
 //
 //#include "Utilities/TextureLoader.h"
-//#include "Utilities/ModelLoader.h"
+#include "Utilities/ModelLoader.h"
 //
 #include "Actors/OpaqueInstances.h"
 //
@@ -66,7 +66,7 @@ namespace psm
         ImagePtr mMSAARenderTarget;
 
         CommandPoolPtr mCommandPool;
-        CommandBufferPtr mCommandBuffers;
+        std::vector<CommandBufferPtr> mCommandBuffers;
 
         std::vector<SemaphorePtr> mImageAvailableSemaphores;
         std::vector<SemaphorePtr> mRenderFinishedSemaphores;
@@ -75,15 +75,12 @@ namespace psm
         bool isInit;
         uint32_t mCurrentFrame;
 
-        RenderPassPtr mDepthRenderPass;
         ImagePtr mDepthRenderTargetTexture;
         EFormat mDepthStencilFormat;
 
-        ImagePtr mRenderTarget;
-
         SResourceExtent2D mShadowMapSize;
         RenderPassPtr mShadowRenderPass;
-        std::vector<ImagePtr> mDirectionalDepthImageViews;
+        std::vector<ImagePtr> mDirectionalDepthImages;
         std::vector<FramebufferPtr> mDirectionalDepthFramebuffers;
 
         //CDevicePtr m_Device;
