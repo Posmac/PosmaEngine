@@ -17,12 +17,7 @@ namespace psm
 
         for(int i = 0; i < attachments.size(); i++)
         {
-            attachments[i] = reinterpret_cast<VkImageView>(config.Attachments[i]->GetImageView());
-        }
-        
-        if(config.SwapchainImage != nullptr)
-        {
-            attachments.push_back(reinterpret_cast<VkImageView>(config.SwapchainImage));
+            attachments[i] = reinterpret_cast<VkImageView>(config.Attachments[i]);
         }
 
         VkFramebufferCreateInfo framebufferInfo{};

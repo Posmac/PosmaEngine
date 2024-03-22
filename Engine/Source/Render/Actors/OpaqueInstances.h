@@ -75,21 +75,17 @@ namespace psm
 
         //class related
     public:
-        void Init(DevicePtr device, RenderPassPtr renderPass, RenderPassPtr shadowRenderPass, SResourceExtent2D windowSize);
+        void Init(DevicePtr device, RenderPassPtr renderPass, SResourceExtent2D windowSize);
         void Deinit();
         void Render(CommandBufferPtr commandBuffer);
-        void RenderDepth2D(CommandBufferPtr commandBuffer, float depthBias, float depthSlope);
         void AddInstance(std::shared_ptr<Model> model, const Material& material, const Instance& instance);
 
-        void UpdateDescriptorSets(ImagePtr shadowMapView, BufferPtr lightsBuffer, BufferPtr matrixBuffer);
-        void UpdateShadowDescriptors(BufferPtr lightsBuffer);
+        void UpdateDescriptorSets(BufferPtr globalBuffer);
 
         void PrepareInstances();
     private:
         void CreateInstanceDescriptorSets();
         void CreateInstancePipelineLayout(RenderPassPtr renderPass, SResourceExtent2D extent);
-        void CreateShadowDescriptorSets();
-        void CreateShadowPipeline(RenderPassPtr renderPass, SResourceExtent2D size);
         void CreateMaterialDescriptors();
         void AllocateAndUpdateDescriptors(DescriptorSetPtr& descriptorSet, const Material& material);
 
@@ -98,43 +94,13 @@ namespace psm
         std::vector<PerModel> m_PerModels;
 
         DevicePtr mDeviceInternal;
-        //pipeline data
         PipelinePtr mInstancedPipeline;
         PipelineLayoutPtr mInstancedPipelineLayout;
-        //VkPipelineLayout m_InstancedPipelineLayout;
-        //VkPipeline m_InstancedPipeline;
-
-        //shadow generation pipeline
-        PipelinePtr mShadowsPipeline;
-        PipelineLayoutPtr mShadowsPipelineLayout;
-        //VkPipelineLayout m_ShadowPipelineLayout;
-        //VkPipeline m_ShadowPipeline;
-
-        //instance buffer
         BufferPtr mInstanceBuffer;
-        //VkBuffer m_InstanceBuffer;
-        //VkDeviceMemory m_InstanceBufferMemory;
-
-        //descriptos
         DescriptorPoolPtr mDescriptorPool;
-        //VkDescriptorPool m_DescriptorPool;
-
-        //model material descriptor layout
         DescriptorSetLayoutPtr mMaterilaSetLayout;
-        //VkDescriptorSetLayout m_MaterialSetLayout;
-
-        //general data for all models
         DescriptorSetLayoutPtr mInstanceDescriptorSetLayout;
         DescriptorSetPtr mInstanceDescriptorSet;
-        //VkDescriptorSetLayout m_InstanceDescriptorSetLayout;
-        //VkDescriptorSet m_InstanceDescriptorSet;
-
-        //shadow data (also for all models)
-        DescriptorSetLayoutPtr mShadowDescriptorSetLayout;
-        DescriptorSetPtr mShadowDescriptorSet;
-        //VkDescriptorSetLayout m_ShadowDescriptorSetLayout;
-        //VkDescriptorSet m_ShadowDescriptorSet;
-
         SamplerPtr mSampler; //temporary
     };
 

@@ -47,8 +47,6 @@ namespace psm
 
         mSwapchain = mDevice->CreateSwapchain(swapchainConfig);
 
-        //swapchain creation
-        //CreateSwapchain(hWnd);
         int swapchainImages = mSwapchain->GetImagesCount();
         mImageAvailableSemaphores.resize(swapchainImages);
         mRenderFinishedSemaphores.resize(swapchainImages);
@@ -61,9 +59,7 @@ namespace psm
             mRenderFinishedSemaphores[i] = mDevice->CreateSemaphore({false});
         }
 
-        //create it before init render pass
         CreateDepthImage();
-        CreateMsaaImage();
 
         SAttachmentDescription colorDescription =
         {
@@ -75,9 +71,9 @@ namespace psm
             .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
             .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
             .InitialLayout = EImageLayout::UNDEFINED,
-            .FinalLayout = EImageLayout::COLOR_ATTACHMENT_OPTIMAL
+            .FinalLayout = EImageLayout::PRESENT_SRC_KHR
         };
-        
+
         SAttachmentDescription depthStencilDescription =
         {
             .Flags = EAttachmentDescriptionFlags::NONE,
@@ -89,19 +85,6 @@ namespace psm
             .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
             .InitialLayout = EImageLayout::UNDEFINED,
             .FinalLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-        };
-
-        SAttachmentDescription resolveDescription =
-        {
-            .Flags = EAttachmentDescriptionFlags::NONE,
-            .Format = mSwapchain->GetSwapchainImageFormat(),
-            .Samples = ESamplesCount::COUNT_1,
-            .LoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
-            .StoreOperation = EAttachmentStoreOp::STORE_OP_STORE,
-            .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
-            .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .FinalLayout = EImageLayout::PRESENT_SRC_KHR
         };
 
         SAttachmentReference colorAttachmentReference =
@@ -116,12 +99,6 @@ namespace psm
             .Layout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL
         };
 
-        SAttachmentReference resolveAttachmentReference =
-        {
-            .Attachment = 2,
-            .Layout = EImageLayout::COLOR_ATTACHMENT_OPTIMAL
-        };
-
         SSubpassDescription subpassDescription =
         {
             .PipelineBindPoint = EPipelineBindPoint::GRAPHICS,
@@ -129,35 +106,24 @@ namespace psm
             .pInputAttachments = nullptr,
             .ColorAttachmentCount = 1,
             .pColorAttachments = &colorAttachmentReference,
-            .pResolveAttachments = &resolveAttachmentReference,
+            .pResolveAttachments = nullptr,
             .pDepthStencilAttachment = &depthAttachmentReference,
             .PreserveAttachmentCount = 0,
             .pPreserveAttachments = nullptr
-        };
-
-        SSubpassDependency subpassDependency =
-        {
-            .SrcSubpass = VK_SUBPASS_EXTERNAL,
-            .DstSubpass = 0,
-            .SrcStageMask = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
-            .DstStageMask = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
-            .SrcAccessMask = EAccessFlags::NONE,
-            .DstAccessMask = EAccessFlags::COLOR_ATTACHMENT_WRITE_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-            .DependencyFlags = EDependencyFlags::NONE
         };
         
         SRenderPassConfig renderPassConfig =
         {
             .ColorAttachements = {colorDescription},
             .DepthAttachment = depthStencilDescription,
-            .ResolveAttachment = resolveDescription,
-            
+            .ResolveAttachment = {},
+
             .ColorAttachmentReference = colorAttachmentReference,
             .DepthStencilAttachmentReference = depthAttachmentReference,
-            .ResolveAttachemntReference = resolveAttachmentReference,
+            .ResolveAttachemntReference = {},
 
             .SubpassDescriptions = {subpassDescription},
-            .SubpassDependensies = {subpassDependency}
+            .SubpassDependensies = {}
         };
 
         mRenderPass = mDevice->CreateRenderPass(renderPassConfig);
@@ -165,8 +131,6 @@ namespace psm
         CreateFramebuffers();
 
         //command buffers
-
-
         SCommandPoolConfig cmdPoolConfig =
         {
             .QueueFamilyIndex = 0, //get from somewhere
@@ -192,18 +156,12 @@ namespace psm
 
         mGlobalBuffer = mDevice->CreateBuffer(bufferConfig);
 
-        PrepareDirDepth();
-        PrepareOffscreenRenderpass();
-
-        //init other things bellow
-        //__debugbreak();
-
         //init shadow system
-        Shadows::Instance()->Init(mDevice, mSwapchain->GetImagesCount());
+        //Shadows::Instance()->Init(mDevice, mSwapchain->GetImagesCount());
 
         //init mesh systems
         SResourceExtent3D swapchainSize = mSwapchain->GetSwapchainSize();
-        OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, mShadowRenderPass, { swapchainSize.width, swapchainSize.height });
+        OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, { swapchainSize.width, swapchainSize.height });
         ModelLoader::Instance()->Init(mDevice, mCommandPool);
 
         //InitImGui(hWnd);
@@ -213,16 +171,6 @@ namespace psm
 
     void Renderer::CreateDepthImage()
     {
-        //mDepthStencilFormat = EFormat::D32_SFLOAT_S8_UINT;
-
-        /*if(mDepthRenderTargetTexture == nullptr)
-        {
-            vkDeviceWaitIdle(vk::Device);
-            vk::DestroyImageViews(vk::Device, { m_DepthImageView });
-            vk::FreeMemory(vk::Device, m_DepthImageMemory);
-            vk::DestroyImage(vk::Device, m_DepthImage);
-        }*/
-
         auto desiredFormats = { EFormat::D32_SFLOAT, EFormat::D32_SFLOAT_S8_UINT, EFormat::D24_UNORM_S8_UINT };
 
         mDepthStencilFormat = mDevice->FindSupportedFormat(desiredFormats, EImageTiling::OPTIMAL, EFeatureFormat::DEPTH_STENCIL_ATTACHMENT_BIT);
@@ -250,84 +198,8 @@ namespace psm
         mDepthRenderTargetTexture = mDevice->CreateImage(imageConfig);
     }
 
-    void Renderer::CreateMsaaImage()
-    {
-        /*if(m_MsaaImage != VK_NULL_HANDLE)
-        {
-            vkDeviceWaitIdle(vk::Device);
-            vk::DestroyImageViews(vk::Device, { m_MsaaImageView });
-            vk::FreeMemory(vk::Device, m_MsaaImageMemory);
-            vk::DestroyImage(vk::Device, m_MsaaImage);
-        }*/
-
-        SImageConfig imageConfig =
-        {
-            .ImageSize = mSwapchain->GetSwapchainSize(),
-            .MipLevels = 1,
-            .ArrayLevels = 1,
-            .Type = EImageType::TYPE_2D,
-            .Format = mSwapchain->GetSwapchainImageFormat(),
-            .Tiling = EImageTiling::OPTIMAL,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .Usage = EImageUsageType::USAGE_TRANSIENT_ATTACHMENT_BIT | EImageUsageType::USAGE_COLOR_ATTACHMENT_BIT,
-            .SharingMode = ESharingMode::EXCLUSIVE,
-            .SamplesCount = ESamplesCount::COUNT_1, //for now supporto only 1 msaa
-            .Flags = EImageCreateFlags::NONE,
-            .ViewFormat = mSwapchain->GetSwapchainImageFormat(),
-            .ViewType = EImageViewType::TYPE_2D,
-            .ViewAspect = EImageAspect::COLOR_BIT
-        };
-
-        mMSAARenderTarget = mDevice->CreateImage(imageConfig);
-    }
-
-    void Renderer::PrepareDirDepth()
-    {
-        mShadowMapSize = { 2048, 2048 };
-
-        SImageConfig imageConfig =
-        {
-            .ImageSize = { (uint32_t)mShadowMapSize.width, (uint32_t)mShadowMapSize.height, 1 },
-            .MipLevels = 1,
-            .ArrayLevels = 1,
-            .Type = EImageType::TYPE_2D,
-            .Format = mDepthStencilFormat,
-            .Tiling = EImageTiling::OPTIMAL,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .Usage = EImageUsageType::USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | EImageUsageType::USAGE_SAMPLED_BIT,
-            .SharingMode = ESharingMode::EXCLUSIVE,
-            .SamplesCount = ESamplesCount::COUNT_1,
-            .Flags = EImageCreateFlags::NONE,
-            .ViewFormat = mDepthStencilFormat,
-            .ViewType = EImageViewType::TYPE_2D,
-            .ViewAspect = EImageAspect::DEPTH_BIT
-        };
-
-        mDirectionalDepthImages.resize(mSwapchain->GetImagesCount());
-
-        for(auto& image : mDirectionalDepthImages)
-        {
-            image = mDevice->CreateImage(imageConfig);
-        }
-    }
-
     void Renderer::Deinit()
     {
-        /*vkimgui::Deinit();
-
-        vk::DestroyFramebuffers(vk::Device, m_Framebuffers);
-        vk::DestroyRenderPass(vk::Device, m_RenderPass);
-        vk::DestroyImageViews(vk::Device, m_SwapchainImageViews);
-        vk::DestroySwapchain(vk::Device, m_SwapChain);
-
-        for(int i = 0; i < m_SwapChainImages.size(); i++)
-        {
-            vk::DestroySemaphore(vk::Device, m_ImageAvailableSemaphores[i]);
-            vk::DestroySemaphore(vk::Device, m_RenderFinishedSemaphores[i]);
-            vk::DestroyFence(vk::Device, m_FlightFences[i]);
-        }
-
-        vk::Vk::GetInstance()->Deinit();*/
     }
 
     void Renderer::Render(GlobalBuffer& buffer)
@@ -345,13 +217,6 @@ namespace psm
         };
 
         mFlightFences[mCurrentFrame]->Wait(waitConfig);
-        //vkWaitForFences(vk::Device, 1, &m_FlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
-
-        Shadows::Instance()->Update();
-
-        //vk::Vk::GetInstance()->UpdatePerFrameBuffer(data);
-        BufferPtr& shadowBuffer = Shadows::Instance()->GetGPUBuffer();
-        OpaqueInstances::GetInstance()->UpdateShadowDescriptors(shadowBuffer);
 
         //basic
         uint32_t imageIndex;
@@ -363,20 +228,10 @@ namespace psm
 
         mSwapchain->GetNextImage(nextImageConfig, &imageIndex);
 
-        /*VkResult result = vkAcquireNextImageKHR(vk::Device, m_SwapChain, UINT64_MAX,
-                                                m_ImageAvailableSemaphores[m_CurrentFrame],
-                                                nullptr, &imageIndex);
-        VK_CHECK_RESULT(result);*/
-
         mFlightFences[mCurrentFrame]->Reset();
-
-        //vkResetFences(vk::Device, 1, &m_FlightFences[m_CurrentFrame]);
 
         mCommandBuffers[mCurrentFrame]->Reset();
 
-       /* result = vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
-        VK_CHECK_RESULT(result);*/
-        
         SCommandBufferBeginConfig commandBufferBegin =
         {
             .BufferIndex = mCurrentFrame,
@@ -384,83 +239,12 @@ namespace psm
         };
 
         mCommandBuffers[mCurrentFrame]->Begin(commandBufferBegin);
-        //vk::BeginCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //offscreen rendering pass
-
-        UClearValue depthClearValue =
-        {
-            .DepthStencil = {1.0f, 0}
-        };
-
-        SRenderPassBeginConfig renderPassBeginConfig =
-        {
-            .RenderPass = mShadowRenderPass,
-            .Framebuffer = mDirectionalDepthFramebuffers[imageIndex],
-            .CommandBuffer = mCommandBuffers[mCurrentFrame],
-            .Offset = {0, 0},
-            .Extent = mShadowMapSize,
-            .ClearValuesCount = 1,
-            .pClearValues = &depthClearValue,
-            .SubpassContents = ESubpassContents::INLINE
-        };
-
-        mRenderPass->BeginRenderPass(renderPassBeginConfig);
-        /*vk::BeginRenderPass(m_ShadowRenderPass, m_ShadowFramebuffers[imageIndex], { 0,0 },
-                            { m_DirDepthSize.width, m_DirDepthSize.height }, &depthClearColor, 1, m_CommandBuffers[m_CurrentFrame],
-                            VK_SUBPASS_CONTENTS_INLINE);*/
-
-        mRenderPass->SetViewport(mCommandBuffers[mCurrentFrame], 0.0f, 0.0f, static_cast<float>(mShadowMapSize.width), static_cast<float>(mShadowMapSize.height), 0.0f, 1.0f);
-        mRenderPass->SetScissors(mCommandBuffers[mCurrentFrame], { 0, 0 }, mShadowMapSize);
-
-       /* vk::SetViewPortAndScissors(m_CommandBuffers[m_CurrentFrame],
-                                 0.0f, 0.0f, static_cast<float>(m_DirDepthSize.width),
-                                 static_cast<float>(m_DirDepthSize.height), 0.0f, 1.0f,
-                                 );*/
-
-        //related to specific pipeline
-        OpaqueInstances::GetInstance()->RenderDepth2D(mCommandBuffers[mCurrentFrame], 0.0f, 0.0f);
-
-        mShadowRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);
-        //vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //default pass
         std::array<UClearValue, 2> clearColor{};
         clearColor[0].Color = { {0.2f, 0.2f, 0.2f, 1.0f} };
         clearColor[1].DepthStencil = { 1.0f, 0 };
-
-        SImageBarrierConfig imageBarrierConfig =
-        {
-            .CommandBuffer = mCommandBuffers[mCurrentFrame],
-            .Image = mDirectionalDepthImages[mCurrentFrame],
-            .OldLayout = EImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL,
-            .NewLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
-            .SrcAccessMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-            .DstAccessMask = EAccessFlags::SHADER_READ_BIT,
-            .SourceStage = EPipelineStageFlags:: LATE_FRAGMENT_TESTS_BIT,
-            .DestinationStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
-            .BaseMipLevel = 0,
-            .LevelCount = 1,
-            .BaseArrayLayer = 0,
-            .LayerCount = 1,
-            .AspectMask = EImageAspect::DEPTH_BIT
-        };
-
-        mDevice->InsertImageMemoryBarrier(imageBarrierConfig);
-     /*   vk::ImageLayoutTransition(vk::Device,
-                                  m_CommandBuffers[m_CurrentFrame],
-                                  m_DirDepthImage[m_CurrentFrame],
-                                  m_DirDepthFormat,
-                                  VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                  VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-                                  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                  VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-                                  VK_ACCESS_SHADER_READ_BIT,
-                                  VK_IMAGE_ASPECT_DEPTH_BIT,
-                                  1);*/
 
         SRenderPassBeginConfig defaultRenderPassBeginConfig =
         {
@@ -475,18 +259,9 @@ namespace psm
         };
 
         mRenderPass->BeginRenderPass(defaultRenderPassBeginConfig);
-
-        /*vk::BeginRenderPass(m_RenderPass, m_Framebuffers[imageIndex],
-                            { 0, 0 }, m_SwapChainExtent, clearColor.data(), clearColor.size(),
-                            m_CommandBuffers[m_CurrentFrame], VK_SUBPASS_CONTENTS_INLINE);*/
         mRenderPass->SetViewport(mCommandBuffers[mCurrentFrame], 0.0f, 0.0f, static_cast<float>(mSwapchain->GetSwapchainSize().width),
                                    static_cast<float>(mSwapchain->GetSwapchainSize().width), 0.0f, 1.0f);
         mRenderPass->SetScissors(mCommandBuffers[mCurrentFrame], { 0, 0 }, { mSwapchain->GetSwapchainSize().width, mSwapchain->GetSwapchainSize().height } );
-
-        /*vk::SetViewPortAndScissors(m_CommandBuffers[m_CurrentFrame],
-                                   0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width),
-                                   static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f,
-                                   );*/
 
         void* pData = nullptr;
 
@@ -497,17 +272,15 @@ namespace psm
             .pData = &pData,
             .Flags = 0
         };
+
         mGlobalBuffer->Map(map);
         assert(pData != nullptr);
         memcpy(pData, &buffer, sizeof(GlobalBuffer));
         mGlobalBuffer->Unmap();
 
-        //render default
-        //auto& shadowMap = Shadows::Instance()->GetDirMap();
-        auto& matrixBuffer = Shadows::Instance()->GetGPUBuffer();
-        OpaqueInstances::GetInstance()->UpdateDescriptorSets(mDirectionalDepthImages[mCurrentFrame], matrixBuffer, mGlobalBuffer);
+        OpaqueInstances::GetInstance()->UpdateDescriptorSets(mGlobalBuffer);
         OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame]);
-        
+
         //render IMGui
         //vkimgui::PrepareNewFrame();
 
@@ -533,23 +306,8 @@ namespace psm
 
         //continue
         mRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);
-        //vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
-
-        /*vk::ImageLayoutTransition(vk::Device, m_CommandBuffers[m_CurrentFrame],
-                                  m_DirDepthImage[m_CurrentFrame], 
-                                  m_DirDepthFormat,
-                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                                  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                  VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-                                  VK_ACCESS_SHADER_READ_BIT,
-                                  VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-                                  VK_IMAGE_ASPECT_DEPTH_BIT,
-                                  1);*/
 
         mCommandBuffers[mCurrentFrame]->End();
-
-        //vk::EndCommandBuffer(m_CommandBuffers[m_CurrentFrame]);
         
         SSubmitConfig submitConfig =
         {
@@ -566,10 +324,6 @@ namespace psm
         };
 
         mDevice->Submit(submitConfig);
-
-       /* vk::Submit(vk::Queues.GraphicsQueue, 1, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                   &m_ImageAvailableSemaphores[m_CurrentFrame], 1, &m_CommandBuffers[m_CurrentFrame], 1,
-                   &m_RenderFinishedSemaphores[m_CurrentFrame], 1, m_FlightFences[m_CurrentFrame]);*/
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -624,22 +378,6 @@ namespace psm
         };
 
         return mDevice->CreateImageWithData(mCommandPool, imageConfig, textureBuffer, layoutTransition);
-
-        /*vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
-                               { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,
-                               VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                               VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
-                               VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
-                               &texture->Image, &texture->ImageMemory, &texture->ImageView);*/
-
-
-        //vk::LoadDataIntoImageUsingBuffer(vk::Device, vk::PhysicalDevice,
-        //                                 , m_CommandPool, vk::Queues.GraphicsQueue,
-        //                                 { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
-        //                                 mipLevels,
-        //                                 VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_FORMAT_R8G8B8A8_SRGB,
-        //                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &texture->Image);
     }
 
     void Renderer::ResizeWindow(HWND hWnd)
@@ -652,39 +390,17 @@ namespace psm
         mWindow = hWnd;
         CreateSwapchain(hWnd);
         CreateFramebuffers();
-        CreateMsaaImage();
         CreateDepthImage();
         InitImGui(hWnd);
     }
 
     void Renderer::CreateSwapchain(HWND hWnd) //DELETE
     {
-       /* if(m_SwapChain != VK_NULL_HANDLE)
-        {
-            vkDeviceWaitIdle(vk::Device);
-            vk::DestroyImageViews(vk::Device, m_SwapchainImageViews);
-            vk::DestroySwapchain(vk::Device, m_SwapChain);
 
-            vkimgui::Deinit();
-        }
-
-        vk::CreateSwapchain(vk::Device, vk::PhysicalDevice, vk::Surface, vk::SurfData,
-                            &m_SwapChain, &m_SwapChainImageFormat,
-                            &m_SwapChainExtent);
-        vk::QuerrySwapchainImages(vk::Device, m_SwapChain, m_SwapChainImageFormat,
-                                  &m_SwapChainImages, &m_SwapchainImageViews);
-        vk::CreateImageViews(vk::Device, m_SwapChainImages, m_SwapChainImageFormat,
-                             VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, &m_SwapchainImageViews);*/
     }
 
     void Renderer::CreateFramebuffers()
     {
-        /*if(m_Framebuffers.size() != 0)
-        {
-            vkDeviceWaitIdle(vk::Device);
-            vk::DestroyFramebuffers(vk::Device, m_Framebuffers);
-        }*/
-
         uint32_t frameBufferAttachmentCount = mSwapchain->GetImagesCount();
         auto swapchainSize = mSwapchain->GetSwapchainSize();
         mFramebuffers.resize(frameBufferAttachmentCount);
@@ -693,126 +409,17 @@ namespace psm
         {
             SFramebufferConfig framebufferConfig =
             {
-                .Attachments = { mMSAARenderTarget, mDepthRenderTargetTexture },
-                .SwapchainImage = mSwapchain->ImageAtIndex(i),
+                .Attachments = { mSwapchain->ImageAtIndex(i), mDepthRenderTargetTexture->GetImageView() },
                 .Size = { swapchainSize.width, swapchainSize.height },
                 .RenderPass = mRenderPass
             };
 
             mFramebuffers[i] = mDevice->CreateFramebuffer(framebufferConfig);
         };
-
-       /* vk::CreateFramebuffers(vk::Device, frameBufferAttachment, 3,
-                               m_SwapChainExtent, m_SwapchainImageViews.size(),
-                               m_RenderPass, &m_Framebuffers);*/
     }
 
     void Renderer::InitImGui(HWND hWnd)
     {
-        /*vkimgui::Init(hWnd, m_SwapChainImages.size(), m_RenderPass,
-                      vk::Queues.GraphicsQueue, vk::Queues.GraphicsFamily.value(),
-                      m_CommandPool, m_CommandBuffers[0], vk::MaxMsaaSamples, &m_ImGuiDescriptorsPool);*/
-    }
-
-    void Renderer::PrepareOffscreenRenderpass()
-    {
-        SAttachmentDescription attachmentDescription =
-        {
-            .Flags = EAttachmentDescriptionFlags::NONE,
-            .Format = mDepthStencilFormat,
-            .Samples = ESamplesCount::COUNT_1,
-            .LoadOperation = EAttachmentLoadOp::LOAD_OP_CLEAR,
-            .StoreOperation = EAttachmentStoreOp::STORE_OP_STORE,
-            .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
-            .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .FinalLayout = EImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
-        };
-
-        SAttachmentReference depthReference =
-        {
-            .Attachment = 0,
-            .Layout = EImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL
-        };
-
-        SSubpassDescription subpassDescription =
-        {
-            .PipelineBindPoint = EPipelineBindPoint::GRAPHICS,
-            .InputAttachmentCount = 0,
-            .pInputAttachments = nullptr,
-            .ColorAttachmentCount = 0,
-            .pColorAttachments = nullptr,
-            .pResolveAttachments = nullptr,
-            .pDepthStencilAttachment = &depthReference,
-            .PreserveAttachmentCount = 0,
-            .pPreserveAttachments = nullptr
-        };
         
-        constexpr uint32_t dependenciesCount = 2;
-        std::vector<SSubpassDependency> dependencies;
-        dependencies.resize(dependenciesCount);
-
-        dependencies[0] =
-        {
-            .SrcSubpass = VK_SUBPASS_EXTERNAL,
-            .DstSubpass = 0,
-            .SrcStageMask = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
-            .DstStageMask = EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
-            .SrcAccessMask = EAccessFlags::SHADER_READ_BIT,
-            .DstAccessMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-            .DependencyFlags = EDependencyFlags::BY_REGION_BIT,
-        };
-
-        dependencies[1] =
-        {
-            .SrcSubpass = 0,
-            .DstSubpass = VK_SUBPASS_EXTERNAL,
-            .SrcStageMask = EPipelineStageFlags::LATE_FRAGMENT_TESTS_BIT,
-            .DstStageMask = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
-            .SrcAccessMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-            .DstAccessMask = EAccessFlags::SHADER_READ_BIT,
-            .DependencyFlags = EDependencyFlags::BY_REGION_BIT,
-        };
-
-        SRenderPassConfig renderPassConfig =
-        {
-            .ColorAttachements = {},
-            .DepthAttachment = attachmentDescription,
-            .ResolveAttachment = {},
-
-            .ColorAttachmentReference = {},
-            .DepthStencilAttachmentReference = depthReference,
-            .ResolveAttachemntReference = {},
-
-            .SubpassDescriptions = {subpassDescription},
-            .SubpassDependensies = dependencies
-        };
-
-        mShadowRenderPass = mDevice->CreateRenderPass(renderPassConfig);
-
-        //vk::CreateRenderPass(vk::Device, attachmentsDescriptions, attachmentsDescriptionCount,
-        //                     subpassDescr, subpassDescrCount, dependency, dependenciesCount, &m_ShadowRenderPass);
-
-        //frame buffers
-        uint32_t frameBufferAttachmentCount = mSwapchain->GetImagesCount();
-        mDirectionalDepthFramebuffers.resize(frameBufferAttachmentCount);
-
-        for(int i = 0; i < frameBufferAttachmentCount; i++)
-        {
-            SFramebufferConfig framebufferConfig =
-            {
-                .Attachments = { mDirectionalDepthImages[i] },
-                .Size = mShadowMapSize,
-                .RenderPass = mShadowRenderPass,
-            };
-
-            mDirectionalDepthFramebuffers[i] = mDevice->CreateFramebuffer(framebufferConfig);
-        };
-
-       /* vk::CreateFramebuffers(vk::Device, frameBufferAttachment, 1,
-                               { m_DirDepthSize.width, m_DirDepthSize.height }, 
-                               m_SwapchainImageViews.size(),
-                               m_ShadowRenderPass, 
-                               &m_ShadowFramebuffers);*/
     }
 }
