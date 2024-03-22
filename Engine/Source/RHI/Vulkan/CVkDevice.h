@@ -40,7 +40,7 @@ namespace psm
         virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) override;
         virtual void Submit(const SSubmitConfig& config) override;
         virtual void Present(const SPresentConfig& config) override;
-        virtual void WaitIndle() override;
+        virtual void WaitIdle() override;
         virtual void BindVertexBuffers(CommandBufferPtr commandBuffer, const SVertexBufferBindConfig& config) override;
         virtual void BindIndexBuffer(CommandBufferPtr commandBuffer, const SIndexBufferBindConfig& config) override;
         virtual void CopyBuffer(CommandBufferPtr commandBuffer, uint64_t size, BufferPtr sourceBuffer, BufferPtr destinationBuffer) override;//copy buffer fully
@@ -49,8 +49,9 @@ namespace psm
         virtual void DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance) override;
         virtual void SetDepthBias(CommandBufferPtr commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) override;
         virtual void UpdateDescriptorSets(DescriptorSetPtr descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) override;
-        virtual void AllocateDescriptorSets(const SDescriptorSetAllocateConfig& config) override;
-        virtual void ImageLayoutTransition(CommandBufferPtr commandBuffer, ImagePtr image, const SImageLayoutTransition& config) override;
+        virtual DescriptorSetPtr AllocateDescriptorSets(SDescriptorSetAllocateConfig& config) override;
+        virtual void ImageLayoutTransition(CommandBufferPtr commandBuffer, ImagePtr image, const SImageLayoutTransition& config) override;//TODO: Remove it, you have InsertImageMemoryBarrier
+        virtual bool CheckFenceStatus(FencePtr fence) override;
 
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) override;
 

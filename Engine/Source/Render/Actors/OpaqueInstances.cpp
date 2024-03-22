@@ -28,6 +28,8 @@ namespace psm
                                RenderPassPtr shadowRenderPass,
                                SResourceExtent2D windowSize)
     {
+        mDeviceInternal = device;
+
         constexpr uint32_t maxUniformBuffers = 50;
         constexpr uint32_t maxCombinedImageSamples = 50;
         constexpr uint32_t maxDescriptorSets = 50;
@@ -57,6 +59,34 @@ namespace psm
         //                         maxDescriptorSets, //maximum descriptor sets 
         //                         0, //flags
         //                         &m_DescriptorPool);
+
+        //create image sampler
+        /*vk::CreateTextureSampler(m_Device, VK_FILTER_LINEAR,
+            VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            VK_SAMPLER_ADDRESS_MODE_REPEAT, false, 0.0f, VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+            false, VK_COMPARE_OP_ALWAYS, 0, m_MaxMsaaSamples, 0,
+            0.0, VK_SAMPLER_MIPMAP_MODE_LINEAR, false, &m_Sampler);*/
+
+        SSamplerConfig samplerConfig =
+        {
+            .MagFilter = EFilterMode::FILTER_LINEAR,
+            .MinFilter = EFilterMode::FILTER_LINEAR,
+            .UAddress = ESamplerAddressMode::SAMPLER_MODE_MIRRORED_REPEAT,
+            .VAddress = ESamplerAddressMode::SAMPLER_MODE_MIRRORED_REPEAT,
+            .WAddress = ESamplerAddressMode::SAMPLER_MODE_MIRRORED_REPEAT,
+            .BorderColor = EBorderColor::BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+            .EnableComparision = false,
+            .CompareOp = ECompareOp::COMPARE_OP_ALWAYS,
+            .SamplerMode = ESamplerMipmapMode::SAMPLER_MIPMAP_MODE_LINEAR,
+            .EnableAniso  = false, 
+            .MaxAniso  = 0.0f, 
+            .MaxLod  = 0.0, 
+            .MinLod  = 0.0, 
+            .MipLodBias  = 0.0,
+            .UnnormalizedCoords  = false,
+        };
+
+        mSampler = mDeviceInternal->CreateSampler(samplerConfig);
 
         CreateMaterialDescriptors();
 
@@ -166,7 +196,6 @@ namespace psm
 
         for(auto& perModel : m_PerModels)
         {
-
             perModel.Model->BindBuffers(mDeviceInternal, commandBuffer);
 
             for(int i = 0; i < perModel.PerMaterials.size(); i++)
@@ -441,7 +470,7 @@ namespace psm
             .Rasterization = rasterization,
         };
 
-        mDeviceInternal->CreateRenderPipeline(pipelineConfig);
+        mInstancedPipeline = mDeviceInternal->CreateRenderPipeline(pipelineConfig);
 
         /*vk::DestroyShaderModule(vk::Device, vertexShader);
         vk::DestroyShaderModule(vk::Device, fragmentShader);*/
@@ -482,6 +511,34 @@ namespace psm
         vk::CreateShaderModule(vk::Device,
                                "../Engine/Shaders/shadow2D.vert.txt",
                                &vertexShader);*/
+                               //descriptor set layout 
+
+        std::vector<SDescriptorLayoutInfo> shaderDescriptorInfo =
+        {
+            {
+                .Binding = 0, //binding
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER, //descriptor type
+                .DescriptorCount = 1, //count
+                .ShaderStage = EShaderStageFlag::VERTEX_BIT //vertex stage
+            }
+        };
+
+        SDescriptorSetLayoutConfig config =
+        {
+            .pLayoutsInfo = shaderDescriptorInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(shaderDescriptorInfo.size())
+        };
+
+        mShadowDescriptorSetLayout = mDeviceInternal->CreateDescriptorSetLayout(config);
+
+        SDescriptorSetAllocateConfig allocateConfig =
+        {
+            .DescriptorPool = mDescriptorPool,
+            .DescriptorSetLayouts = {mShadowDescriptorSetLayout},
+            .MaxSets = 1
+        };
+
+        mShadowDescriptorSet = mDeviceInternal->AllocateDescriptorSets(allocateConfig);
 
                                //pipeline layout
         constexpr uint32_t descriptorSetLayoutsSize = 1;
@@ -634,7 +691,7 @@ namespace psm
         {
             .RenderPass = renderPass,
             .ViewPortExtent = size,
-            .PipelineLayout = mInstancedPipelineLayout,
+            .PipelineLayout = mShadowsPipelineLayout,
             .pVertexInputAttributes = vertexAttribDescr,
             .VertexInputAttributeCount = attribsSize,
             .pVertexInputBindings = bindingDescriptions,
@@ -674,17 +731,16 @@ namespace psm
                                       &m_MaterialSetLayout);*/
     }
 
-    void OpaqueInstances::AllocateAndUpdateDescriptors(DescriptorSetPtr descriptorSet, const Material& material)
+    void OpaqueInstances::AllocateAndUpdateDescriptors(DescriptorSetPtr& descriptorSet, const Material& material)
     {
         SDescriptorSetAllocateConfig allocateConfig =
         {
             .DescriptorPool = mDescriptorPool,
-            .DescriptorSet = descriptorSet,
             .DescriptorSetLayouts = {mMaterilaSetLayout},
             .MaxSets = 1
         };
 
-         mDeviceInternal->AllocateDescriptorSets(allocateConfig);
+        descriptorSet = mDeviceInternal->AllocateDescriptorSets(allocateConfig);
 
         /*vk::AllocateDescriptorSets(vk::Device, m_DescriptorPool,
                                            { m_MaterialSetLayout },
@@ -926,7 +982,7 @@ namespace psm
         SDescriptorSetLayoutConfig descriptorSetLayoutConfig =
         {
             .pLayoutsInfo = shaderDescriptorInfo.data(),
-            .LayoutsCount = 1,
+            .LayoutsCount = static_cast<uint32_t>(shaderDescriptorInfo.size()),
         };
 
         mInstanceDescriptorSetLayout = mDeviceInternal->CreateDescriptorSetLayout(descriptorSetLayoutConfig);
@@ -934,12 +990,11 @@ namespace psm
         SDescriptorSetAllocateConfig allocateConfig =
         {
             .DescriptorPool = mDescriptorPool,
-            .DescriptorSet = mInstanceDescriptorSet,
             .DescriptorSetLayouts = {mInstanceDescriptorSetLayout},
             .MaxSets = 1
         };
 
-        mDeviceInternal->AllocateDescriptorSets(allocateConfig);
+        mInstanceDescriptorSet = mDeviceInternal->AllocateDescriptorSets(allocateConfig);
 
         /*vk::CreateDestriptorSetLayout(vk::Device, { shaderDescriptorInfo },
                                       0, &m_InstanceDescriptorSetLayout);

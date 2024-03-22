@@ -13,6 +13,7 @@
 #include "RHI/Vulkan/CVkFence.h"
 #include "RHI/Vulkan/CVkCommandBuffer.h"
 #include "RHI/Vulkan/CVkRenderPass.h"
+#include "RHI/Vulkan/CVkBuffer.h"
 #endif
 
 namespace psm
@@ -182,6 +183,15 @@ namespace psm
 
         mCommandBuffers = mDevice->CreateCommandBuffers(mCommandPool, cmdBuffersConfig);
 
+        SBufferConfig bufferConfig =
+        {
+            .Size = sizeof(GlobalBuffer),
+            .Usage = EBufferUsage::USAGE_UNIFORM_BUFFER_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
+
+        mGlobalBuffer = mDevice->CreateBuffer(bufferConfig);
+
         PrepareDirDepth();
         PrepareOffscreenRenderpass();
 
@@ -320,7 +330,7 @@ namespace psm
         vk::Vk::GetInstance()->Deinit();*/
     }
 
-    void Renderer::Render()
+    void Renderer::Render(GlobalBuffer& buffer)
     {
         if(!isInit)
         {
@@ -339,14 +349,11 @@ namespace psm
 
         Shadows::Instance()->Update();
 
-        //data.ViewProjectionMatrix = m_DirViewProjMatrix;
-
         //vk::Vk::GetInstance()->UpdatePerFrameBuffer(data);
-        //OpaqueInstances::GetInstance()->UpdateShadowDescriptors(m_DirShadowBuffer);
+        BufferPtr& shadowBuffer = Shadows::Instance()->GetGPUBuffer();
+        OpaqueInstances::GetInstance()->UpdateShadowDescriptors(shadowBuffer);
 
         //basic
-
-
         uint32_t imageIndex;
         SSwapchainAquireNextImageConfig nextImageConfig
         {
@@ -413,7 +420,7 @@ namespace psm
                                  );*/
 
         //related to specific pipeline
-        //OpaqueInstances::GetInstance()->RenderDepth2D(mCommandBuffers[mCurrentFrame]);
+        OpaqueInstances::GetInstance()->RenderDepth2D(mCommandBuffers[mCurrentFrame], 0.0f, 0.0f);
 
         mShadowRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);
         //vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
@@ -436,7 +443,7 @@ namespace psm
             .DestinationStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
             .BaseMipLevel = 0,
             .LevelCount = 1,
-            .BaseArrayLayer = 1,
+            .BaseArrayLayer = 0,
             .LayerCount = 1,
             .AspectMask = EImageAspect::DEPTH_BIT
         };
@@ -481,10 +488,26 @@ namespace psm
                                    static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f,
                                    );*/
 
-        //render default
-        //OpaqueInstances::GetInstance()->UpdateDescriptorSets(m_DirDepthImageView[0], m_DirShadowBuffer);
-        //OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame]);
+        void* pData = nullptr;
 
+        SBufferMapConfig map =
+        {
+            .Size = sizeof(GlobalBuffer),
+            .Offset = 0,
+            .pData = &pData,
+            .Flags = 0
+        };
+        mGlobalBuffer->Map(map);
+        assert(pData != nullptr);
+        memcpy(pData, &buffer, sizeof(GlobalBuffer));
+        mGlobalBuffer->Unmap();
+
+        //render default
+        //auto& shadowMap = Shadows::Instance()->GetDirMap();
+        auto& matrixBuffer = Shadows::Instance()->GetGPUBuffer();
+        OpaqueInstances::GetInstance()->UpdateDescriptorSets(mDirectionalDepthImages[mCurrentFrame], matrixBuffer, mGlobalBuffer);
+        OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame]);
+        
         //render IMGui
         //vkimgui::PrepareNewFrame();
 
@@ -530,7 +553,7 @@ namespace psm
         
         SSubmitConfig submitConfig =
         {
-            .Queue = nullptr,
+            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
             .SubmitCount = 1,
             .WaitStageFlags = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT,
             .WaitSemaphoresCount = 1,
@@ -552,7 +575,7 @@ namespace psm
 
         SPresentConfig presentConfig =
         {
-            .Queue = nullptr,
+            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
             .WaitSemaphoresCount = 1,
             .pWaitSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
             .ImageIndex = imageIndex
@@ -562,16 +585,11 @@ namespace psm
 
         mCurrentFrame = (mCurrentFrame + 1) % mSwapchain->GetImagesCount();
 
-        mDevice->WaitIndle();
+        mDevice->WaitIdle();
     }
 
-    void Renderer::LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels, ImagePtr image)
+    ImagePtr Renderer::LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels)
     {
-        if(image == nullptr)
-        {
-            LogMessage(MessageSeverity::Error, "Texture pointer is null");
-        }
-
         if(textureData.Data == nullptr)
         {
             LogMessage(MessageSeverity::Error, "Raw texture data pointer is null");
@@ -605,7 +623,7 @@ namespace psm
             .LayoutAfterTransition = EImageLayout::SHADER_READ_ONLY_OPTIMAL
         };
 
-        image = mDevice->CreateImageWithData(mCommandPool, imageConfig, textureBuffer, layoutTransition);
+        return mDevice->CreateImageWithData(mCommandPool, imageConfig, textureBuffer, layoutTransition);
 
         /*vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
                                { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,

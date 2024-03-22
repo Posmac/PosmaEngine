@@ -1,5 +1,6 @@
 #include "CVkPipeline.h"
 
+#include "CVkDevice.h"
 #include "CVkCommandBuffer.h"
 #include "CVkShader.h"
 #include "CVkPipelineLayout.h"
@@ -10,6 +11,9 @@ namespace psm
 {
     CVkPipeline::CVkPipeline(DevicePtr device, const SPipelineConfig& config)
     {
+        mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
+        assert(mDeviceInternal != nullptr);
+
         //move inside vulkan class
         VkPipelineVertexInputStateCreateInfo vertexInputState{};
 

@@ -58,7 +58,7 @@ namespace psm
         virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) = 0;
         virtual void Submit(const SSubmitConfig& config) = 0;
         virtual void Present(const SPresentConfig& config) = 0;
-        virtual void WaitIndle() = 0;
+        virtual void WaitIdle() = 0;
         virtual void BindVertexBuffers(CommandBufferPtr commandBuffer, const SVertexBufferBindConfig& config) = 0;
         virtual void BindIndexBuffer(CommandBufferPtr commandBuffer, const SIndexBufferBindConfig& config) = 0;
         virtual void CopyBuffer(CommandBufferPtr commandBuffer, uint64_t size, BufferPtr sourceBuffer, BufferPtr destinationBuffer) = 0;//copy buffer fully
@@ -67,8 +67,9 @@ namespace psm
         virtual void DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance) = 0;
         virtual void SetDepthBias(CommandBufferPtr commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) = 0;
         virtual void UpdateDescriptorSets(DescriptorSetPtr descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) = 0;
-        virtual void AllocateDescriptorSets(const SDescriptorSetAllocateConfig& config) = 0;
+        virtual DescriptorSetPtr AllocateDescriptorSets(SDescriptorSetAllocateConfig& config) = 0;
         virtual void ImageLayoutTransition(CommandBufferPtr commandBuffer, ImagePtr image, const SImageLayoutTransition& config) = 0;
+        virtual bool CheckFenceStatus(FencePtr fence) = 0;
 
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) = 0;
 

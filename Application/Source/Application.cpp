@@ -22,16 +22,14 @@ namespace psm
         RawTextureData skullData{ Rgb_alpha };
         TextureLoader::Instance()->LoadRawTextureData("../Engine/Models/Skull/Skull.jpg", &skullData);
 
-        uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(skullData.Height, skullData.Width)))) + 1;
+        //uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(skullData.Height, skullData.Width)))) + 1;
 
-        ImagePtr skullTexture;
-        Renderer::Instance()->LoadTextureIntoMemory(skullData, mipLevels, skullTexture);
+        ImagePtr skullTexture = Renderer::Instance()->LoadTextureIntoMemory(skullData, 1);
 
         RawTextureData cubeData{ Rgb_alpha };
         TextureLoader::Instance()->LoadRawTextureData("../Engine/Models/untitled.png", &cubeData);
 
-        ImagePtr cubeTexture;
-        Renderer::Instance()->LoadTextureIntoMemory(cubeData, 1, cubeTexture);
+        ImagePtr cubeTexture = Renderer::Instance()->LoadTextureIntoMemory(cubeData, 1);
 
         OpaqueInstances::Material material {};
         OpaqueInstances::Instance instance;
@@ -75,13 +73,13 @@ namespace psm
 
         ProcessInput();
 
-        PerFrameData data{};
+        GlobalBuffer data{};
         data.Time = GlobalTimer::Instance()->TotalTime();
         data.ViewMatrix = m_Camera.GetViewMatrix();
         data.ProjectionMatrix = m_Camera.GetProjectionMatrix();
         data.ViewProjectionMatrix = m_Camera.GetViewProjectionMatrix();
 
-        Renderer::Instance()->Render();
+        Renderer::Instance()->Render(data);
     }
 
     void Application::Deinit()

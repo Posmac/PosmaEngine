@@ -23,7 +23,6 @@ namespace psm
             void* Device;
             void* Instance;
             void* PhysicalDevice;
-            //uint32_t QueueFamilyIndex;
             uint32_t GraphicsQueueIndex;
             void* GraphicsQueue;
         } vkData;

@@ -23,7 +23,7 @@ namespace psm
     {
         mDeviceInternal = device;
 
-        mDeviceInternal->FindSupportedFormat({EFormat::D32_SFLOAT, EFormat::D32_SFLOAT_S8_UINT, EFormat::D32_SFLOAT_S8_UINT}, EImageTiling::OPTIMAL, EFeatureFormat::DEPTH_STENCIL_ATTACHMENT_BIT);
+        mDepthFormat = mDeviceInternal->FindSupportedFormat({EFormat::D32_SFLOAT, EFormat::D32_SFLOAT_S8_UINT, EFormat::D32_SFLOAT_S8_UINT}, EImageTiling::OPTIMAL, EFeatureFormat::DEPTH_STENCIL_ATTACHMENT_BIT);
 
         //m_DepthFormat = vk::Vk::GetInstance()->FindSupportedFormat(
         //    { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
@@ -39,7 +39,7 @@ namespace psm
 
     void Shadows::InitShadowsBuffer()
     {
-        uint64_t bufferSize = sizeof(mShadowsBuffer) - offsetof(ShadowsBuffer, ShadowBuffer);
+        uint64_t bufferSize = sizeof(mShadowsBuffer);
 
         SBufferConfig bufferConfig =
         {
@@ -48,7 +48,7 @@ namespace psm
             .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
         };
 
-        mShadowsBuffer.ShadowBuffer = mDeviceInternal->CreateBuffer(bufferConfig);
+        mGPUShadowBuffer = mDeviceInternal->CreateBuffer(bufferConfig);
         /*vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice, 
                                      bufferSize,
                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -120,17 +120,17 @@ namespace psm
 
         SBufferMapConfig mapConfig =
         {
-            .Size = sizeof(mShadowsBuffer) - offsetof(ShadowsBuffer, ShadowBuffer),
+            .Size = sizeof(mShadowsBuffer),
             .Offset = 0,
             .pData = &mapping
         };
 
-        mShadowsBuffer.ShadowBuffer->Map(mapConfig);
+        mGPUShadowBuffer->Map(mapConfig);
 
         ShadowsBuffer* mat = reinterpret_cast<ShadowsBuffer*>(mapping);
         mat->DirectionalLightViewProjectionMatrix = mShadowsBuffer.DirectionalLightViewProjectionMatrix;
 
-        mShadowsBuffer.ShadowBuffer->Unmap();
+        mGPUShadowBuffer->Unmap();
     }
 
     void Shadows::InitPointLightsData(uint32_t swapchainImages)
@@ -148,6 +148,11 @@ namespace psm
         return mShadowsBuffer;
     }
 
+    BufferPtr& Shadows::GetGPUBuffer()
+    {
+        return mGPUShadowBuffer;
+    }
+
     void Shadows::RenderDepth()
     {
         
@@ -163,16 +168,16 @@ namespace psm
 
         SBufferMapConfig mapConfig =
         {
-            .Size = sizeof(mShadowsBuffer) - offsetof(ShadowsBuffer, ShadowBuffer),
+            .Size = sizeof(mShadowsBuffer),
             .Offset = 0,
             .pData = &mapping
         };
 
-        mShadowsBuffer.ShadowBuffer->Map(mapConfig);
+        mGPUShadowBuffer->Map(mapConfig);
 
         ShadowsBuffer* mat = reinterpret_cast<ShadowsBuffer*>(mapping);
         mat->DirectionalLightViewProjectionMatrix = mShadowsBuffer.DirectionalLightViewProjectionMatrix;
 
-        mShadowsBuffer.ShadowBuffer->Unmap();
+        mGPUShadowBuffer->Unmap();
     }
 }

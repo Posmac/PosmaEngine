@@ -168,7 +168,7 @@ namespace psm
                    VkMemoryMapFlags flags,
                    void** mapping)
     {
-        return vkMapMemory(device, bufferMemory, offset, size, size, mapping);
+        return vkMapMemory(device, bufferMemory, offset, size, flags, mapping);
     }
 
     void CVkBuffer::UnmapMemory(VkDevice device, VkDeviceMemory memory)

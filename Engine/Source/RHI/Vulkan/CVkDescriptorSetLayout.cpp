@@ -43,4 +43,21 @@ namespace psm
     {
         return mLayout;
     }
+
+    CVkDescriptorSet::CVkDescriptorSet(VkDevice device, VkDescriptorSet set, VkDescriptorPool pool)
+    {
+        mDeviceInternal = device;
+        mSet = set;
+        mPool = pool;
+    }
+
+    CVkDescriptorSet::~CVkDescriptorSet()
+    {
+        vkFreeDescriptorSets(mDeviceInternal, mPool, 1, &mSet);
+    }
+
+    void* CVkDescriptorSet::GetPointer()
+    {
+        return mSet;
+    }
 }

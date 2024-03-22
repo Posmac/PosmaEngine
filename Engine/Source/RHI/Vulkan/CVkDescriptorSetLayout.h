@@ -26,12 +26,13 @@ namespace psm
     class CVkDescriptorSet : public IDescriptorSet, std::enable_shared_from_this<CVkDescriptorSet>
     {
     public:
-        CVkDescriptorSet(DevicePtr device, const SDescriptorSetLayoutConfig& config);
+        CVkDescriptorSet(VkDevice device, VkDescriptorSet set, VkDescriptorPool pool);
         virtual ~CVkDescriptorSet();
 
         virtual void* GetPointer() override;
     private:
         VkDevice mDeviceInternal;
-        VkDescriptorSetLayout mLayout;
+        VkDescriptorSet mSet;
+        VkDescriptorPool mPool;
     };
 }

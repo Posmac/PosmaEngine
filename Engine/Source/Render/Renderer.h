@@ -16,7 +16,7 @@
 //
 #include "Actors/OpaqueInstances.h"
 //
-//#include "PerFrameData.h"
+#include "PerFrameData.h"
 #include "Shadows.h"
 
 #include "RHI/Interface/Types.h"
@@ -46,8 +46,8 @@ namespace psm
         void CreateMsaaImage();
         void PrepareDirDepth();
         void Deinit();
-        void Render();
-        void LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels, ImagePtr image);
+        void Render(GlobalBuffer& buffer);
+        ImagePtr LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels);
         void ResizeWindow(HWND hWnd);
         void CreateSwapchain(HWND hWnd);
         void CreateFramebuffers();
@@ -64,6 +64,7 @@ namespace psm
         RenderPassPtr mRenderPass;
         std::vector<FramebufferPtr> mFramebuffers;
         ImagePtr mMSAARenderTarget;
+        BufferPtr mGlobalBuffer;
 
         CommandPoolPtr mCommandPool;
         std::vector<CommandBufferPtr> mCommandBuffers;

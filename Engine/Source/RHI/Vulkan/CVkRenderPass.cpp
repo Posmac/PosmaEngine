@@ -182,19 +182,24 @@ namespace psm
         std::vector<VkClearValue> clearValues;
         clearValues.resize(config.ClearValuesCount);
 
-        clearValues[0] =
+        if(config.ClearValuesCount >= 1)
         {
-            .color = *config.pClearValues[0].Color.float32
-        };
-
-        clearValues[1] =
-        {
-            .depthStencil = 
+            clearValues[0] =
             {
-                .depth = config.pClearValues[1].DepthStencil.Depth,
-                .stencil = config.pClearValues[1].DepthStencil.Stencil,
-            }
-        };
+                .color = *config.pClearValues[0].Color.float32
+            };
+        }
+        if(config.ClearValuesCount >= 2)
+        {
+            clearValues[1] =
+            {
+                .depthStencil =
+                {
+                    .depth = config.pClearValues[1].DepthStencil.Depth,
+                    .stencil = config.pClearValues[1].DepthStencil.Stencil,
+                }
+            };
+        }
 
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

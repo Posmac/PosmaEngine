@@ -97,7 +97,64 @@ namespace psm
         VkPhysicalDeviceFeatures deviceFeatures{};
         vkGetPhysicalDeviceFeatures(physicalDevice, &deviceFeatures);
 
-        VkPhysicalDeviceFeatures featuresToEnable{}; //for now we dont enable any features
+        VkPhysicalDeviceFeatures featuresToEnable = 
+        {
+            //.robustBufferAccess = ,
+            //.fullDrawIndexUint32 = ,
+            //.imageCubeArray = ,
+            //.independentBlend = ,
+            .geometryShader = true,
+            //.tessellationShader = ,
+            //.sampleRateShading = ,
+            //.dualSrcBlend = ,
+            //.logicOp = ,
+            //.multiDrawIndirect = ,
+            //.drawIndirectFirstInstance = ,
+            .depthClamp = true,
+            .depthBiasClamp = true,
+            //.fillModeNonSolid = ,
+            //.depthBounds = ,
+            //.wideLines = ,
+            //.largePoints = ,
+            //.alphaToOne = ,
+            //.multiViewport = ,
+            //.samplerAnisotropy = ,
+            //.textureCompressionETC2 = ,
+            //.textureCompressionASTC_LDR = ,
+            //.textureCompressionBC = ,
+            //.occlusionQueryPrecise = ,
+            //.pipelineStatisticsQuery = ,
+            //.vertexPipelineStoresAndAtomics = ,
+            //.fragmentStoresAndAtomics = ,
+            //.shaderTessellationAndGeometryPointSize = ,
+            //.shaderImageGatherExtended = ,
+            //.shaderStorageImageExtendedFormats = ,
+            //.shaderStorageImageMultisample = ,
+            //.shaderStorageImageReadWithoutFormat = ,
+            //.shaderStorageImageWriteWithoutFormat = ,
+            //.shaderUniformBufferArrayDynamicIndexing = ,
+            //.shaderSampledImageArrayDynamicIndexing = ,
+            //.shaderStorageBufferArrayDynamicIndexing = ,
+            //.shaderStorageImageArrayDynamicIndexing = ,
+            //.shaderClipDistance = ,
+            //.shaderCullDistance = ,
+            //.shaderFloat64 = ,
+            //.shaderInt64 = ,
+            //.shaderInt16 = ,
+            //.shaderResourceResidency = ,
+            //.shaderResourceMinLod = ,
+            //.sparseBinding = ,
+            //.sparseResidencyBuffer = ,
+            //.sparseResidencyImage2D = ,
+            //.sparseResidencyImage3D = ,
+            //.sparseResidency2Samples = ,
+            //.sparseResidency4Samples = ,
+            //.sparseResidency8Samples = ,
+            //.sparseResidency16Samples = ,
+            //.sparseResidencyAliased = ,
+            //.variableMultisampleRate = ,
+            //.inheritedQueries = ,
+        };
 
         //get device props
         VkPhysicalDeviceProperties deviceProps{};
@@ -174,7 +231,7 @@ namespace psm
 
         vkGetDeviceQueue(mDevice, mQueues.GraphicsFamily.value(), 0, &mQueues.GraphicsQueue);
         vkGetDeviceQueue(mDevice, mQueues.PresentFamily.value(), 0, &mQueues.PresentQueue);
-        
+
         mDeviceData.vkData =
         {
             .Device = mDevice,
@@ -302,36 +359,34 @@ namespace psm
             /* GenerateMipMaps(physicalDevice, commandBuffer, *dstImage,
                   VK_FORMAT_R8G8B8A8_SRGB, size.width, size.height, mipLevels);*/
         }
-        else
+
+        SImageLayoutTransition layoutTransition =
         {
-            SImageLayoutTransition layoutTransition =
-            {
-                .Format = copyConfig.FormatAfterTransition,
-                .OldLayout = copyConfig.LayoutAfterTransition,
-                .NewLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
-                .SourceStage = EPipelineStageFlags::TRANSFER_BIT,
-                .DestinationStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
-                .SourceMask = EAccessFlags::TRANSFER_WRITE_BIT,
-                .DestinationMask = EAccessFlags::SHADER_READ_BIT,
-                .ImageAspectFlags = EImageAspect::COLOR_BIT,
-                .MipLevel = 0,
-            };
+            .Format = copyConfig.FormatAfterTransition,
+            .OldLayout = EImageLayout::TRANSFER_DST_OPTIMAL, //or can be undefined
+            .NewLayout = copyConfig.LayoutAfterTransition,
+            .SourceStage = EPipelineStageFlags::TRANSFER_BIT,
+            .DestinationStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
+            .SourceMask = EAccessFlags::TRANSFER_WRITE_BIT,
+            .DestinationMask = EAccessFlags::SHADER_READ_BIT,
+            .ImageAspectFlags = EImageAspect::COLOR_BIT,
+            .MipLevel = 0,
+        };
 
-            ImageLayoutTransition(commandBuffer, image, layoutTransition);
-            /*device, commandBuffer, *dstImage,
-              imageFormatBeforeTransition,
-              imageLayoutBeforeTransition,
-              VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-              VK_PIPELINE_STAGE_TRANSFER_BIT,
-              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-              VK_ACCESS_TRANSFER_WRITE_BIT,
-              VK_ACCESS_SHADER_READ_BIT,
-              VK_IMAGE_ASPECT_COLOR_BIT,
-              1);*/
-        }
+        ImageLayoutTransition(commandBuffer, image, layoutTransition);
+        /*device, commandBuffer, *dstImage,
+          imageFormatBeforeTransition,
+          imageLayoutBeforeTransition,
+          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+          VK_PIPELINE_STAGE_TRANSFER_BIT,
+          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+          VK_ACCESS_TRANSFER_WRITE_BIT,
+          VK_ACCESS_SHADER_READ_BIT,
+          VK_IMAGE_ASPECT_COLOR_BIT,
+          1);*/
 
-        //VkResult result = vkEndCommandBuffer(commandBuffer);
-        //VK_CHECK_RESULT(result);
+          //VkResult result = vkEndCommandBuffer(commandBuffer);
+          //VK_CHECK_RESULT(result);
 
         commandBuffer->End();
 
@@ -381,6 +436,7 @@ namespace psm
         //vkDestroyFence(device, fence, nullptr);
         //vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
         commandPool->FreeCommandBuffers({ commandBuffer });
+        WaitIdle();
 
         //putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, commandQueue);
 
@@ -443,7 +499,8 @@ namespace psm
 
     SwapchainPtr CVkDevice::CreateSwapchain(const SSwapchainConfig& config)
     {
-        return std::make_shared<CVkSwapchain>(RenderDevice, config);
+        mSwapchain = std::make_shared<CVkSwapchain>(RenderDevice, config);
+        return mSwapchain;
     }
 
     PipelineLayoutPtr CVkDevice::CreatePipelineLayout(const SPipelineLayoutConfig& config)
@@ -506,10 +563,10 @@ namespace psm
         return std::make_shared<CVkDescriptorSetLayout>(RenderDevice, config);
     }
 
-    void CVkDevice::AllocateDescriptorSets(const SDescriptorSetAllocateConfig& config)
+    DescriptorSetPtr CVkDevice::AllocateDescriptorSets(SDescriptorSetAllocateConfig& config)
     {
         VkDescriptorPool vkPool = reinterpret_cast<VkDescriptorPool>(config.DescriptorPool->GetPointer());
-        VkDescriptorSet vkSet = reinterpret_cast<VkDescriptorSet>(config.DescriptorSet->GetPointer());
+        VkDescriptorSet vkSet;
 
         std::vector<VkDescriptorSetLayout> layouts;
         layouts.resize(config.DescriptorSetLayouts.size());
@@ -528,6 +585,8 @@ namespace psm
 
         VkResult result = vkAllocateDescriptorSets(mDevice, &setsAllocInfo, &vkSet);
         VK_CHECK_RESULT(result);
+
+        return std::make_shared<CVkDescriptorSet>(mDevice, vkSet, vkPool);
     }
 
     void CVkDevice::ImageLayoutTransition(CommandBufferPtr commandBuffer, ImagePtr image, const SImageLayoutTransition& config)
@@ -542,8 +601,8 @@ namespace psm
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.subresourceRange.aspectMask = ToVulkan(config.ImageAspectFlags);
         barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.baseMipLevel = 0;
-        barrier.subresourceRange.levelCount = config.MipLevel;
+        barrier.subresourceRange.baseMipLevel = config.MipLevel;
+        barrier.subresourceRange.levelCount = 1;
         barrier.subresourceRange.layerCount = 1;
         barrier.srcAccessMask = ToVulkan(config.SourceMask);
         barrier.dstAccessMask = ToVulkan(config.DestinationMask);
@@ -555,6 +614,11 @@ namespace psm
             0, nullptr,
             0, nullptr,
             1, &barrier);
+    }
+
+    bool CVkDevice::CheckFenceStatus(FencePtr fence)
+    {
+        return vkGetFenceStatus(mDevice, reinterpret_cast<VkFence>(fence->GetPointer())) != VK_SUCCESS;
     }
 
     void CVkDevice::InsertImageMemoryBarrier(const SImageBarrierConfig& config)
@@ -628,7 +692,7 @@ namespace psm
         mSwapchain->Present(config);
     }
 
-    void CVkDevice::WaitIndle()
+    void CVkDevice::WaitIdle()
     {
         vkDeviceWaitIdle(mDevice);
     }
@@ -650,8 +714,8 @@ namespace psm
 
     void CVkDevice::BindIndexBuffer(CommandBufferPtr commandBuffer, const SIndexBufferBindConfig& config)
     {
-        vkCmdBindIndexBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()), 
-                             reinterpret_cast<VkBuffer>(config.Buffer->GetPointer()), 
+        vkCmdBindIndexBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
+                             reinterpret_cast<VkBuffer>(config.Buffer->GetPointer()),
                              0, ToVulkan(config.Type));
     }
 
@@ -668,8 +732,8 @@ namespace psm
              VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
              VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);*/
 
-        vkCmdCopyBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()), 
-                        reinterpret_cast<VkBuffer>(sourceBuffer->GetPointer()), 
+        vkCmdCopyBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
+                        reinterpret_cast<VkBuffer>(sourceBuffer->GetPointer()),
                         reinterpret_cast<VkBuffer>(destinationBuffer->GetPointer()),
                         1, &copyRegion);
 
@@ -693,7 +757,7 @@ namespace psm
         copy.imageSubresource.layerCount = 1;
         copy.imageSubresource.mipLevel = 0;
 
-        vkCmdCopyBufferToImage(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()), 
+        vkCmdCopyBufferToImage(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
                                reinterpret_cast<VkBuffer>(sourceBuffer->GetPointer()),
                                reinterpret_cast<VkImage>(destrinationImage->GetImage()),
                                ToVulkan(imageLayoutAfterCopy), 1, &copy);
@@ -707,14 +771,14 @@ namespace psm
             vkDescriptors[i] = reinterpret_cast<VkDescriptorSet>(descriptors[i]->GetPointer());
         }
 
-        vkCmdBindDescriptorSets(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()), 
-                                ToVulkan(bindPoint), 
-                                reinterpret_cast<VkPipelineLayout>(pipelineLayout->GetPointer()), 0, 
+        vkCmdBindDescriptorSets(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
+                                ToVulkan(bindPoint),
+                                reinterpret_cast<VkPipelineLayout>(pipelineLayout->GetPointer()), 0,
                                 vkDescriptors.size(), vkDescriptors.data(), 0, nullptr);
 
-       /* vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                        m_InstancedPipelineLayout, { m_InstanceDescriptorSet,
-                                        perModel.PerMaterials[i].MaterialDescriptorSet });*/
+        /* vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                         m_InstancedPipelineLayout, { m_InstanceDescriptorSet,
+                                         perModel.PerMaterials[i].MaterialDescriptorSet });*/
     }
 
     void CVkDevice::DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance)
@@ -820,8 +884,7 @@ namespace psm
     }
 
     void CVkDevice::SetDebugNameForResource(void* resource, VkDebugReportObjectTypeEXT type, const char* debugName)
-    {
-    }
+    {}
 
     PipelinePtr CVkDevice::CreateRenderPipeline(const SPipelineConfig& config)
     {

@@ -20,6 +20,7 @@ namespace psm
     };
 
     EBufferUsage operator | (const EBufferUsage rhs, const EBufferUsage lhs);
+    uint32_t operator & (const EBufferUsage rhs, const EBufferUsage lhs);
 
     enum class EMemoryProperties : uint32_t
     {
@@ -37,4 +38,5 @@ namespace psm
     };
 
     EMemoryProperties operator | (const EMemoryProperties rhs, const EMemoryProperties lhs);
+    uint32_t operator & (const EMemoryProperties rhs, const EMemoryProperties lhs);
 }

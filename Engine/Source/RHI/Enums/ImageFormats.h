@@ -224,7 +224,7 @@ namespace psm
         USAGE_INPUT_ATTACHMENT_BIT = 0x00000080,
     };
 
-    EImageUsageType operator &(const EImageUsageType& rhs, const EImageUsageType& lhs);
+    uint32_t operator &(const EImageUsageType& rhs, const EImageUsageType& lhs);
 
     EImageUsageType operator | (const EImageUsageType& rhs, const EImageUsageType& lhs);
 
@@ -255,7 +255,7 @@ namespace psm
         TRANSFER_DST_BIT = 0x00008000,
     };
 
-    EFeatureFormat operator & (const EFeatureFormat& rhs, const EFeatureFormat& lhs);
+    uint32_t operator & (const EFeatureFormat& rhs, const EFeatureFormat& lhs);
 
     bool operator != (const EFeatureFormat& rhs, const uint32_t& lhs);
 

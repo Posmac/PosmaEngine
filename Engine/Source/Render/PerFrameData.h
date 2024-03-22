@@ -4,7 +4,7 @@
 
 namespace psm
 {
-    struct PerFrameData
+    struct GlobalBuffer
     {
         glm::mat4 ViewMatrix;
         glm::mat4 ProjectionMatrix;

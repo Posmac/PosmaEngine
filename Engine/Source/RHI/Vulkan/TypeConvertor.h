@@ -108,56 +108,89 @@ namespace psm
 
     inline VkBufferUsageFlags ToVulkan(EBufferUsage usage)
     {
-        switch(usage)
+        VkBufferUsageFlags flags = 0;
+        if((usage & EBufferUsage::USAGE_TRANSFER_SRC_BIT) != 0)
         {
-            case EBufferUsage::USAGE_TRANSFER_SRC_BIT:
-                return VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-            case EBufferUsage::USAGE_TRANSFER_DST_BIT:
-                return VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-            case EBufferUsage::USAGE_UNIFORM_TEXEL_BUFFER_BIT:
-                return VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
-            case EBufferUsage::USAGE_STORAGE_TEXEL_BUFFER_BIT:
-                return VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
-            case EBufferUsage::USAGE_UNIFORM_BUFFER_BIT:
-                return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-            case EBufferUsage::USAGE_STORAGE_BUFFER_BIT:
-                return VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-            case EBufferUsage::USAGE_INDEX_BUFFER_BIT:
-                return VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-            case EBufferUsage::USAGE_VERTEX_BUFFER_BIT:
-                return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-            case EBufferUsage::USAGE_INDIRECT_BUFFER_BIT:
-                return VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
-            default:
-                assert(false);
+            flags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         }
+        if((usage & EBufferUsage::USAGE_TRANSFER_DST_BIT) != 0)
+        {
+            flags |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        }
+        if((usage & EBufferUsage::USAGE_UNIFORM_TEXEL_BUFFER_BIT) != 0)
+        {
+            flags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+        }
+        if((usage & EBufferUsage::USAGE_STORAGE_TEXEL_BUFFER_BIT) != 0)
+        {
+            flags |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
+        }
+        if((usage & EBufferUsage::USAGE_UNIFORM_BUFFER_BIT) != 0)
+        {
+            flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        }
+        if((usage & EBufferUsage::USAGE_STORAGE_BUFFER_BIT) != 0)
+        {
+            flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        }
+        if((usage & EBufferUsage::USAGE_INDEX_BUFFER_BIT) != 0)
+        {
+            flags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        }
+        if((usage & EBufferUsage::USAGE_VERTEX_BUFFER_BIT) != 0)
+        {
+            flags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        }
+        if((usage & EBufferUsage::USAGE_INDIRECT_BUFFER_BIT) != 0)
+        {
+            flags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+        }
+
+        return flags;
     }
 
     inline VkMemoryPropertyFlags ToVulkan(EMemoryProperties properties)
     {
-        switch(properties)
+        VkMemoryPropertyFlags flags = 0;
+
+        if((properties & EMemoryProperties::MEMORY_PROPERTY_DEVICE_LOCAL_BIT) != 0)
         {
-            case EMemoryProperties::MEMORY_PROPERTY_DEVICE_LOCAL_BIT:
-                return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-            case EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT:
-                return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-            case EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT:
-                return VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-            case EMemoryProperties::MEMORY_PROPERTY_HOST_CACHED_BIT:
-                return VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-            case EMemoryProperties::MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT:
-                return VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
-            case EMemoryProperties::MEMORY_PROPERTY_PROTECTED_BIT:
-                return VK_MEMORY_PROPERTY_PROTECTED_BIT;
-            case EMemoryProperties::MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD:
-                return VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD;
-            case EMemoryProperties::MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD:
-                return VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD;
-            case EMemoryProperties::MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV:
-                return VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV;
-            default:
-                assert(false);
+            flags |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         }
+        if((properties & EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0)
+        {
+            flags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+        }
+        if((properties & EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT) != 0)
+        {
+            flags |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        }
+        if((properties & EMemoryProperties::MEMORY_PROPERTY_HOST_CACHED_BIT) != 0)
+        {
+            flags |= VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+        }
+        if((properties & EMemoryProperties::MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT) != 0)
+        {
+            flags |= VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
+        }
+        if((properties & EMemoryProperties::MEMORY_PROPERTY_PROTECTED_BIT) != 0)
+        {
+            flags |= VK_MEMORY_PROPERTY_PROTECTED_BIT;
+        }
+
+        if((properties & EMemoryProperties::MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD) != 0)
+        {
+            flags |= VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD;
+        }
+        if((properties & EMemoryProperties::MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD) != 0)
+        {
+            flags |= VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD;
+        }
+        if((properties & EMemoryProperties::MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV) != 0)
+        {
+            flags |= VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV;
+        }
+        return flags;
     }
 
     inline EImageType FromVulkan(VkImageType type)

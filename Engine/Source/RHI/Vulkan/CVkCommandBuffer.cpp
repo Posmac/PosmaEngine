@@ -16,7 +16,7 @@ namespace psm
 
     CVkCommandBuffer::~CVkCommandBuffer()
     {
-        assert(mCommandBuffer == nullptr);
+        assert(mCommandBuffer != nullptr);
     }
 
     void CVkCommandBuffer::Reset()

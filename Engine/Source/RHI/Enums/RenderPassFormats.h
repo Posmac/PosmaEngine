@@ -80,13 +80,13 @@ namespace psm
 
     EPipelineStageFlags operator | (const EPipelineStageFlags& rhs, const EPipelineStageFlags& lhs);
 
-    EPipelineStageFlags operator & (const EPipelineStageFlags& rhs, const EPipelineStageFlags& lhs);
+    uint32_t operator & (const EPipelineStageFlags& rhs, const EPipelineStageFlags& lhs);
 
     bool operator != (const EPipelineStageFlags rhs, uint32_t lhs);
 
     EAccessFlags operator | (const EAccessFlags& rhs, const EAccessFlags& lhs);
 
-    EAccessFlags operator & (const EAccessFlags& rhs, const EAccessFlags& lhs);
+    uint32_t operator & (const EAccessFlags& rhs, const EAccessFlags& lhs);
 
     bool operator != (const EAccessFlags rhs, uint32_t lhs);
 }

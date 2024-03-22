@@ -33,7 +33,6 @@ namespace psm
     struct SDescriptorSetAllocateConfig
     {
         DescriptorPoolPtr DescriptorPool;
-        DescriptorSetPtr DescriptorSet;
         std::vector<DescriptorSetLayoutPtr> DescriptorSetLayouts;
         uint32_t MaxSets;
     };

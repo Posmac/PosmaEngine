@@ -25,8 +25,6 @@ namespace psm
             glm::mat4 DirectionalLightViewProjectionMatrix;
             glm::mat4 m_SpotViewProjectionMatrix;
             std::array<glm::mat4, MAX_POINT_LIGHT_SOURCES> PointLightViewProjectionMatrices;
-
-            BufferPtr ShadowBuffer;
         };
 
         //singleton realization
@@ -45,6 +43,7 @@ namespace psm
         void InitPointLightsData(uint32_t swapchainImages);
         void InitSpotLightData(uint32_t swapchainImages);
         ShadowsBuffer& GetBufferData();
+        BufferPtr& GetGPUBuffer();
         void RenderDepth();
         void Update();
     private:
@@ -52,6 +51,7 @@ namespace psm
         DevicePtr mDeviceInternal;
 
         ShadowsBuffer mShadowsBuffer;
+        BufferPtr mGPUShadowBuffer;
         EFormat mDepthFormat;
         SResourceExtent3D mDepthSize;
         //VkFormat mDepthFormat;

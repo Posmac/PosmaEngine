@@ -91,7 +91,7 @@ namespace psm
         void CreateShadowDescriptorSets();
         void CreateShadowPipeline(RenderPassPtr renderPass, SResourceExtent2D size);
         void CreateMaterialDescriptors();
-        void AllocateAndUpdateDescriptors(DescriptorSetPtr descriptorSet, const Material& material);
+        void AllocateAndUpdateDescriptors(DescriptorSetPtr& descriptorSet, const Material& material);
 
     private:
         std::unordered_map<std::shared_ptr<Model>, uint32_t> m_Models;

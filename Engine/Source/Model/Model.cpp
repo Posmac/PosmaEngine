@@ -6,6 +6,8 @@
 #include "RHI/Vulkan/CVkDevice.h"
 #include "RHI/Vulkan/CVkCommandBuffer.h"
 #include "RHI/Vulkan/CVkBuffer.h"
+#include "RHI/Vulkan/CVkFence.h"
+#include "RHI/Vulkan/CVkCommandPool.h"
 #endif
 
 namespace psm
@@ -98,20 +100,20 @@ namespace psm
 
         SBufferConfig indexBufferConfig =
         {
-            .Size = sizeof(Vertex) * totalVertices,
+            .Size = sizeof(uint32_t) * totalIndices,
             .Usage = EBufferUsage::USAGE_TRANSFER_DST_BIT | EBufferUsage::USAGE_INDEX_BUFFER_BIT,
             .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         };
 
         SBufferConfig stagingIndexBufferConfig =
         {
-            .Size = sizeof(Vertex) * totalVertices,
+            .Size = sizeof(uint32_t) * totalIndices,
             .Usage = EBufferUsage::USAGE_TRANSFER_SRC_BIT,
             .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
         };
 
-        mIndexBuffer = device->CreateBuffer(vertexBufferConfig);
-        BufferPtr indexStagingBuffer = device->CreateBuffer(stagingVertexBufferConfig);
+        mIndexBuffer = device->CreateBuffer(indexBufferConfig);
+        BufferPtr indexStagingBuffer = device->CreateBuffer(stagingIndexBufferConfig);
 
        /* VkDeviceSize indexBufferSize = sizeof(uint32_t) * totalIndices;
         VkBuffer indexStagingBuffer;
@@ -242,6 +244,16 @@ namespace psm
 
         device->Submit(submitConfig);
 
+        SFenceWaitConfig wait =
+        {
+            .WaitAll = true,
+            .Timeout = 100'000'000,
+        };
+
+        submitFence->Wait(wait);
+        commandPool->FreeCommandBuffers({ commandBuffer });
+        //__debugbreak();
+        
         /*VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(vk::Device, commandPool);
 
         vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
