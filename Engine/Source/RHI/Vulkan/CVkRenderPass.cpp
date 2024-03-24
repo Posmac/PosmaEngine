@@ -52,7 +52,7 @@ namespace psm
                 .finalLayout = ToVulkan(config.DepthAttachment.value().FinalLayout)
             };
 
-            attachmentDescriptions.emplace_back(depthAttachment);
+            attachmentDescriptions.push_back(depthAttachment);
         }
 
         //add final(resolve or present) subpass description to current subpass
@@ -71,7 +71,7 @@ namespace psm
                 .finalLayout = ToVulkan(config.ResolveAttachment.value().FinalLayout)
             };
 
-            attachmentDescriptions.emplace_back(resolveAttachment);
+            attachmentDescriptions.push_back(resolveAttachment);
         }
 
         //add all subpasses for current render pass
@@ -114,6 +114,28 @@ namespace psm
                 colorRef.layout = ToVulkan(srcSubpassIter->pColorAttachments[colorRefCounter].Layout);
 
                 colorRefCounter++;
+            }
+
+            if(srcSubpassIter->pDepthStencilAttachment != nullptr)
+            {
+                VkAttachmentReference depthReference =
+                {
+                    .attachment = srcSubpassIter->pDepthStencilAttachment->Attachment,
+                    .layout = ToVulkan(srcSubpassIter->pDepthStencilAttachment->Layout)
+                };
+
+                dstSubpassDataIter->DepthStencilReference = depthReference;
+            }
+
+            if(srcSubpassIter->pResolveAttachments != nullptr)
+            {
+                VkAttachmentReference resolveReference =
+                {
+                    .attachment = srcSubpassIter->pResolveAttachments->Attachment,
+                    .layout = ToVulkan(srcSubpassIter->pResolveAttachments->Layout)
+                };
+
+                dstSubpassDataIter->ResolveReference = resolveReference;
             }
 
             subpass.flags = 0;

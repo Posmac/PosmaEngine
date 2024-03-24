@@ -12,6 +12,7 @@
 #include "RHI/Vulkan/CVkImage.h"
 #include "RHI/Vulkan/CVkFence.h"
 #include "RHI/Vulkan/CVkCommandBuffer.h"
+#include "RHI/Vulkan/CVkCommandPool.h"
 #include "RHI/Vulkan/CVkRenderPass.h"
 #include "RHI/Vulkan/CVkBuffer.h"
 #endif
@@ -58,6 +59,23 @@ namespace psm
             mImageAvailableSemaphores[i] = mDevice->CreateSemaphore({false});
             mRenderFinishedSemaphores[i] = mDevice->CreateSemaphore({false});
         }
+
+        //command buffers
+        SCommandPoolConfig cmdPoolConfig =
+        {
+            .QueueFamilyIndex = 0, //get from somewhere
+            .QueueType = EQueueType::GRAHPICS
+        };
+
+        mCommandPool = mDevice->CreateCommandPool(cmdPoolConfig);
+
+        SCommandBufferConfig cmdBuffersConfig =
+        {
+            .Size = mSwapchain->GetImagesCount(),
+            .IsBufferLevelPrimary = true,
+        };
+
+        mCommandBuffers = mDevice->CreateCommandBuffers(mCommandPool, cmdBuffersConfig);
 
         CreateDepthImage();
 
@@ -111,7 +129,17 @@ namespace psm
             .PreserveAttachmentCount = 0,
             .pPreserveAttachments = nullptr
         };
-        
+
+        SSubpassDependency dependency = 
+        {
+            .SrcSubpass = VK_SUBPASS_EXTERNAL,
+            .DstSubpass = 0,
+            .SrcStageMask = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
+            .DstStageMask = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
+            .SrcAccessMask = EAccessFlags::NONE,
+            .DstAccessMask = EAccessFlags::COLOR_ATTACHMENT_WRITE_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        };
+
         SRenderPassConfig renderPassConfig =
         {
             .ColorAttachements = {colorDescription},
@@ -123,29 +151,12 @@ namespace psm
             .ResolveAttachemntReference = {},
 
             .SubpassDescriptions = {subpassDescription},
-            .SubpassDependensies = {}
+            .SubpassDependensies = {dependency}
         };
 
         mRenderPass = mDevice->CreateRenderPass(renderPassConfig);
 
         CreateFramebuffers();
-
-        //command buffers
-        SCommandPoolConfig cmdPoolConfig =
-        {
-            .QueueFamilyIndex = 0, //get from somewhere
-            .QueueType = EQueueType::GRAHPICS
-        };
-
-        mCommandPool = mDevice->CreateCommandPool(cmdPoolConfig);
-
-        SCommandBufferConfig cmdBuffersConfig =
-        {
-            .Size = mSwapchain->GetImagesCount(),
-            .IsBufferLevelPrimary = true,
-        };
-
-        mCommandBuffers = mDevice->CreateCommandBuffers(mCommandPool, cmdBuffersConfig);
 
         SBufferConfig bufferConfig =
         {
@@ -196,6 +207,83 @@ namespace psm
         };
 
         mDepthRenderTargetTexture = mDevice->CreateImage(imageConfig);
+
+        SCommandBufferConfig commandBufferConfig =
+        {
+            .Size = 1,
+            .IsBufferLevelPrimary = true
+        };
+
+        std::vector<CommandBufferPtr> commandBuffers = mDevice->CreateCommandBuffers(mCommandPool, commandBufferConfig);
+        CommandBufferPtr commandBuffer = commandBuffers[0];
+
+        SCommandBufferBeginConfig beginConfig =
+        {
+            .BufferIndex = 0,
+            .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
+        };
+
+        commandBuffer->Begin(beginConfig);
+
+        SImageLayoutTransition imageLayoutTransition =
+        {
+            .Format = mDepthStencilFormat,
+            .OldLayout = EImageLayout::UNDEFINED,
+            .NewLayout = EImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL,
+            .SourceStage = EPipelineStageFlags::TOP_OF_PIPE_BIT,
+            .DestinationStage = EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
+            .SourceMask = EAccessFlags::NONE,
+            .DestinationMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_READ_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            .ImageAspectFlags = EImageAspect::DEPTH_BIT,
+            .MipLevel = 0,
+        };
+
+        /*else if(oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+        {
+            barrier.srcAccessMask = 0;
+            barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        }*/
+
+        mDevice->ImageLayoutTransition(commandBuffer, mDepthRenderTargetTexture, imageLayoutTransition);
+
+        commandBuffer->End();
+
+        SFenceConfig fenceConfig =
+        {
+            .Signaled = false
+        };
+
+        FencePtr submitFence = mDevice->CreateFence(fenceConfig);
+
+        SSubmitConfig submitConfig =
+        {
+            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .SubmitCount = 1,
+            .WaitStageFlags = EPipelineStageFlags::NONE,
+            .WaitSemaphoresCount = 0,
+            .pWaitSemaphores = nullptr,
+            .CommandBuffersCount = 1,
+            .pCommandBuffers = &commandBuffer,
+            .SignalSemaphoresCount = 0,
+            .pSignalSemaphores = nullptr,
+            .Fence = submitFence,
+        };
+
+        mDevice->Submit(submitConfig);
+
+        SFenceWaitConfig waitConfig =
+        {
+            .WaitAll = true,
+            .Timeout = static_cast<float>(100000000000)
+        };
+
+        submitFence->Wait(waitConfig);
+
+        mCommandPool->FreeCommandBuffers({ commandBuffer });
+        mDevice->WaitIdle();
     }
 
     void Renderer::Deinit()
@@ -348,7 +436,7 @@ namespace psm
         {
             LogMessage(MessageSeverity::Error, "Raw texture data pointer is null");
         }
-        
+
         SImageConfig imageConfig =
         {
             .ImageSize = { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },

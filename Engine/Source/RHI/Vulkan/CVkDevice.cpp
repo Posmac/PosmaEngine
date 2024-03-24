@@ -254,14 +254,6 @@ namespace psm
 
     ImagePtr CVkDevice::CreateImageWithData(CommandPoolPtr commandPool, const SImageConfig& config, const SUntypedBuffer& data, const SImageToBufferCopyConfig& copyConfig)
     {
-        /*vk::CreateImageAndView(vk::Device, vk::PhysicalDevice,
-                               { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 }, mipLevels, 1,
-                               VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                               VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
-                               VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT,
-                               &texture->Image, &texture->ImageMemory, &texture->ImageView);*/
-
         ImagePtr image = std::make_shared<CVkImage>(RenderDevice, config);
 
         SBufferConfig stagingBufferConfig =
@@ -272,10 +264,6 @@ namespace psm
         };
 
         BufferPtr stagingBuffer = CreateBuffer(stagingBufferConfig);
-
-        /*CreateBuffer(device, physicalDevice, dataToLoadSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-               &stagingBuffer, &stagingBufferMemory);*/
 
         void* pData;
         SBufferMapConfig mapping =
@@ -288,14 +276,9 @@ namespace psm
 
         stagingBuffer->Map(mapping);
 
-        //void* data;
-        //VkResult result = vkMapMemory(device, stagingBufferMemory, 0, dataToLoadSize, 0, &data);
-        //VK_CHECK_RESULT(result);
-
         memcpy(pData, data.data(), static_cast<size_t>(data.size()));
 
         stagingBuffer->Unmap();
-        //vkUnmapMemory(device, stagingBufferMemory);
 
         SCommandBufferConfig commandBufferConfig =
         {
@@ -314,19 +297,6 @@ namespace psm
 
         commandBuffer->Begin(beginConfig);
 
-        /*vk::ImageLayoutTransition(vk::Device,
-                             m_CommandBuffers[m_CurrentFrame],
-                             m_DirDepthImage[m_CurrentFrame],
-                             m_DirDepthFormat,
-                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                             VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-                             VK_ACCESS_SHADER_READ_BIT,
-                             VK_IMAGE_ASPECT_DEPTH_BIT,
-                             1);*/
-
         SImageLayoutTransition imageLayoutTransition =
         {
             .Format = copyConfig.FormatBeforeTransition,
@@ -341,16 +311,6 @@ namespace psm
         };
 
         ImageLayoutTransition(commandBuffer, image, imageLayoutTransition);
-
-        /*imageFormatBeforeTransition,
-        imageLayoutBeforeTransition,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        0,
-        VK_ACCESS_TRANSFER_WRITE_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        1);*/
 
         CopyBufferToImage(commandBuffer, stagingBuffer, image, config.ImageSize, EImageAspect::COLOR_BIT, EImageLayout::TRANSFER_DST_OPTIMAL);
 
@@ -374,19 +334,6 @@ namespace psm
         };
 
         ImageLayoutTransition(commandBuffer, image, layoutTransition);
-        /*device, commandBuffer, *dstImage,
-          imageFormatBeforeTransition,
-          imageLayoutBeforeTransition,
-          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-          VK_PIPELINE_STAGE_TRANSFER_BIT,
-          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-          VK_ACCESS_TRANSFER_WRITE_BIT,
-          VK_ACCESS_SHADER_READ_BIT,
-          VK_IMAGE_ASPECT_COLOR_BIT,
-          1);*/
-
-          //VkResult result = vkEndCommandBuffer(commandBuffer);
-          //VK_CHECK_RESULT(result);
 
         commandBuffer->End();
 
@@ -412,15 +359,6 @@ namespace psm
         };
 
         Submit(submitConfig);
-        //VkSubmitInfo submitInfo = {};
-        //submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        //submitInfo.commandBufferCount = 1;
-        //submitInfo.pCommandBuffers = &commandBuffer;
-
-        //// Submit to the queue
-        //result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence);
-        //VK_CHECK_RESULT(result);
-        // Wait for the fence to signal that command buffer has finished executing
 
         SFenceWaitConfig waitConfig =
         {
@@ -430,25 +368,8 @@ namespace psm
 
         submitFence->Wait(waitConfig);
 
-        //result = vkWaitForFences(device, 1, &fence, VK_TRUE, 100000000000);
-        //VK_CHECK_RESULT(result);
-
-        //vkDestroyFence(device, fence, nullptr);
-        //vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
         commandPool->FreeCommandBuffers({ commandBuffer });
         WaitIdle();
-
-        //putils::EndSingleTimeCommandBuffer(device, commandPool, commandBuffer, commandQueue);
-
-        /*vk::FreeMemory(device, stagingBufferMemory);
-        vk::DestroyBuffer(device, stagingBuffer);*/
-
-        /*vk::LoadDataIntoImageUsingBuffer(vk::Device, vk::PhysicalDevice,
-                                         , m_CommandPool, vk::Queues.GraphicsQueue,
-                                         { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
-                                         mipLevels,
-                                         VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_FORMAT_R8G8B8A8_SRGB,
-                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, &texture->Image);*/
 
         return image;
     }
