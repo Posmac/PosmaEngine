@@ -58,6 +58,16 @@ namespace psm
         return static_cast<EPipelineStageFlags>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
     }
 
+    EImageAspect operator | (const EImageAspect& rhs, const EImageAspect& lhs)
+    {
+        return static_cast<EImageAspect>(static_cast<uint32_t>(rhs) | static_cast<uint32_t>(lhs));
+    }
+
+    uint32_t operator & (const EImageAspect& rhs, const uint32_t& lhs)
+    {
+        return static_cast<uint32_t>(rhs) & lhs;
+    }
+
     uint32_t operator & (const EPipelineStageFlags& rhs, const EPipelineStageFlags& lhs)
     {
         return static_cast<uint32_t>(rhs) & static_cast<uint32_t>(lhs);

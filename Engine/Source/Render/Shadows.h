@@ -54,32 +54,21 @@ namespace psm
         BufferPtr mGPUShadowBuffer;
         EFormat mDepthFormat;
         SResourceExtent3D mDepthSize;
-        //VkFormat mDepthFormat;
-        //VkExtent3D m_DepthSize;
 
         //dir light depth image
         std::vector<ImagePtr> mDirDepthShadowMaps;
-        /*std::vector<VkImage> m_DirDepthImage;
-        std::vector<VkDeviceMemory> m_DirDepthImageMemory;
-        std::vector<VkImageView> m_DirDepthImageView;*/
 
         //point light depth images
         std::array<std::vector<ImagePtr>, MAX_POINT_LIGHT_SOURCES> mPointLightsShadowMaps;
-       /* std::array<std::vector<VkImage>, MAX_POINT_LIGHT_SOURCES> m_PointLightsDepthImages;
-        std::array<std::vector<VkDeviceMemory>, MAX_POINT_LIGHT_SOURCES> m_PointLightsDepthImagesMemory;
-        std::array<std::vector<VkImageView>, MAX_POINT_LIGHT_SOURCES> m_PointLightsDepthImageViews;*/
 
         //spot light depth image
         std::vector<ImagePtr> mSpotLightShadowMaps;
-        /*std::vector<VkImage> m_SpotDepthImage;
-        std::vector<VkDeviceMemory> m_SpotDepthImageMemory;
-        std::vector<VkImageView> m_SpotDepthImageView;*/
 
         //renderer related thing
         RenderPassPtr mShadowRenderPass;
         std::vector<FramebufferPtr> mShadowFramebuffers;
 
-        //imgui data
+        //imgui data (for debugging)
         float range = 100;
         float nearPlane = -200;
         float farPlane = 200;

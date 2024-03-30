@@ -1243,18 +1243,22 @@ namespace psm
 
     inline VkImageAspectFlags ToVulkan(EImageAspect aspect)
     {
-        switch(aspect)
-        {
-            case EImageAspect::COLOR_BIT:
-                return VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
-            case EImageAspect::DEPTH_BIT:
-                return VkImageAspectFlagBits::VK_IMAGE_ASPECT_DEPTH_BIT;
-            case EImageAspect::STENCIL_BIT:
-                return VkImageAspectFlagBits::VK_IMAGE_ASPECT_STENCIL_BIT;
-            default:
-                return VkImageAspectFlagBits::VK_IMAGE_ASPECT_NONE;
+        VkImageAspectFlags flags = 0;
 
+        if((aspect & VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT) != 0)
+        {
+            flags |= VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
         }
+        if((aspect & VkImageAspectFlagBits::VK_IMAGE_ASPECT_DEPTH_BIT) != 0)
+        {
+            flags |= VkImageAspectFlagBits::VK_IMAGE_ASPECT_DEPTH_BIT;
+        }
+        if((aspect & VkImageAspectFlagBits::VK_IMAGE_ASPECT_STENCIL_BIT) != 0)
+        {
+            flags |= VkImageAspectFlagBits::VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
+
+        return flags;
     }
 
     inline VkCommandBufferUsageFlags ToVulkan(ECommandBufferUsage usage)

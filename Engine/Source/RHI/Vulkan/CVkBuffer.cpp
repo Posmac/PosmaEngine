@@ -234,6 +234,11 @@ namespace psm
         Unmap();
     }
 
+    uint64_t CVkBuffer::Size()
+    {
+        return mSize;
+    }
+
     void* CVkBuffer::GetPointer()
     {
         return mVkBuffer;

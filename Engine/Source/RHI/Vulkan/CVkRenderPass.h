@@ -21,8 +21,6 @@ namespace psm
 
         virtual void BeginRenderPass(const SRenderPassBeginConfig& config) override;
         virtual void EndRenderPass(CommandBufferPtr commandBuffer) override;
-        virtual void SetViewport(CommandBufferPtr commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth) override;
-        virtual void SetScissors(CommandBufferPtr commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent) override;
         virtual void* GetNativeRawPtr() override;
     private:
         VkDevice mDeviceInternal;

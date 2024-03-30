@@ -6,7 +6,7 @@
 #include "Utilities/ModelLoader.h"
 #include "Utilities/TextureLoader.h"
 #include "Render/Camera/Camera.h"
-#include "Render/PerFrameData.h"
+#include "Render/GlobalBuffer.h"
 #include "Render/Actors/OpaqueInstances.h"
 
 #include "RHI/VkCommon.h"

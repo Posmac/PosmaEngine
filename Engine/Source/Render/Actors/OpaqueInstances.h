@@ -75,19 +75,26 @@ namespace psm
 
         //class related
     public:
-        void Init(DevicePtr device, RenderPassPtr renderPass, SResourceExtent2D windowSize);
+        
+        void Init(DevicePtr device, RenderPassPtr renderPass, RenderPassPtr shadowRenderPass, SResourceExtent2D windowSize, SResourceExtent2D shadowMapSize);
         void Deinit();
+
         void Render(CommandBufferPtr commandBuffer);
+        void RenderDepth(CommandBufferPtr commandBuffer);
         void AddInstance(std::shared_ptr<Model> model, const Material& material, const Instance& instance);
 
-        void UpdateDescriptorSets(BufferPtr globalBuffer);
+        void UpdateInstanceDescriptorSets(BufferPtr globalBuffer, BufferPtr shadowMapBuffer, ImagePtr dirDepthShadowMap);
+        void UpdateShadowMapDescriptorSets(BufferPtr globalBuffer);
 
-        void PrepareInstances();
+        void UpdateInstanceBuffer();
     private:
         void CreateInstanceDescriptorSets();
-        void CreateInstancePipelineLayout(RenderPassPtr renderPass, SResourceExtent2D extent);
+        void CreateInstancePipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize);
         void CreateMaterialDescriptors();
         void AllocateAndUpdateDescriptors(DescriptorSetPtr& descriptorSet, const Material& material);
+
+        void CreateShadowMapDescriptorSets();
+        void CreateShadowMapPipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize);
 
     private:
         std::unordered_map<std::shared_ptr<Model>, uint32_t> m_Models;
@@ -98,9 +105,19 @@ namespace psm
         PipelineLayoutPtr mInstancedPipelineLayout;
         BufferPtr mInstanceBuffer;
         DescriptorPoolPtr mDescriptorPool;
+
         DescriptorSetLayoutPtr mMaterilaSetLayout;
         DescriptorSetLayoutPtr mInstanceDescriptorSetLayout;
         DescriptorSetPtr mInstanceDescriptorSet;
+
+        DescriptorSetLayoutPtr mInstanceShadowDescriptorSetLayout;
+        DescriptorSetPtr mInstanceShadowDescriptorSet;
+
+        DescriptorSetLayoutPtr mShadowMapDescriptorSetLayout;
+        DescriptorSetPtr mShadowMapDescriptorSet;
+        PipelinePtr mShadowMapPipeline;
+        PipelineLayoutPtr mShadowMapPipelineLayout;
+
         SamplerPtr mSampler; //temporary
     };
 

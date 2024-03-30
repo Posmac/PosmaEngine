@@ -4,25 +4,25 @@
 
 namespace psm
 {
-    enum class EAttachmentDescriptionFlags : uint8_t
+    enum class EAttachmentDescriptionFlags : uint32_t
     {
         NONE = 0, //for now
     };
 
-    enum class EAttachmentLoadOp : uint8_t
+    enum class EAttachmentLoadOp : uint32_t
     {
         LOAD_OP_LOAD = 0,
         LOAD_OP_CLEAR = 1,
         LOAD_OP_DONT_CARE = 2,
     };
 
-    enum class EAttachmentStoreOp : uint8_t
+    enum class EAttachmentStoreOp : uint32_t
     {
         STORE_OP_STORE = 0,
         STORE_OP_DONT_CARE = 1,
     };
 
-    enum class EPipelineBindPoint : uint8_t
+    enum class EPipelineBindPoint : uint32_t
     {
         GRAPHICS = 0,
         COMPUTE = 1,
@@ -72,7 +72,7 @@ namespace psm
         NONE = 0,
     };
 
-    enum class EDependencyFlags : uint8_t
+    enum class EDependencyFlags : uint32_t
     {
         NONE = 0,
         BY_REGION_BIT = 0x00000001,

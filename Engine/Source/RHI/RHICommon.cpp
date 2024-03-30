@@ -23,9 +23,9 @@ namespace psm
             }
         };
 
-        std::cout << "RHI [" << severityToStr(severity) << "]: " << message << '\n';
+        std::cout << "PSM [" << severityToStr(severity) << "]: " << message << '\n';
 #ifdef _WIN32
-        std::string str = std::format("RGL [{}] - {}\n", severityToStr(severity), message);
+        std::string str = std::format("PSM [{}] - {}\n", severityToStr(severity), message);
         OutputDebugStringA(str.c_str());
 #endif
 

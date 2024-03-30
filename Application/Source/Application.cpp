@@ -61,7 +61,7 @@ namespace psm
         material.Albedo = skullTexture;
 
         OpaqueInstances::GetInstance()->AddInstance(skullModel, material, instance);
-        OpaqueInstances::GetInstance()->PrepareInstances();
+        OpaqueInstances::GetInstance()->UpdateInstanceBuffer();
 
         GlobalTimer::Instance()->Init(60);
     }

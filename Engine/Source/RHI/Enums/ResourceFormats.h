@@ -4,7 +4,7 @@
 
 namespace psm
 {
-    enum class ESharingMode : uint8_t
+    enum class ESharingMode : uint32_t
     {
         EXCLUSIVE = 0,
         CONCURRENT = 1,

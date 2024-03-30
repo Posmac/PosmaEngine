@@ -25,10 +25,6 @@ namespace psm
 
         mDepthFormat = mDeviceInternal->FindSupportedFormat({EFormat::D32_SFLOAT, EFormat::D32_SFLOAT_S8_UINT, EFormat::D32_SFLOAT_S8_UINT}, EImageTiling::OPTIMAL, EFeatureFormat::DEPTH_STENCIL_ATTACHMENT_BIT);
 
-        //m_DepthFormat = vk::Vk::GetInstance()->FindSupportedFormat(
-        //    { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-        //    VK_IMAGE_TILING_OPTIMAL,
-        //    VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT /*| VK_IMAGE_USAGE_SAMPLED_BIT*/);
         mDepthSize = { 2048, 2048, 1 };
 
         InitShadowsBuffer();
@@ -49,21 +45,11 @@ namespace psm
         };
 
         mGPUShadowBuffer = mDeviceInternal->CreateBuffer(bufferConfig);
-        /*vk::CreateBufferAndMapMemory(vk::Device, vk::PhysicalDevice, 
-                                     bufferSize,
-                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                     &m_ShadowsBuffer.ShadowBuffer, 
-                                     &m_ShadowsBuffer.ShadowBufferMemory, 
-                                     &m_ShadowsBuffer.ShadowBufferMapping);*/
     }
 
     void Shadows::InitDirectionalLightData(uint32_t swapchainImages)
     {
         mDirDepthShadowMaps.resize(swapchainImages);
-        /*m_DirDepthImage.resize(swapchainImages);
-        m_DirDepthImageMemory.resize(swapchainImages);
-        m_DirDepthImageView.resize(swapchainImages);*/
 
         for(int i = 0; i < swapchainImages; i++)
         {
@@ -86,13 +72,6 @@ namespace psm
             };
 
             mDirDepthShadowMaps[i] = mDeviceInternal->CreateImage(imageConfig);
-
-            /*vk::CreateImageAndView(vk::Device, vk::PhysicalDevice, m_DepthSize, 1, 1, VK_IMAGE_TYPE_2D, m_DepthFormat,
-                       VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED,
-                       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                       VK_SHARING_MODE_EXCLUSIVE, VK_SAMPLE_COUNT_1_BIT, 0,
-                       m_DepthFormat, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT,
-                       &m_DirDepthImage[i], &m_DirDepthImageMemory[i], &m_DirDepthImageView[i]);*/
         }
 
         glm::mat4 lightView = glm::lookAt(glm::vec3(10.0f, 0.0f, 0.0f),

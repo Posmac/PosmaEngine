@@ -241,34 +241,6 @@ namespace psm
         vkCmdEndRenderPass(vkCommandBuffer);
     }
 
-    void CVkRenderPass::SetViewport(CommandBufferPtr commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth)
-    {
-        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer());
-        VkViewport viewport =
-        {
-            .x = viewPortX,
-            .y = viewPortY,
-            .width = viewPortWidth,
-            .height = viewPortHeight,
-            .minDepth = viewPortMinDepth,
-            .maxDepth = viewPortMaxDepth
-        };
-
-        vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
-    }
-
-    void CVkRenderPass::SetScissors(CommandBufferPtr commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent)
-    {
-        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer());
-
-        VkRect2D scissor =
-        {
-            .offset = scissorsOffet,
-            .extent = scissorsExtent
-        };
-        vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
-    }
-
     void* CVkRenderPass::GetNativeRawPtr()
     {
         return mRenderPass;

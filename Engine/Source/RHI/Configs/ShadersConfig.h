@@ -9,7 +9,7 @@
 
 namespace psm
 {
-    enum class EFrontFace : uint8_t
+    enum class EFrontFace : uint32_t
     {
         COUNTER_CLOCKWISE = 0,
         CLOCKWISE = 1,
@@ -23,7 +23,7 @@ namespace psm
         FRONT_AND_BACK = 0x00000003,
     };
 
-    enum class EPolygonMode : uint8_t
+    enum class EPolygonMode : uint32_t
     {
         FILL = 0,
         LINE = 1,

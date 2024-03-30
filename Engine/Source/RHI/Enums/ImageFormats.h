@@ -4,12 +4,12 @@
 
 namespace psm
 {
-    enum class EImageCreateFlags : uint8_t
+    enum class EImageCreateFlags : uint32_t
     {
         NONE = 0,
     };
 
-    enum class ESamplesCount : uint8_t
+    enum class ESamplesCount : uint32_t
     {
         COUNT_1 = 1,
         COUNT_2 = 2,
@@ -20,7 +20,7 @@ namespace psm
         COUNT_64 = 64,
     };
 
-    enum class EImageLayout : uint8_t
+    enum class EImageLayout : uint32_t
     {
         UNDEFINED = 0,
         GENERAL = 1,
@@ -31,6 +31,8 @@ namespace psm
         TRANSFER_SRC_OPTIMAL = 6,
         TRANSFER_DST_OPTIMAL = 7,
         PREINITIALIZED = 8,
+
+        //require version 1.1 and higher
         DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL = 9,
         DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL = 10,
         DEPTH_ATTACHMENT_OPTIMAL = 11,
@@ -42,7 +44,7 @@ namespace psm
         PRESENT_SRC_KHR = 17,
     };
 
-    enum class EFormat : uint8_t
+    enum class EFormat : uint32_t
     {
         UNDEFINED = 0,
         R4G4_UNORM_PACK8 = 1,
@@ -194,14 +196,14 @@ namespace psm
         //not complete
     };
 
-    enum class EImageType : uint8_t
+    enum class EImageType : uint32_t
     {
         TYPE_1D = 0,
         TYPE_2D = 1,
         TYPE_3D = 2,
     };
 
-    enum class EImageViewType : uint8_t
+    enum class EImageViewType : uint32_t
     {
         TYPE_1D = 0,
         TYPE_2D = 1,
@@ -230,7 +232,7 @@ namespace psm
 
     bool operator != (const EImageUsageType& rhs, const uint32_t lhs);
 
-    enum class EImageTiling : uint8_t
+    enum class EImageTiling : uint32_t
     {
         OPTIMAL = 0,
         LINEAR = 1,
@@ -259,10 +261,13 @@ namespace psm
 
     bool operator != (const EFeatureFormat& rhs, const uint32_t& lhs);
 
-    enum class EImageAspect : uint8_t
+    enum class EImageAspect : uint32_t
     {
         COLOR_BIT = 0x00000001,
         DEPTH_BIT = 0x00000002,
         STENCIL_BIT = 0x00000004,
     };
+
+    EImageAspect operator | (const EImageAspect& rhs, const EImageAspect& lhs);
+    uint32_t operator & (const EImageAspect& rhs, const uint32_t& lhs);
 }

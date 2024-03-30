@@ -74,7 +74,7 @@ namespace psm
         const uint32_t* pPreserveAttachments;
     };
 
-    enum class ESubpassContents : uint8_t
+    enum class ESubpassContents : uint32_t
     {
         INLINE = 0,
         SECONDARY_COMMAND_BUFFERS = 1,

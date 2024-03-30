@@ -4,7 +4,7 @@
 
 namespace psm
 {
-    enum class EIndexType : uint8_t
+    enum class EIndexType : uint32_t
     {
         UINT16 = 0,
         UINT32 = 1,
@@ -28,7 +28,7 @@ namespace psm
         TRIANGLE_FAN = 5,
     };
 
-    enum class EVertexInputRate : uint8_t
+    enum class EVertexInputRate : uint32_t
     {
         VERTEX = 0,
         INSTANCE = 1,
@@ -46,7 +46,7 @@ namespace psm
         ALL = 0x7FFFFFFF,
     };
 
-    enum class EDescriptorType : uint8_t
+    enum class EDescriptorType : uint32_t
     {
         SAMPLER = 0,
         COMBINED_IMAGE_SAMPLER = 1,

@@ -52,6 +52,8 @@ namespace psm
         virtual DescriptorSetPtr AllocateDescriptorSets(SDescriptorSetAllocateConfig& config) override;
         virtual void ImageLayoutTransition(CommandBufferPtr commandBuffer, ImagePtr image, const SImageLayoutTransition& config) override;//TODO: Remove it, you have InsertImageMemoryBarrier
         virtual bool CheckFenceStatus(FencePtr fence) override;
+        virtual void SetViewport(CommandBufferPtr commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth) override;
+        virtual void SetScissors(CommandBufferPtr commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent) override;
 
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) override;
 

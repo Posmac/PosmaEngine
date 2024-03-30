@@ -18,6 +18,7 @@ namespace psm
         virtual void Unmap() override;
         virtual void Flush(SBufferFlushConfig& config) override;
         virtual void UpdateBuffer(const SUntypedBuffer& data) override;
+        virtual uint64_t Size() override;
 
         virtual void* GetPointer() override;
 

@@ -7,7 +7,7 @@
 
 namespace psm
 {
-    enum class EQueueType : uint8_t
+    enum class EQueueType : uint32_t
     {
         GRAHPICS,
         COMPUTE,
@@ -15,7 +15,7 @@ namespace psm
         GENERAL
     };
 
-    enum class ECommandBufferUsage : uint8_t
+    enum class ECommandBufferUsage : uint32_t
     {
         NONE = 0x00000000,
         ONE_TIME_SUBMIT_BIT = 0x00000001,

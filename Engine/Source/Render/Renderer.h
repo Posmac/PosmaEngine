@@ -5,18 +5,9 @@
 #include <array>
 #include <vector>
 
-//#include "../RHI/Interface/Device.h"
-//#include "../RHI/Interface/Swapchain.h"
-//#include "../RHI/Interface/Buffer.h"
-//#include "../RHI/Interface/ImGui.h"
-//#include "../RHI/Interface/Image.h"
-//
-//#include "Utilities/TextureLoader.h"
 #include "Utilities/ModelLoader.h"
-//
 #include "Actors/OpaqueInstances.h"
-//
-#include "PerFrameData.h"
+#include "GlobalBuffer.h"
 #include "Shadows.h"
 
 #include "RHI/Interface/Types.h"
@@ -42,14 +33,19 @@ namespace psm
         //class specific
     public:
         void Init(DevicePtr device, const PlatformConfig& config);
-        void CreateDepthImage();
         void Deinit();
+
+        void CreateDepthImage();
         void Render(GlobalBuffer& buffer);
-        ImagePtr LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels);
         void ResizeWindow(HWND hWnd);
         void CreateSwapchain(HWND hWnd);
         void CreateFramebuffers();
-        void InitImGui(HWND hWnd);
+
+        void InitImGui(HWND hWnd);//needs to be initialized in another place
+
+        ImagePtr LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels);//should be moved inside DevicePtr
+    private:
+        void PrepareShadowMapRenderPass();
     private:
 
         //old
@@ -57,10 +53,12 @@ namespace psm
 
         //new RHI data
         DevicePtr mDevice;
+        BufferPtr mGlobalBuffer;
         SwapchainPtr mSwapchain;
+
+        //specific things
         RenderPassPtr mRenderPass;
         std::vector<FramebufferPtr> mFramebuffers;
-        BufferPtr mGlobalBuffer;
 
         CommandPoolPtr mCommandPool;
         std::vector<CommandBufferPtr> mCommandBuffers;
@@ -74,5 +72,10 @@ namespace psm
 
         ImagePtr mDepthRenderTargetTexture;
         EFormat mDepthStencilFormat;
+
+        RenderPassPtr mShadowMapRenderPass;
+        std::vector<FramebufferPtr> mShadowMapFramebuffers;
+        SResourceExtent2D mShadowMapSize;
+        std::vector<ImagePtr> mDirDepthShadowMaps;
     };
 }

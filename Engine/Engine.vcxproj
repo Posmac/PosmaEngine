@@ -285,7 +285,7 @@
     <ClCompile Include="Source\Model\Vertex.cpp" />
     <ClCompile Include="Source\Render\Camera\Camera.cpp" />
     <ClCompile Include="Source\Render\Actors\OpaqueInstances.cpp" />
-    <ClCompile Include="Source\Render\PerFrameData.h" />
+    <ClCompile Include="Source\Render\GlobalBuffer.h" />
     <ClCompile Include="Source\Render\Renderer.cpp" />
     <ClCompile Include="Source\Render\Shadows.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkImage.cpp" />

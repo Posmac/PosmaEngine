@@ -353,7 +353,7 @@
     <ClCompile Include="Source\Render\Camera\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Render\PerFrameData.h">
+    <ClCompile Include="Source\Render\GlobalBuffer.h">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Systems\InputSystem.cpp">

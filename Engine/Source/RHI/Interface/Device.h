@@ -70,6 +70,8 @@ namespace psm
         virtual DescriptorSetPtr AllocateDescriptorSets(SDescriptorSetAllocateConfig& config) = 0;
         virtual void ImageLayoutTransition(CommandBufferPtr commandBuffer, ImagePtr image, const SImageLayoutTransition& config) = 0;
         virtual bool CheckFenceStatus(FencePtr fence) = 0;
+        virtual void SetViewport(CommandBufferPtr commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth) = 0;
+        virtual void SetScissors(CommandBufferPtr commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent) = 0;
 
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) = 0;
 
