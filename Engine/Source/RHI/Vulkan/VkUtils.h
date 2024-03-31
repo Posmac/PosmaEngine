@@ -25,3 +25,8 @@ inline std::vector<const char*> DeviceExtensions =
 {
     "VK_KHR_swapchain",
 };
+
+namespace psm
+{
+    
+}

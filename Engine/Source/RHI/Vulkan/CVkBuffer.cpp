@@ -4,7 +4,6 @@
 #include "TypeConvertor.h"
 #include "CVkDevice.h"
 #include "../Memory/UntypedBuffer.h"
-#include "RenderBackend/Memory.h"
 
 namespace psm
 {
@@ -25,6 +24,21 @@ namespace psm
                          &mVkMemory);
 
         VK_CHECK_RESULT(result);
+    }
+
+    uint32_t FindMemoryType(VkPhysicalDevice gpu, uint32_t typeFilter, VkMemoryPropertyFlags props)
+    {
+        VkPhysicalDeviceMemoryProperties memProps;
+        vkGetPhysicalDeviceMemoryProperties(gpu, &memProps);
+
+        for(uint32_t i = 0; i < memProps.memoryTypeCount; i++)
+        {
+            if(typeFilter & (1 << i) &&
+                (memProps.memoryTypes[i].propertyFlags & props) == props)
+            {
+                return i;
+            }
+        }
     }
 
     VkResult CVkBuffer::CreateBuffer(VkDevice device, VkPhysicalDevice gpu, VkDeviceSize size, VkBufferUsageFlags usage,
@@ -48,7 +62,7 @@ namespace psm
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memReq.size;
-        allocInfo.memoryTypeIndex = vk::FindMemoryType(gpu, memReq.memoryTypeBits, properties);
+        allocInfo.memoryTypeIndex = FindMemoryType(gpu, memReq.memoryTypeBits, properties);
 
         result = vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory);
         if(result != VK_SUCCESS)
@@ -90,7 +104,7 @@ namespace psm
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memReq.size;
-        allocInfo.memoryTypeIndex = vk::FindMemoryType(gpu, memReq.memoryTypeBits, properties);
+        allocInfo.memoryTypeIndex = FindMemoryType(gpu, memReq.memoryTypeBits, properties);
 
         vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory);
         if(result != VK_SUCCESS)

@@ -15,6 +15,11 @@ using SResourceExtent3D = VkExtent3D;
 using SResourceOffset2D = VkOffset2D;
 using SResourceOffset3D = VkOffset3D;
 
+struct QueueFamilyIndices
+{
+
+};
+
 #define VK_CHECK_RESULT(vkresult) {auto VK_CHECK_RESULT = vkresult; Assert(VK_CHECK_RESULT == VK_SUCCESS, std::string("Vulkan assertion failed: ") + # vkresult + " -> " + string_VkResult(VK_CHECK_RESULT));}
 
 // XXX use it

@@ -1,11 +1,11 @@
 #pragma once
 
 #include <vector>
+#include <cassert>
 
-#include "RenderBackend/Common.h"
-#include "RenderBackend/Queue.h"
 #include "../Interface/Device.h"
 #include "../Interface/Types.h"
+#include "QueueFamilyIndices.h"
 
 class CVkSurface;
 
@@ -69,8 +69,8 @@ namespace psm
 
         DeviceData mDeviceData;
 
-        vk::QueueFamilyIndices mQueues;
-
+        QueueFamilyIndices mQueues;
+        
         SwapchainPtr mSwapchain;
         SurfacePtr mVkSurface;
     };

@@ -25,10 +25,9 @@
 
 #include "../RHICommon.h"
 #include "../VkCommon.h"
+#include "VkUtils.h"
 
 #include "Model/Mesh.h"
-
-#include "RenderBackend/BackedInfo.h"
 
 extern VkInstance Instance;
 

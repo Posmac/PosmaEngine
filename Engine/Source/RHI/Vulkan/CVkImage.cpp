@@ -4,8 +4,6 @@
 
 #include "TypeConvertor.h"
 
-#include "RenderBackend/Image.h"
-
 namespace psm
 {
     CVkImage::CVkImage(DevicePtr device, const SImageConfig& config)

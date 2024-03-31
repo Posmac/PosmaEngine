@@ -2,7 +2,6 @@
 
 #include "../RHICommon.h"
 
-#include "RenderBackend/Sampler.h"
 #include "TypeConvertor.h"
 
 #include "CVkDevice.h"

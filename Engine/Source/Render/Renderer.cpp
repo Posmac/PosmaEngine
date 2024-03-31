@@ -289,7 +289,6 @@ namespace psm
             return;
         }
 
-
         SFenceWaitConfig waitConfig =
         {
             .WaitAll = true,

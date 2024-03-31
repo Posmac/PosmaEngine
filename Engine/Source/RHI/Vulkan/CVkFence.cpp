@@ -2,8 +2,6 @@
 
 #include "CVkDevice.h"
 
-#include "RenderBackend/Synchronization.h"
-
 namespace psm
 {
     CVkFence::CVkFence(DevicePtr device, const SFenceConfig& config)
