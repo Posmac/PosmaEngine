@@ -18,13 +18,13 @@ layout(set = 2, binding = 1) uniform sampler2D DirectionalShadowMap;
 
 void main()
 {
-    vec4 texCoords = shadowBuffer.DirectionalViewProjectionMatrix * WorldPosition;
-	texCoords /= texCoords.w;
+    vec4 ndc = shadowBuffer.DirectionalViewProjectionMatrix * WorldPosition;
+	ndc /= ndc.w;
 
-    vec2 uv = texCoords.xy * 0.5 + 0.5;
+    vec4 projCoords = ndc * 0.5 + 0.5;
 
-    float depth = texture(DirectionalShadowMap, TexCoord).r; 
-    depth = texCoords.z > depth ? 1.0 : 0.0;       
+    float shadowMapDepth = texture(DirectionalShadowMap, projCoords.xy).r; 
+    float depth = ndc.z < shadowMapDepth ? 1.0 : 0.0;
 
-	AttachmentColor = texture(Albedo, TexCoord) * depth; 
+	AttachmentColor = texture(Albedo, TexCoord.xy) * depth; 
 }

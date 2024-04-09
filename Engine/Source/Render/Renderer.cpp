@@ -168,7 +168,7 @@ namespace psm
         mGlobalBuffer = mDevice->CreateBuffer(bufferConfig);
 
         //init shadow system
-        mShadowMapSize = { 2048, 2048 };
+        mShadowMapSize = { 1024, 1024 };
         PrepareShadowMapRenderPass();
         Shadows::Instance()->Init(mDevice, mSwapchain->GetImagesCount());
 
@@ -355,7 +355,7 @@ namespace psm
         mShadowMapRenderPass->BeginRenderPass(shadowMapRenderPassBeginConfig);
         mDevice->SetViewport(mCommandBuffers[mCurrentFrame], 0, 0, static_cast<float>(mShadowMapSize.width), static_cast<float>(mShadowMapSize.height), 0.0f, 1.0f);
         mDevice->SetScissors(mCommandBuffers[mCurrentFrame], { 0,0 }, mShadowMapSize);
-        mDevice->SetDepthBias(mCommandBuffers[mCurrentFrame], 0.0f, 0.0f, 0.0f);
+        mDevice->SetDepthBias(mCommandBuffers[mCurrentFrame], 0.1f, 0.0f, 0.1f);
 
         //update some matrix buffers
 
@@ -370,7 +370,7 @@ namespace psm
         //shadow maps layout transition
         SImageLayoutTransition shadowMapLayoutTransitionReverse =
         {
-            .Format = EFormat::D32_SFLOAT,
+            .Format = EFormat::R32_SFLOAT,
             .OldLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .NewLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
             .SourceStage = EPipelineStageFlags::LATE_FRAGMENT_TESTS_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,

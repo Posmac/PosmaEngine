@@ -157,7 +157,7 @@ namespace psm
         glm::vec3 radiansOffset = glm::radians(offset);
         m_CameraRotation *= glm::angleAxis(radiansOffset.x, glm::vec3(GetRightLocal()));
         m_CameraRotation *= glm::angleAxis(radiansOffset.y, glm::vec3(0, 1, 0));
-
+        
         glm::normalize(m_CameraRotation);
     }
 

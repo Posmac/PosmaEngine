@@ -155,7 +155,7 @@ namespace psm
         depthInfo.depthWriteEnable = VK_TRUE;
         depthInfo.depthCompareOp = VK_COMPARE_OP_LESS;
         depthInfo.depthBoundsTestEnable = VK_FALSE;
-        depthInfo.minDepthBounds = 0.0f; // Optional
+        depthInfo.minDepthBounds = 0.0f; // Optional    
         depthInfo.maxDepthBounds = 1.0f; // Optional
         depthInfo.stencilTestEnable = VK_FALSE;
         depthInfo.front = {}; // Optional

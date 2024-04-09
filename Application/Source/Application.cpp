@@ -37,6 +37,13 @@ namespace psm
         //cube
         material.Albedo = cubeTexture;
         glm::mat4 instanceMatrix = glm::mat4(1.0);
+        instanceMatrix = glm::mat4(1.0);
+        instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0,-5,-20));
+        instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+        instanceMatrix = glm::rotate(instanceMatrix, glm::radians(90.0f), glm::vec3(-1, 0, 0));
+        instance.InstanceMatrix = instanceMatrix;
+        OpaqueInstances::GetInstance()->AddInstance(cubeModel, material, instance);
+
         //small cubes
         for(int x = -100; x < 100; x++)
         {
@@ -50,7 +57,7 @@ namespace psm
             }
         }
 
-        //skull
+       //skull
         instanceMatrix = glm::mat4(1.0);
         instanceMatrix = glm::translate(instanceMatrix, glm::vec3(30, 0, -50));
         instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1));
@@ -59,8 +66,10 @@ namespace psm
         instance.InstanceMatrix = instanceMatrix;
 
         material.Albedo = skullTexture;
+        //material.Albedo = cubeTexture;
 
         OpaqueInstances::GetInstance()->AddInstance(skullModel, material, instance);
+        //OpaqueInstances::GetInstance()->AddInstance(cubeModel, material, instance);
         OpaqueInstances::GetInstance()->UpdateInstanceBuffer();
 
         GlobalTimer::Instance()->Init(60);

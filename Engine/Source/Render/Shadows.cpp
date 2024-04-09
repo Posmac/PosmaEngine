@@ -25,7 +25,7 @@ namespace psm
 
         mDepthFormat = mDeviceInternal->FindSupportedFormat({EFormat::D32_SFLOAT, EFormat::D32_SFLOAT_S8_UINT, EFormat::D32_SFLOAT_S8_UINT}, EImageTiling::OPTIMAL, EFeatureFormat::DEPTH_STENCIL_ATTACHMENT_BIT);
 
-        mDepthSize = { 2048, 2048, 1 };
+        mDepthSize = { 1024, 1024, 1 };
 
         InitShadowsBuffer();
         InitDirectionalLightData(swapchainImages);
@@ -74,11 +74,11 @@ namespace psm
             mDirDepthShadowMaps[i] = mDeviceInternal->CreateImage(imageConfig);
         }
 
-        glm::mat4 lightView = glm::lookAt(glm::vec3(10.0f, 0.0f, 0.0f),
+        glm::mat4 lightView = glm::lookAt(glm::vec3(100.0f, 100.0f, 0.0f),
                                    glm::vec3(0.0f, 0.0f, 0.0f),
                                    glm::vec3(0.0f, 1.0f, 0.0f));
 
-        float nearFarPlanes = 100.0f;
+        float nearFarPlanes = 1000.0f;
         glm::mat4 lightProjection = glm::orthoRH_ZO(-100.0f, 100.0f, -100.0f, 100.0f, -nearFarPlanes, nearFarPlanes);
         mShadowsBuffer.DirectionalLightViewProjectionMatrix = lightProjection * lightView;
 
