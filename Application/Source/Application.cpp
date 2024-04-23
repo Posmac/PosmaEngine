@@ -26,9 +26,16 @@ namespace psm
         //cube
         material.Albedo = helmet_albedo_texture;
         glm::mat4 instanceMatrix = glm::mat4(1.0);
+
         instanceMatrix = glm::mat4(1.0);
-        //instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0,0,0));
-        //instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+        instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0,0,0));
+        instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+        instance.InstanceMatrix = instanceMatrix;
+        OpaqueInstances::GetInstance()->AddInstance(helmetModel, material, instance);
+
+        instanceMatrix = glm::mat4(1.0);
+        instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0, 5, 0));
+        instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
         instance.InstanceMatrix = instanceMatrix;
         OpaqueInstances::GetInstance()->AddInstance(helmetModel, material, instance);
 

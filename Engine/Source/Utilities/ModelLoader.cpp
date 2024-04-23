@@ -40,7 +40,7 @@ namespace psm
     {
         for(unsigned int i = 0; i < node->mNumMeshes; i++)
         {
-            const glm::mat4 nodeToParent = reinterpret_cast<const glm::mat4&>(node->mTransformation/*.Transpose()*/);
+            const glm::mat4 nodeToParent = reinterpret_cast<const glm::mat4&>(node->mTransformation.Transpose());
             const glm::mat4 parentToNode = glm::inverse(nodeToParent);
             Mesh mesh =
             {
