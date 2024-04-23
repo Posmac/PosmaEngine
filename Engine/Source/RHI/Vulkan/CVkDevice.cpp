@@ -695,10 +695,6 @@ namespace psm
                                 ToVulkan(bindPoint),
                                 reinterpret_cast<VkPipelineLayout>(pipelineLayout->GetPointer()), 0,
                                 vkDescriptors.size(), vkDescriptors.data(), 0, nullptr);
-
-        /* vk::BindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                         m_InstancedPipelineLayout, { m_InstanceDescriptorSet,
-                                         perModel.PerMaterials[i].MaterialDescriptorSet });*/
     }
 
     void CVkDevice::DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance)
@@ -792,9 +788,6 @@ namespace psm
         }
 
         vkUpdateDescriptorSets(mDevice, writeDescriptors.size(), writeDescriptors.data(), 0, nullptr);
-
-        /*vk::UpdateDescriptorSets(vk::Device, *descriptorSet, {}, imagesInfo,
-            imagesInfo.size());*/
     }
 
     EFormat CVkDevice::FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature)

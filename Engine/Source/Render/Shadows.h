@@ -23,7 +23,7 @@ namespace psm
         struct ShadowsBuffer
         {
             glm::mat4 DirectionalLightViewProjectionMatrix;
-            glm::mat4 m_SpotViewProjectionMatrix;
+            glm::mat4 SpotViewProjectionMatrix;
             std::array<glm::mat4, MAX_POINT_LIGHT_SOURCES> PointLightViewProjectionMatrices;
         };
 
@@ -44,7 +44,6 @@ namespace psm
         void InitSpotLightData(uint32_t swapchainImages);
         ShadowsBuffer& GetBufferData();
         BufferPtr& GetGPUBuffer();
-        void RenderDepth();
         void Update();
     private:
 
@@ -70,9 +69,9 @@ namespace psm
 
         //imgui data (for debugging)
         float range = 250;
-        float nearPlane = -400;
-        float farPlane = 400;
-        glm::vec3 position = glm::vec3(100.0f, 100.0f, 0.0f);
+        float nearPlane = -200;
+        float farPlane = 200;
+        glm::vec3 position = glm::vec3(50.0f, 50.0f, 0.0f);
         glm::vec3 lookAt = glm::vec3(0, 0, 0);
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
         float depthBias = 1;

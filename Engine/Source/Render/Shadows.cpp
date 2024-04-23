@@ -132,11 +132,6 @@ namespace psm
         return mGPUShadowBuffer;
     }
 
-    void Shadows::RenderDepth()
-    {
-        
-    }
-
     void Shadows::Update()
     {
         glm::mat4 lightView = glm::lookAt(position, lookAt, up);

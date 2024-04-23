@@ -4,6 +4,8 @@
 
 #include "Vertex.h"
 
+#include <optional>
+
 namespace psm
 {
     struct MeshRange
@@ -20,5 +22,8 @@ namespace psm
         std::vector<uint32_t> MeshIndices;
 
         MeshRange Range;
+
+        glm::mat4 LocalMatrix;
+        glm::mat4 InvLocalMatrix;
     };
 }

@@ -46,12 +46,24 @@ namespace psm
             DescriptorSetPtr MaterialDescriptorSet;
         };
 
+        struct PerMesh
+        {
+            std::vector<PerMaterial> PerMaterials;
+            DescriptorSetPtr MeshToModelData;
+            std::unordered_map<Material, int, MaterialHash> MaterialsData;
+        };
+
         struct PerModel
         {
             std::shared_ptr<Model> Model;
-            std::vector<PerMaterial> PerMaterials;
-            std::unordered_map<Material, int, MaterialHash> MaterialsData;
+            std::vector<PerMesh> Meshes;
         };
+
+        struct InstanceInternal
+        {
+            glm::mat4 MeshToModel;
+        };
+
     public:
         struct PushConstant
         {
@@ -83,40 +95,51 @@ namespace psm
         void RenderDepth(CommandBufferPtr commandBuffer);
         void AddInstance(std::shared_ptr<Model> model, const Material& material, const Instance& instance);
 
-        void UpdateInstanceDescriptorSets(BufferPtr globalBuffer, BufferPtr shadowMapBuffer, ImagePtr dirDepthShadowMap);
-        void UpdateShadowMapDescriptorSets(BufferPtr globalBuffer);
+        void UpdateDefaultDescriptors(BufferPtr globalBuffer, BufferPtr shadowMapBuffer, ImagePtr dirDepthShadowMap);
+        void UpdateDepthDescriptors(BufferPtr globalBuffer);
 
         void UpdateInstanceBuffer();
+        void UpdateMeshToModelData();
     private:
-        void CreateInstanceDescriptorSets();
-        void CreateInstancePipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize);
-        void CreateMaterialDescriptors();
-        void AllocateAndUpdateDescriptors(DescriptorSetPtr& descriptorSet, const Material& material);
+        void SetupDescriptors();
+        void SetupMaterialDescriptor(DescriptorSetPtr& descriptorSet, const Material& material);
 
-        void CreateShadowMapDescriptorSets();
-        void CreateShadowMapPipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize);
+        void CreateDepthPipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize);
+        void CreateDefaultPipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize);
 
     private:
         std::unordered_map<std::shared_ptr<Model>, uint32_t> m_Models;
         std::vector<PerModel> m_PerModels;
 
         DevicePtr mDeviceInternal;
-        PipelinePtr mInstancedPipeline;
-        PipelineLayoutPtr mInstancedPipelineLayout;
+        
         BufferPtr mInstanceBuffer;
         DescriptorPoolPtr mDescriptorPool;
 
-        DescriptorSetLayoutPtr mMaterilaSetLayout;
-        DescriptorSetLayoutPtr mInstanceDescriptorSetLayout;
-        DescriptorSetPtr mInstanceDescriptorSet;
+        //shader descriptor sets
+        DescriptorSetLayoutPtr mGlobalBufferSetLayout; //global buffer only (set 0)
+        DescriptorSetPtr mGlobalBufferSet;
 
-        DescriptorSetLayoutPtr mInstanceShadowDescriptorSetLayout;
-        DescriptorSetPtr mInstanceShadowDescriptorSet;
+        DescriptorSetLayoutPtr mModelDataSetLayout; // model instance matrix (set 1)
+        BufferPtr mInstanceToWorldConstantBuffer; //hold all instances of all models
 
-        DescriptorSetLayoutPtr mShadowMapDescriptorSetLayout;
-        DescriptorSetPtr mShadowMapDescriptorSet;
-        PipelinePtr mShadowMapPipeline;
-        PipelineLayoutPtr mShadowMapPipelineLayout;
+        DescriptorSetLayoutPtr mMaterialSetLayout; // material albedo (set 2)
+        DescriptorSetPtr mMaterialSet;
+
+        DescriptorSetLayoutPtr mDepthPassSetLayout; // depth pass light projection matrices buffer(set 3)
+        DescriptorSetPtr mDepthPassSet;
+
+        DescriptorSetLayoutPtr mDefaultPassDepthDataSetLayout; // depth pass light projection matrices buffer(b0) and shadow map(b1) (set 4)
+        DescriptorSetPtr mDefaultPassDepthDataSet;
+
+        //shadow map pipeline
+        PipelinePtr mDepthPassPipeline;
+        PipelineLayoutPtr mDepthPassPipelineLayout;
+
+        //default pipeline
+        PipelinePtr mDefaultPassPipeline;
+        PipelineLayoutPtr mDefaultPassPipelineLayout;
+
 
         SamplerPtr mSampler; //temporary
     };

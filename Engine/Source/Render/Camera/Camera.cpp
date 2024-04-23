@@ -36,21 +36,6 @@ namespace psm
         m_InvViewProjectionMatrix = glm::inverse(m_ViewProjectionMatrix);
     }
 
-    //Camera::Camera(float fieldOfViewDeg, 
-    //    float aspect, 
-    //    float nearPlane, 
-    //    float farPlane)
-    //{
-    //    m_ProjectionMatrix = glm::perspective(glm::radians(fieldOfViewDeg), aspect, nearPlane, farPlane);
-    //    m_ProjectionMatrix[1][1] *= -1;//KOCTb|L' EBU4II
-    //    m_ViewMatrix = glm::lookAt(glm::vec3(0, 0, 10), glm::vec3(0), glm::vec3(0, 1, 0));
-    //    m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
-
-    //    m_InvProjectionMatrix = glm::inverse(m_ProjectionMatrix);
-    //    m_InvViewMatrix = glm::inverse(m_ViewMatrix);
-    //    m_InvViewProjectionMatrix = glm::inverse(m_ViewProjectionMatrix);
-    //}
-
     glm::mat4& Camera::GetProjectionMatrix()
     {
         return m_ProjectionMatrix;

@@ -1,10 +1,10 @@
 #include "ModelLoader.h"
 
+#include "RHI/Common.h"
 #include "RHI/VkCommon.h"
 
 namespace psm
 {
-
     ModelLoader* ModelLoader::s_Instance = nullptr;
 
     ModelLoader* ModelLoader::Instance()
@@ -19,61 +19,79 @@ namespace psm
 
     void ModelLoader::LoadModel(const std::string& path, Model* model)
     {
-        tinyobj::attrib_t attrib;
-        std::vector<tinyobj::shape_t> shapes;
-        std::vector<tinyobj::material_t> materials;
-        std::string warn, err;
+        Assimp::Importer importer;
+        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenUVCoords);
 
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str()))
+        model->Name = path;
+
+        if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
-            LogMessage(MessageSeverity::Error ,"Failed to load model: " + path);
-            assert(true);
+            LogMessage(MessageSeverity::Error, "ERROR::ASSIMP::" + std::string(importer.GetErrorString()));
+            __debugbreak();
             return;
         }
 
-        std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+        aiNode* rootNode = scene->mRootNode;
+        ProcessNode(rootNode, scene, model);
+        model->Init(mDevice, mCommandPool);
+    }
 
-        Mesh mesh{};
-
-        for (const auto& shape : shapes)
+    void ModelLoader::ProcessNode(aiNode* node, const aiScene* scene, Model* model)
+    {
+        for(unsigned int i = 0; i < node->mNumMeshes; i++)
         {
-            for (const auto& index : shape.mesh.indices)
+            const glm::mat4 nodeToParent = reinterpret_cast<const glm::mat4&>(node->mTransformation/*.Transpose()*/);
+            const glm::mat4 parentToNode = glm::inverse(nodeToParent);
+            Mesh mesh =
             {
-                Vertex vertex{};
+                .LocalMatrix = nodeToParent,
+                .InvLocalMatrix = parentToNode
+            };
 
-                vertex.Position =
-                {
-                    glm::vec4(
-                    attrib.vertices[3 * index.vertex_index + 0],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2],
-                    1.0)
-                };
+            model->Meshes.push_back(mesh);
+            ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene, model);
+        }
+        for(unsigned int i = 0; i < node->mNumChildren; i++)
+        {
+            ProcessNode(node->mChildren[i], scene, model);
+        }
+    }
 
-                vertex.TexCoord =
-                {
-                    glm::vec2(
-                    attrib.texcoords[2 * index.texcoord_index + 0],
-                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1])
-                };
+    void ModelLoader::ProcessMesh(aiMesh * aiMesh, const aiScene * scene, Model* model)
+    {
+        //std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+        Mesh& mesh = model->Meshes[model->Meshes.size() - 1];
 
-                vertex.Normal =
-                {
-                    glm::vec4(
-                    attrib.normals[3 * index.normal_index + 0] ,
-                    attrib.normals[3 * index.normal_index + 1],
-                    attrib.normals[3 * index.normal_index + 2],
-                    1.0)
-                };
+        for(unsigned int i = 0; i < aiMesh->mNumVertices; i++)
+        {
+            Vertex vertex;
+            vertex.Position = { aiMesh->mVertices[i].x, aiMesh->mVertices[i].y, aiMesh->mVertices[i].z, 1.0 };
+            vertex.Normal = { aiMesh->mNormals[i].x, aiMesh->mNormals[i].y, aiMesh->mNormals[i].z, 1.0 };
+            if(aiMesh->mTextureCoords[0])
+            {
+                vertex.TexCoord = { aiMesh->mTextureCoords[0][i].x, aiMesh->mTextureCoords[0][i].y };
+            }
+            else
+            {
+                vertex.TexCoord = { 0, 0 };
+            }
 
-                if (uniqueVertices.count(vertex) == 0)
-                {
-                    uniqueVertices[vertex] =
-                        static_cast<uint32_t>(mesh.MeshVertices.size());
-                    mesh.MeshVertices.push_back(vertex);
-                }
+            /*if(uniqueVertices.count(vertex) == 0)
+            {
+                uniqueVertices[vertex] = static_cast<uint32_t>(mesh.MeshVertices.size());
+            }*/
 
-                mesh.MeshIndices.push_back(uniqueVertices[vertex]);
+            mesh.MeshVertices.push_back(vertex);
+
+            //mesh.MeshIndices.push_back(uniqueVertices[vertex]);
+        }
+
+        for(unsigned int i = 0; i < aiMesh->mNumFaces; i++)
+        {
+            aiFace face = aiMesh->mFaces[i];
+            for(unsigned int j = 0; j < face.mNumIndices; j++)
+            {
+                mesh.MeshIndices.push_back(face.mIndices[j]);
             }
         }
 
@@ -81,11 +99,6 @@ namespace psm
         mesh.Range.VerticesCount = mesh.MeshVertices.size();
         mesh.Range.IndicesOffset = 0;
         mesh.Range.VerticesOffset = 0;
-
-        model->Name = path;
-        model->Meshes.push_back(mesh);
-
-        model->Init(mDevice, mCommandPool);
     }
 
     void ModelLoader::Init(DevicePtr device, CommandPoolPtr commandPool)

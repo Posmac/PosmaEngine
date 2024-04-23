@@ -8,11 +8,6 @@
 #include "Mesh.h"
 #include "RHI/Interface/Types.h"
 
-//#include "Render/Vk.h"
-//#include "RenderBackend/Vulkan/Core.h"
-//#include "Include/vulkan/vulkan.h"
-//#include "RenderBackend/Vulkan/Buffer.h"
-
 namespace psm
 {
     class Model
@@ -28,11 +23,6 @@ namespace psm
         std::vector<Mesh> Meshes;
     private:
         BufferPtr mVertexBuffer;
-        //VkBuffer m_VertexBuffer; //contains all geometry data of all meshes
-        //VkDeviceMemory m_VertexBufferMemory;
-
         BufferPtr mIndexBuffer;
-        //VkBuffer m_IndexBuffer; //contains all indices of all meshes
-        //VkDeviceMemory m_IndexBufferMemory;
     };
 }

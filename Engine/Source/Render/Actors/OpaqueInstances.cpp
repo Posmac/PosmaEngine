@@ -78,12 +78,10 @@ namespace psm
 
         mSampler = mDeviceInternal->CreateSampler(samplerConfig);
 
-        CreateMaterialDescriptors();
-        CreateInstanceDescriptorSets();
-        CreateInstancePipeline(defaultRenderPass, windowSize);
+        SetupDescriptors();
 
-        CreateShadowMapDescriptorSets();
-        CreateShadowMapPipeline(shadowRenderPass, shadowMapSize);
+        CreateDefaultPipeline(defaultRenderPass, windowSize);
+        CreateDepthPipeline(shadowRenderPass, shadowMapSize);
     }
 
     void OpaqueInstances::Deinit()
@@ -98,7 +96,7 @@ namespace psm
             return;
         }
 
-        mInstancedPipeline->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
+        mDefaultPassPipeline->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
 
         SVertexBufferBindConfig vertexBufferBind =
         {
@@ -116,19 +114,25 @@ namespace psm
         {
             perModel.Model->BindBuffers(mDeviceInternal, commandBuffer);
 
-            for(int i = 0; i < perModel.PerMaterials.size(); i++)
+            for(int i = 0; i < perModel.Meshes.size(); i++)
             {
-                uint32_t totalInstances = perModel.PerMaterials[i].Instances.size();
+                PerMesh& perMesh = perModel.Meshes[i];
+                Mesh& modelMesh = perModel.Model->Meshes[i];
 
-                mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mInstancedPipelineLayout, { mInstanceDescriptorSet, perModel.PerMaterials[i].MaterialDescriptorSet, mInstanceShadowDescriptorSet });
-
-                for(int i = 0; i < perModel.Model->Meshes.size(); i++)
+                for(auto& material : perMesh.PerMaterials)
                 {
-                    MeshRange range = perModel.Model->Meshes[i].Range;
-                    mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
+                    uint32_t totalInstances = material.Instances.size();
 
+                    mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mDefaultPassPipelineLayout,
+                                                        { mGlobalBufferSet, perMesh.MeshToModelData, material.MaterialDescriptorSet, mDefaultPassDepthDataSet });
+
+                    for(int i = 0; i < perModel.Model->Meshes.size(); i++)
+                    {
+                        MeshRange range = perModel.Model->Meshes[i].Range;
+                        mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
+                    }
+                    firstInstance += totalInstances;
                 }
-                firstInstance += totalInstances;
             }
         }
     }
@@ -140,7 +144,7 @@ namespace psm
             return;
         }
 
-        mShadowMapPipeline->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
+        mDepthPassPipeline->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
 
         SVertexBufferBindConfig vertexBufferBind =
         {
@@ -151,7 +155,6 @@ namespace psm
         };
 
         mDeviceInternal->BindVertexBuffers(commandBuffer, vertexBufferBind);
-        mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mShadowMapPipelineLayout, { mShadowMapDescriptorSet });
 
         uint32_t firstInstance = 0;
 
@@ -159,16 +162,25 @@ namespace psm
         {
             perModel.Model->BindBuffers(mDeviceInternal, commandBuffer);
 
-            for(int i = 0; i < perModel.PerMaterials.size(); i++)
+            for(int i = 0; i < perModel.Meshes.size(); i++)
             {
-                uint32_t totalInstances = perModel.PerMaterials[i].Instances.size();
+                PerMesh& perMesh = perModel.Meshes[i];
+                Mesh& modelMesh = perModel.Model->Meshes[i];
 
-                for(int i = 0; i < perModel.Model->Meshes.size(); i++)
+                for(auto& material : perMesh.PerMaterials)
                 {
-                    MeshRange range = perModel.Model->Meshes[i].Range;
-                    mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
+                    uint32_t totalInstances = perMesh.PerMaterials[i].Instances.size();
+
+                    mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mDepthPassPipelineLayout,
+                                                        { mDepthPassSet, perMesh.MeshToModelData });
+
+                    for(int i = 0; i < perModel.Model->Meshes.size(); i++)
+                    {
+                        MeshRange range = perModel.Model->Meshes[i].Range;
+                        mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
+                    }
+                    firstInstance += totalInstances;
                 }
-                firstInstance += totalInstances;
             }
         }
     }
@@ -180,51 +192,75 @@ namespace psm
         if(m_Models.count(model) == 0)
         {
             int index = m_PerModels.size();
-
-            PerMaterial perMat = {};
-            perMat.Material = material;
-            perMat.Instances.push_back(instance);
-            AllocateAndUpdateDescriptors(perMat.MaterialDescriptorSet, perMat.Material);
-
             m_Models.insert({ model, index });
 
-            PerModel perModel = {};
-            perModel.Model = model;
-            perModel.PerMaterials = { perMat };
-            perModel.MaterialsData.insert({ material, 0 });
-
+            PerModel perModel =
+            {
+                .Model = model,
+            };
             m_PerModels.push_back(perModel);
+
+            for(auto& mesh : model->Meshes)
+            {
+                PerMaterial perMat =
+                {
+                    .Material = material,
+                    .Instances = {instance},
+                };
+                SetupMaterialDescriptor(perMat.MaterialDescriptorSet, perMat.Material);
+
+                PerMesh perMesh =
+                {
+                    .PerMaterials = {perMat},
+                    .MaterialsData = {{{material, 0}}},
+                };
+
+                SDescriptorSetAllocateConfig modelAlloc =
+                {
+                     .DescriptorPool = mDescriptorPool,
+                     .DescriptorSetLayouts = {mModelDataSetLayout},
+                     .MaxSets = 1,
+                };
+
+                perMesh.MeshToModelData = mDeviceInternal->AllocateDescriptorSets(modelAlloc);
+
+                m_PerModels[index].Meshes.push_back(perMesh);
+            }
         }
         else
         {
             int index = m_Models[model];
             PerModel& perModel = m_PerModels[index];
 
-            if(perModel.MaterialsData.count(material) == 0)
+            for(auto& mesh : perModel.Meshes)
             {
-                perModel.MaterialsData.insert({ material, perModel.PerMaterials.size() });
-                PerMaterial perMat = {};
-                perMat.Material = material;
-                perMat.Instances.emplace_back(instance);
+                if(mesh.MaterialsData.count(material) == 0)
+                {
+                    mesh.MaterialsData.insert({ material, mesh.PerMaterials.size() });
+                    PerMaterial perMat = {};
+                    perMat.Material = material;
+                    perMat.Instances.emplace_back(instance);
 
-                perModel.PerMaterials.push_back(perMat);
-            }
-            else
-            {
-                int matIndex = perModel.MaterialsData[material];
-                perModel.PerMaterials[matIndex].Instances.push_back(instance);
+                    mesh.PerMaterials.push_back(perMat);
+                }
+                else
+                {
+                    int matIndex = mesh.MaterialsData[material];
+                    mesh.PerMaterials[matIndex].Instances.push_back(instance);
+                }
             }
         }
     }
 
-    void OpaqueInstances::CreateInstancePipeline(RenderPassPtr renderPass, SResourceExtent2D extent)
+    void OpaqueInstances::CreateDefaultPipeline(RenderPassPtr renderPass, SResourceExtent2D extent)
     {
-        constexpr uint32_t descriptorSetLayoutsSize = 3;
+        constexpr uint32_t descriptorSetLayoutsSize = 4;
         DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
         {
-            mInstanceDescriptorSetLayout,
-            mMaterilaSetLayout,
-            mInstanceShadowDescriptorSetLayout
+            mGlobalBufferSetLayout,
+            mModelDataSetLayout,
+            mMaterialSetLayout,
+            mDefaultPassDepthDataSetLayout
         };
 
         SPipelineLayoutConfig pipelingLayoutConfig =
@@ -235,7 +271,7 @@ namespace psm
             .PushConstantsSize = 0
         };
 
-        mInstancedPipelineLayout = mDeviceInternal->CreatePipelineLayout(pipelingLayoutConfig);
+        mDefaultPassPipelineLayout = mDeviceInternal->CreatePipelineLayout(pipelingLayoutConfig);
 
         //shader stages (describe all shader stages used in pipeline)
 
@@ -353,7 +389,7 @@ namespace psm
         {
             .RenderPass = renderPass,
             .ViewPortExtent = extent,
-            .PipelineLayout = mInstancedPipelineLayout,
+            .PipelineLayout = mDefaultPassPipelineLayout,
             .pVertexInputAttributes = vertexAttribDescr,
             .VertexInputAttributeCount = perVertexAttribsSize,
             .pVertexInputBindings = bindingDescriptions,
@@ -366,13 +402,60 @@ namespace psm
             .Rasterization = rasterization,
         };
 
-        mInstancedPipeline = mDeviceInternal->CreateRenderPipeline(pipelineConfig);
+        mDefaultPassPipeline = mDeviceInternal->CreateRenderPipeline(pipelineConfig);
     }
 
-    void OpaqueInstances::CreateMaterialDescriptors()
+    void OpaqueInstances::SetupDescriptors()
     {
-        //descriptor set layout 
-        std::vector<SDescriptorLayoutInfo> shaderDescriptorInfo =
+        //global buffer only (set 0)
+        std::vector<SDescriptorLayoutInfo> globalInfo =
+        {
+            {
+                .Binding = 0, //binding
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER, //descriptor type
+                .DescriptorCount = 1, //count
+                .ShaderStage = EShaderStageFlag::VERTEX_BIT //vertex stage
+            }
+        };
+
+        SDescriptorSetLayoutConfig globalConfig =
+        {
+            .pLayoutsInfo = globalInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(globalInfo.size())
+        };
+
+        mGlobalBufferSetLayout = mDeviceInternal->CreateDescriptorSetLayout(globalConfig);
+
+        SDescriptorSetAllocateConfig globalAlloc =
+        {
+             .DescriptorPool = mDescriptorPool,
+             .DescriptorSetLayouts = {mGlobalBufferSetLayout},
+             .MaxSets = 1,
+        };
+
+        mGlobalBufferSet = mDeviceInternal->AllocateDescriptorSets(globalAlloc);
+
+        // model instance matrix (set 1)
+        std::vector<SDescriptorLayoutInfo> modelInfo =
+        {
+            {
+                .Binding = 0, //binding
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER, //descriptor type
+                .DescriptorCount = 1, //count
+                .ShaderStage = EShaderStageFlag::VERTEX_BIT //vertex stage
+            }
+        };
+
+        SDescriptorSetLayoutConfig modelConfig =
+        {
+            .pLayoutsInfo = modelInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(modelInfo.size())
+        };
+
+        mModelDataSetLayout = mDeviceInternal->CreateDescriptorSetLayout(modelConfig);
+
+        // material albedo (set 2)
+        std::vector<SDescriptorLayoutInfo> materialInfo =
         {
             {
                 .Binding = 0, //binding
@@ -382,21 +465,83 @@ namespace psm
             }
         };
 
-        SDescriptorSetLayoutConfig config =
+        SDescriptorSetLayoutConfig materialConfig =
         {
-            .pLayoutsInfo = shaderDescriptorInfo.data(),
-            .LayoutsCount = static_cast<uint32_t>(shaderDescriptorInfo.size())
+            .pLayoutsInfo = materialInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(materialInfo.size())
         };
 
-        mMaterilaSetLayout = mDeviceInternal->CreateDescriptorSetLayout(config);
+        mMaterialSetLayout = mDeviceInternal->CreateDescriptorSetLayout(materialConfig);
+
+        //depth pass light projection matrices buffer(set 3)
+        std::vector<SDescriptorLayoutInfo> depthInfo =
+        {
+            {
+                .Binding = 0, //binding
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER, //descriptor type
+                .DescriptorCount = 1, //count
+                .ShaderStage = EShaderStageFlag::VERTEX_BIT //vertex stage
+            }
+        };
+
+        SDescriptorSetLayoutConfig depthConfig =
+        {
+            .pLayoutsInfo = depthInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(depthInfo.size())
+        };
+
+        mDepthPassSetLayout = mDeviceInternal->CreateDescriptorSetLayout(depthConfig);
+
+        SDescriptorSetAllocateConfig depthAlloc =
+        {
+             .DescriptorPool = mDescriptorPool,
+             .DescriptorSetLayouts = {mDepthPassSetLayout},
+             .MaxSets = 1,
+        };
+
+        mDepthPassSet = mDeviceInternal->AllocateDescriptorSets(depthAlloc);
+
+        // depth pass light projection matrices buffer(b0) and shadow map(b1) (set 4)
+        std::vector<SDescriptorLayoutInfo> depthInputInfo =
+        {
+            {
+                .Binding = 0, //binding
+                .DescriptorType = EDescriptorType::UNIFORM_BUFFER, //descriptor type
+                .DescriptorCount = 1, //count
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT //vertex stage
+            },
+            {
+                .Binding = 1, //binding
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER, //descriptor type
+                .DescriptorCount = 1, //count
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT //vertex stage
+            }
+        };
+
+        SDescriptorSetLayoutConfig depthInputConfig =
+        {
+            .pLayoutsInfo = depthInputInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(depthInputInfo.size())
+        };
+
+        mDefaultPassDepthDataSetLayout = mDeviceInternal->CreateDescriptorSetLayout(depthInputConfig);
+
+        SDescriptorSetAllocateConfig depthDataAlloc =
+        {
+             .DescriptorPool = mDescriptorPool,
+             .DescriptorSetLayouts = {mDefaultPassDepthDataSetLayout},
+             .MaxSets = 1,
+        };
+
+        mDefaultPassDepthDataSet = mDeviceInternal->AllocateDescriptorSets(depthDataAlloc);
     }
 
-    void OpaqueInstances::AllocateAndUpdateDescriptors(DescriptorSetPtr& descriptorSet, const Material& material)
+    void OpaqueInstances::SetupMaterialDescriptor(DescriptorSetPtr& descriptorSet, const Material& material)
     {
         SDescriptorSetAllocateConfig allocateConfig =
         {
             .DescriptorPool = mDescriptorPool,
-            .DescriptorSetLayouts = {mMaterilaSetLayout},
+            .DescriptorSetLayouts = {mMaterialSetLayout},
             .MaxSets = 1
         };
 
@@ -416,45 +561,24 @@ namespace psm
         mDeviceInternal->UpdateDescriptorSets(descriptorSet, texturesUpdateInfo, {});
     }
 
-    void OpaqueInstances::CreateShadowMapDescriptorSets()
+    void OpaqueInstances::CreateDepthPipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize)
     {
-        SDescriptorLayoutInfo layoutInfo =
+        constexpr uint32_t descriptorSetLayoutsSize = 2;
+        DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
         {
-            .Binding = 0,
-            .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
-            .DescriptorCount = 1,
-            .ShaderStage = EShaderStageFlag::VERTEX_BIT,
+            mDepthPassSetLayout,
+            mModelDataSetLayout
         };
 
-        SDescriptorSetLayoutConfig layoutConfig =
-        {
-            .pLayoutsInfo = &layoutInfo,
-            .LayoutsCount = 1
-        };
-
-        mShadowMapDescriptorSetLayout = mDeviceInternal->CreateDescriptorSetLayout(layoutConfig);
-
-        SDescriptorSetAllocateConfig allocateConfig =
-        {
-            .DescriptorPool = mDescriptorPool,
-            .DescriptorSetLayouts = {mShadowMapDescriptorSetLayout},
-            .MaxSets = 1,
-        };
-
-        mShadowMapDescriptorSet = mDeviceInternal->AllocateDescriptorSets(allocateConfig);
-    }
-
-    void OpaqueInstances::CreateShadowMapPipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize)
-    {
         SPipelineLayoutConfig pipelineLayoutConfig =
         {
-            .pLayouts = &mShadowMapDescriptorSetLayout,
-            .LayoutsSize = 1,
+            .pLayouts = descriptorSetLayouts,
+            .LayoutsSize = descriptorSetLayoutsSize,
             .pPushConstants = nullptr,
             .PushConstantsSize = 0,
         };
 
-        mShadowMapPipelineLayout = mDeviceInternal->CreatePipelineLayout(pipelineLayoutConfig);
+        mDepthPassPipelineLayout = mDeviceInternal->CreatePipelineLayout(pipelineLayoutConfig);
 
         ShaderPtr vertexShader = mDeviceInternal->CreateShaderFromFilename("../Engine/Shaders/shadow2D.vert.txt", EShaderStageFlag::VERTEX_BIT);
 
@@ -565,7 +689,7 @@ namespace psm
         {
             .RenderPass = renderPass,
             .ViewPortExtent = viewportSize,
-            .PipelineLayout = mShadowMapPipelineLayout,
+            .PipelineLayout = mDepthPassPipelineLayout,
             .pVertexInputAttributes = vertexInputAttributes,
             .VertexInputAttributeCount = vertexInputAttributesSize,
             .pVertexInputBindings = bindingDescriptions,
@@ -578,7 +702,7 @@ namespace psm
             .Rasterization = rasterization,
         };
 
-        mShadowMapPipeline = mDeviceInternal->CreateRenderPipeline(pipelineConfig);
+        mDepthPassPipeline = mDeviceInternal->CreateRenderPipeline(pipelineConfig);
     }
 
     void OpaqueInstances::UpdateInstanceBuffer()
@@ -592,9 +716,12 @@ namespace psm
 
         for(auto& models : m_PerModels)
         {
-            for(auto& material : models.PerMaterials)
+            for(auto& mesh : models.Meshes)
             {
-                totalInstances += material.Instances.size();
+                for(auto& material : mesh.PerMaterials)
+                {
+                    totalInstances += material.Instances.size();
+                }
             }
         }
 
@@ -630,20 +757,106 @@ namespace psm
 
         for(auto& model : m_PerModels)
         {
-            for(auto& material : model.PerMaterials)
+            for(auto& mesh : model.Meshes)
             {
-                for(int i = 0; i < material.Instances.size(); i++)
+                for(auto& material : mesh.PerMaterials)
                 {
-                    *perInstance = material.Instances[i];
-                    perInstance++;
+                    for(int i = 0; i < material.Instances.size(); i++)
+                    {
+                        *perInstance = material.Instances[i];
+                        perInstance++;
+                    }
                 }
+
             }
         }
 
         mInstanceBuffer->Unmap();
     }
 
-    void OpaqueInstances::UpdateInstanceDescriptorSets(BufferPtr globalBuffer, BufferPtr shadowMapBuffer, ImagePtr dirDepthShadowMap)
+    //can be merged with UpdateInstanceBuffer
+    void OpaqueInstances::UpdateMeshToModelData()
+    {
+        if(m_Models.size() == 0)
+        {
+            return;
+        }
+
+        uint32_t totalMatrices = 0;
+
+        for(auto& models : m_PerModels)
+        {
+            for(auto& mesh : models.Meshes)
+            {
+                totalMatrices++;
+            }
+        }
+
+        if(mInstanceToWorldConstantBuffer != nullptr)
+        {
+            mInstanceToWorldConstantBuffer = nullptr;
+        }
+
+        static const uint64_t range = sizeof(glm::mat4);
+
+        VkDeviceSize bufferSize = range * totalMatrices;
+
+        void* instanceBufferMapping = nullptr;
+
+        SBufferConfig bufferConfig =
+        {
+            .Size = bufferSize,
+            .Usage = EBufferUsage::USAGE_UNIFORM_BUFFER_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
+
+        mInstanceToWorldConstantBuffer = mDeviceInternal->CreateBuffer(bufferConfig);
+
+        SBufferMapConfig mapConfig =
+        {
+            .Size = bufferSize,
+            .Offset = 0,
+            .pData = &instanceBufferMapping,
+            .Flags = 0 //0 everythime for now
+        };
+
+        mInstanceToWorldConstantBuffer->Map(mapConfig);
+
+        glm::mat4* perInstance = reinterpret_cast<glm::mat4*>(instanceBufferMapping);
+        uint64_t offset = 0;
+        static const uint64_t step = sizeof(glm::mat4);
+
+        for(auto& model : m_PerModels)
+        {
+            for(int i = 0; i < model.Meshes.size(); i++)
+            {
+                PerMesh& perMesh = model.Meshes[i];
+                Mesh& modelMesh = model.Model->Meshes[i];
+
+                *perInstance = modelMesh.LocalMatrix;
+                perInstance++;
+
+                std::vector<SUpdateBuffersConfig> buffersInfo =
+                {
+                   {
+                       .Buffer = mInstanceToWorldConstantBuffer,
+                       .Offset = offset,
+                       .Range = range,
+                       .DstBinding = 0,
+                       .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
+                   },
+                };
+
+                mDeviceInternal->UpdateDescriptorSets(perMesh.MeshToModelData, {}, buffersInfo);
+
+                offset += step;
+            }
+        }
+
+        mInstanceToWorldConstantBuffer->Unmap();
+    }
+
+    void OpaqueInstances::UpdateDefaultDescriptors(BufferPtr globalBuffer, BufferPtr shadowMapBuffer, ImagePtr dirDepthShadowMap)
     {
         std::vector<SUpdateBuffersConfig> buffersInfo =
         {
@@ -656,7 +869,7 @@ namespace psm
            },
         };
 
-        mDeviceInternal->UpdateDescriptorSets(mInstanceDescriptorSet, {}, buffersInfo);
+        mDeviceInternal->UpdateDescriptorSets(mGlobalBufferSet, {}, buffersInfo);
 
         std::vector<SUpdateBuffersConfig> shadowBuffersInfo =
         {
@@ -680,10 +893,10 @@ namespace psm
             }
         };
 
-        mDeviceInternal->UpdateDescriptorSets(mInstanceShadowDescriptorSet, textureUpdateInfo, shadowBuffersInfo);
+        mDeviceInternal->UpdateDescriptorSets(mDefaultPassDepthDataSet, textureUpdateInfo, shadowBuffersInfo);
     }
 
-    void OpaqueInstances::UpdateShadowMapDescriptorSets(BufferPtr lightSources)
+    void OpaqueInstances::UpdateDepthDescriptors(BufferPtr lightSources)
     {
         SUpdateBuffersConfig buffers =
         {
@@ -694,72 +907,7 @@ namespace psm
             .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
         };
 
-        mDeviceInternal->UpdateDescriptorSets(mShadowMapDescriptorSet, {}, { buffers });
-    }
-
-    void OpaqueInstances::CreateInstanceDescriptorSets()
-    {
-        //descriptor set layout 
-        std::vector<SDescriptorLayoutInfo> shaderDescriptorInfo =
-        {
-            {
-                .Binding = 0, //binding
-                .DescriptorType = EDescriptorType::UNIFORM_BUFFER, //descriptor type
-                .DescriptorCount = 1, //count
-                .ShaderStage = EShaderStageFlag::VERTEX_BIT//vertex stage
-            },
-        };
-
-        SDescriptorSetLayoutConfig descriptorSetLayoutConfig =
-        {
-            .pLayoutsInfo = shaderDescriptorInfo.data(),
-            .LayoutsCount = static_cast<uint32_t>(shaderDescriptorInfo.size()),
-        };
-
-        mInstanceDescriptorSetLayout = mDeviceInternal->CreateDescriptorSetLayout(descriptorSetLayoutConfig);
-
-        SDescriptorSetAllocateConfig allocateConfig =
-        {
-            .DescriptorPool = mDescriptorPool,
-            .DescriptorSetLayouts = {mInstanceDescriptorSetLayout},
-            .MaxSets = 1
-        };
-
-        mInstanceDescriptorSet = mDeviceInternal->AllocateDescriptorSets(allocateConfig);
-
-        //shadow descriptor set layout 
-        std::vector<SDescriptorLayoutInfo> shadowShaderDescriptorInfo =
-        {
-            {
-                .Binding = 0, //binding
-                .DescriptorType = EDescriptorType::UNIFORM_BUFFER, //descriptor type
-                .DescriptorCount = 1, //count
-                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT//vertex stage
-            },
-            {
-                .Binding = 1, //binding
-                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER, //descriptor type
-                .DescriptorCount = 1, //count
-                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT//vertex stage
-            },
-        };
-
-        SDescriptorSetLayoutConfig shadowDescriptorSetLayoutConfig =
-        {
-            .pLayoutsInfo = shadowShaderDescriptorInfo.data(),
-            .LayoutsCount = static_cast<uint32_t>(shadowShaderDescriptorInfo.size()),
-        };
-        
-        mInstanceShadowDescriptorSetLayout = mDeviceInternal->CreateDescriptorSetLayout(shadowDescriptorSetLayoutConfig);
-
-        SDescriptorSetAllocateConfig shadowAllocateConfig =
-        {
-            .DescriptorPool = mDescriptorPool,
-            .DescriptorSetLayouts = {mInstanceShadowDescriptorSetLayout},
-            .MaxSets = 1
-        };
-
-        mInstanceShadowDescriptorSet = mDeviceInternal->AllocateDescriptorSets(shadowAllocateConfig);
+        mDeviceInternal->UpdateDescriptorSets(mDepthPassSet, {}, { buffers });
     }
 
     bool OpaqueInstances::Material::operator==(const Material& lhs)

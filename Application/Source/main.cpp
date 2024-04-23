@@ -23,6 +23,9 @@ void CloseConsole();
 
 psm::Application app;
 
+constexpr uint32_t Width = 1280;
+constexpr uint32_t Height = 720;
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
     CreateConsole();
@@ -52,7 +55,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     HWND hWnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
         windowClassName, windowName, WS_OVERLAPPEDWINDOW,
-        320, 180, 1280, 720, NULL, NULL, hInstance, NULL);
+        320, 180, Width, Height, NULL, NULL, hInstance, NULL);
 
     if(hWnd == NULL)
     {
@@ -63,7 +66,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     ShowWindow(hWnd, nCmdShow);
 
     psm::Engine::Instance()->Init(hWnd, hInstance);
-    app.Init();
+    app.Init(Width, Height);
 
     bool isAppRuning = true;
     while(isAppRuning)

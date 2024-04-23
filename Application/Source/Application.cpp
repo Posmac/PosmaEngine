@@ -7,70 +7,33 @@
 
 namespace psm
 {
-    void Application::Init()
+    void Application::Init(uint32_t width, uint32_t height)
     {
-        m_Camera = Camera(60.0f, 1280.0f / 720.0f, 0.1f, 1000.0f);
+        m_Camera = Camera(60.0f, width / height, 0.1f, 1000.0f);
         m_CameraDefaultMoveSpeed = 20.0f;
         m_CameraDefaultRotateSpeed = 150.0f;
 
-        std::shared_ptr<Model> cubeModel = std::make_shared<Model>();
-        ModelLoader::Instance()->LoadModel("../Engine/Models/untitled.obj", cubeModel.get());
+        std::shared_ptr<Model>  helmetModel = std::make_shared<Model>();
+        ModelLoader::Instance()->LoadModel("../Engine/Models/DamagedHelmet/glTF/DamagedHelmet.gltf", helmetModel.get());
 
-        std::shared_ptr<Model> skullModel = std::make_shared<Model>();
-        ModelLoader::Instance()->LoadModel("../Engine/Models/Skull/Skull.obj", skullModel.get());
-
-        RawTextureData skullData{ Rgb_alpha };
-        TextureLoader::Instance()->LoadRawTextureData("../Engine/Models/Skull/Skull.jpg", &skullData);
-
-        //uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(skullData.Height, skullData.Width)))) + 1;
-
-        ImagePtr skullTexture = Renderer::Instance()->LoadTextureIntoMemory(skullData, 1);
-
-        RawTextureData cubeData{ Rgb_alpha };
-        TextureLoader::Instance()->LoadRawTextureData("../Engine/Models/untitled.png", &cubeData);
-
-        ImagePtr cubeTexture = Renderer::Instance()->LoadTextureIntoMemory(cubeData, 1);
+        RawTextureData helmet_albedo{ Rgb_alpha };
+        TextureLoader::Instance()->LoadRawTextureData("../Engine/Models/DamagedHelmet/glTF/Default_albedo.jpg", &helmet_albedo);
+        ImagePtr helmet_albedo_texture = Renderer::Instance()->LoadTextureIntoMemory(helmet_albedo, 1);
 
         OpaqueInstances::Material material {};
         OpaqueInstances::Instance instance;
 
         //cube
-        material.Albedo = cubeTexture;
+        material.Albedo = helmet_albedo_texture;
         glm::mat4 instanceMatrix = glm::mat4(1.0);
         instanceMatrix = glm::mat4(1.0);
-        instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0,-5,-20));
-        instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
-        instanceMatrix = glm::rotate(instanceMatrix, glm::radians(90.0f), glm::vec3(-1, 0, 0));
+        //instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0,0,0));
+        //instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
         instance.InstanceMatrix = instanceMatrix;
-        OpaqueInstances::GetInstance()->AddInstance(cubeModel, material, instance);
+        OpaqueInstances::GetInstance()->AddInstance(helmetModel, material, instance);
 
-        //small cubes
-        for(int x = -100; x < 100; x++)
-        {
-            for(int z = -100; z < 100; z++)
-            {
-                instanceMatrix = glm::mat4(1.0);
-                instanceMatrix = glm::translate(instanceMatrix, glm::vec3(x, -5, z));
-                instanceMatrix = glm::rotate(instanceMatrix, glm::radians(90.0f), glm::vec3(-1, 0, 0));
-                instance.InstanceMatrix = instanceMatrix;
-                OpaqueInstances::GetInstance()->AddInstance(cubeModel, material, instance);
-            }
-        }
-
-       //skull
-        instanceMatrix = glm::mat4(1.0);
-        instanceMatrix = glm::translate(instanceMatrix, glm::vec3(30, 0, -50));
-        instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1));
-        instanceMatrix = glm::rotate(instanceMatrix, glm::radians(90.0f), glm::vec3(-1, 0, 0));
-
-        instance.InstanceMatrix = instanceMatrix;
-
-        material.Albedo = skullTexture;
-        //material.Albedo = cubeTexture;
-
-        OpaqueInstances::GetInstance()->AddInstance(skullModel, material, instance);
-        //OpaqueInstances::GetInstance()->AddInstance(cubeModel, material, instance);
         OpaqueInstances::GetInstance()->UpdateInstanceBuffer();
+        OpaqueInstances::GetInstance()->UpdateMeshToModelData();
 
         GlobalTimer::Instance()->Init(60);
     }

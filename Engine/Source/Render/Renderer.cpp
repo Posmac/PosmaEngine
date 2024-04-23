@@ -362,7 +362,7 @@ namespace psm
         Shadows::Instance()->Update();
         auto& shadowMapBuffer = Shadows::Instance()->GetGPUBuffer();
         ////
-        OpaqueInstances::GetInstance()->UpdateShadowMapDescriptorSets(shadowMapBuffer);
+        OpaqueInstances::GetInstance()->UpdateDepthDescriptors(shadowMapBuffer);
         OpaqueInstances::GetInstance()->RenderDepth(mCommandBuffers[mCurrentFrame]);
 
         mShadowMapRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);
@@ -420,7 +420,7 @@ namespace psm
         memcpy(pData, &buffer, sizeof(GlobalBuffer));
         mGlobalBuffer->Unmap();
 
-        OpaqueInstances::GetInstance()->UpdateInstanceDescriptorSets(mGlobalBuffer, shadowMapBuffer, mDirDepthShadowMaps[mCurrentFrame]);
+        OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mGlobalBuffer, shadowMapBuffer, mDirDepthShadowMaps[mCurrentFrame]);
         OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame]);
 
         //render IMGui
