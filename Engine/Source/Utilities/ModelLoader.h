@@ -10,6 +10,8 @@
 #include "Model/Vertex.h"
 #include "Model/Model.h"
 
+#include "Materials/PbrMaterial.h"
+
 #include "RHI/Interface/Types.h"
 
 #include <assimp/Importer.hpp>
@@ -32,10 +34,10 @@ namespace psm
         //class specific
     public:
         void Init(DevicePtr device, CommandPoolPtr commandPool);
-        void LoadModel(const std::string& path, Model* model);
+        void LoadModel(const std::string& pathToModel, const std::string& modelName, Model* model, std::vector<MeshPbrMaterial>& modelMeshMaterials);
     private:
-        void ProcessNode(aiNode* node, const aiScene* scene, Model* model);
-        void ProcessMesh(aiMesh* mesh, const aiScene* scene, Model* model);
+        void ProcessNode(aiNode* node, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
+        void ProcessMesh(aiMesh* mesh, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
     private:
         DevicePtr mDevice;
         CommandPoolPtr mCommandPool;

@@ -32,9 +32,9 @@ namespace psm
     {
         mDeviceInternal = device;
 
-        constexpr uint32_t maxUniformBuffers = 50;
-        constexpr uint32_t maxCombinedImageSamples = 50;
-        constexpr uint32_t maxDescriptorSets = 50;
+        constexpr uint32_t maxUniformBuffers = 500;
+        constexpr uint32_t maxCombinedImageSamples = 500;
+        constexpr uint32_t maxDescriptorSets = 500;
 
         //create descriptor pool for everything
         std::vector<SDescriptorPoolSize> shaderDescriptors =
@@ -126,11 +126,8 @@ namespace psm
                     mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mDefaultPassPipelineLayout,
                                                         { mGlobalBufferSet, perMesh.MeshToModelData, material.MaterialDescriptorSet, mDefaultPassDepthDataSet });
 
-                    for(int i = 0; i < perModel.Model->Meshes.size(); i++)
-                    {
-                        MeshRange range = perModel.Model->Meshes[i].Range;
-                        mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
-                    }
+                    MeshRange range = perModel.Model->Meshes[i].Range;
+                    mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
                     firstInstance += totalInstances;
                 }
             }
@@ -169,16 +166,13 @@ namespace psm
 
                 for(auto& material : perMesh.PerMaterials)
                 {
-                    uint32_t totalInstances = perMesh.PerMaterials[i].Instances.size();
+                    uint32_t totalInstances = material.Instances.size();
 
                     mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mDepthPassPipelineLayout,
                                                         { mDepthPassSet, perMesh.MeshToModelData });
 
-                    for(int i = 0; i < perModel.Model->Meshes.size(); i++)
-                    {
-                        MeshRange range = perModel.Model->Meshes[i].Range;
+                    MeshRange range = perModel.Model->Meshes[i].Range;
                         mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
-                    }
                     firstInstance += totalInstances;
                 }
             }
@@ -186,67 +180,71 @@ namespace psm
     }
 
     void OpaqueInstances::AddInstance(std::shared_ptr<Model> model,
-                                      const Material& material,
-                                      const Instance& instance)
+                                      const OpaqModelMeshMaterials& materials,
+                                      const OpaqModelMeshInstances& instances)
     {
-        if(m_Models.count(model) == 0)
+        for(int j = 0; j < instances.size(); j++)
         {
-            int index = m_PerModels.size();
-            m_Models.insert({ model, index });
-
-            PerModel perModel =
+            if(m_Models.count(model) == 0)
             {
-                .Model = model,
-            };
-            m_PerModels.push_back(perModel);
+                int index = m_PerModels.size();
+                m_Models.insert({ model, index });
 
-            for(auto& mesh : model->Meshes)
-            {
-                PerMaterial perMat =
+                PerModel perModel =
                 {
-                    .Material = material,
-                    .Instances = {instance},
+                    .Model = model,
                 };
-                SetupMaterialDescriptor(perMat.MaterialDescriptorSet, perMat.Material);
+                m_PerModels.push_back(perModel);
 
-                PerMesh perMesh =
+                for(int i = 0; i < model->Meshes.size(); i++)
                 {
-                    .PerMaterials = {perMat},
-                    .MaterialsData = {{{material, 0}}},
-                };
+                    PerMaterial perMat =
+                    {
+                        .Material = materials[i],
+                        .Instances = {instances[j]},
+                    };
+                    SetupMaterialDescriptor(perMat.MaterialDescriptorSet, perMat.Material);
 
-                SDescriptorSetAllocateConfig modelAlloc =
-                {
-                     .DescriptorPool = mDescriptorPool,
-                     .DescriptorSetLayouts = {mModelDataSetLayout},
-                     .MaxSets = 1,
-                };
+                    PerMesh perMesh =
+                    {
+                        .PerMaterials = {perMat},
+                        .MaterialsData = {{{materials[i], 0}}},
+                    };
 
-                perMesh.MeshToModelData = mDeviceInternal->AllocateDescriptorSets(modelAlloc);
+                    SDescriptorSetAllocateConfig modelAlloc =
+                    {
+                         .DescriptorPool = mDescriptorPool,
+                         .DescriptorSetLayouts = {mModelDataSetLayout},
+                         .MaxSets = 1,
+                    };
 
-                m_PerModels[index].Meshes.push_back(perMesh);
-            }
-        }
-        else
-        {
-            int index = m_Models[model];
-            PerModel& perModel = m_PerModels[index];
+                    perMesh.MeshToModelData = mDeviceInternal->AllocateDescriptorSets(modelAlloc);
 
-            for(auto& mesh : perModel.Meshes)
-            {
-                if(mesh.MaterialsData.count(material) == 0)
-                {
-                    mesh.MaterialsData.insert({ material, mesh.PerMaterials.size() });
-                    PerMaterial perMat = {};
-                    perMat.Material = material;
-                    perMat.Instances.emplace_back(instance);
-
-                    mesh.PerMaterials.push_back(perMat);
+                    m_PerModels[index].Meshes.push_back(perMesh);
                 }
-                else
+            }
+            else
+            {
+                int index = m_Models[model];
+                PerModel& perModel = m_PerModels[index];
+
+                for(int i = 0; i < perModel.Meshes.size(); i++)
                 {
-                    int matIndex = mesh.MaterialsData[material];
-                    mesh.PerMaterials[matIndex].Instances.push_back(instance);
+                    auto& mesh = perModel.Meshes[i];
+                    if(mesh.MaterialsData.count(materials[i]) == 0)
+                    {
+                        mesh.MaterialsData.insert({ materials[i], mesh.PerMaterials.size() });
+                        PerMaterial perMat = {};
+                        perMat.Material = materials[i];
+                        perMat.Instances.emplace_back(instances[j]);
+
+                        mesh.PerMaterials.push_back(perMat);
+                    }
+                    else
+                    {
+                        int matIndex = mesh.MaterialsData[materials[i]];
+                        mesh.PerMaterials[matIndex].Instances.push_back(instances[j]);
+                    }
                 }
             }
         }

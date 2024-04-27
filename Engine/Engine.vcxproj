@@ -156,6 +156,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Materials\PbrMaterial.h" />
     <ClInclude Include="Source\RHI\Common.h" />
     <ClInclude Include="Source\RHI\Configs\Barriers.h" />
     <ClInclude Include="Source\RHI\Configs\CommandBuffers.h" />

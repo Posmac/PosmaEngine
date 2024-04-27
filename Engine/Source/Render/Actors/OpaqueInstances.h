@@ -23,6 +23,14 @@ namespace psm
             bool operator==(const Material& lhs);
         };
 
+        struct Instance
+        {
+            glm::mat4 InstanceMatrix;
+        };
+
+        using OpaqModelMeshMaterials = std::vector<Material>;
+        using OpaqModelMeshInstances = std::vector<Instance>;
+
         struct MaterialHash
         {
             std::size_t operator()(const Material& mat) const
@@ -32,10 +40,6 @@ namespace psm
             }
         };
 
-        struct Instance
-        {
-            glm::mat4 InstanceMatrix;
-        };
     private:
         struct PerMaterial
         {
@@ -93,7 +97,7 @@ namespace psm
 
         void Render(CommandBufferPtr commandBuffer);
         void RenderDepth(CommandBufferPtr commandBuffer);
-        void AddInstance(std::shared_ptr<Model> model, const Material& material, const Instance& instance);
+        void AddInstance(std::shared_ptr<Model> model, const OpaqModelMeshMaterials& materials, const OpaqModelMeshInstances& instances);
 
         void UpdateDefaultDescriptors(BufferPtr globalBuffer, BufferPtr shadowMapBuffer, ImagePtr dirDepthShadowMap);
         void UpdateDepthDescriptors(BufferPtr globalBuffer);

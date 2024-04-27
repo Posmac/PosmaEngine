@@ -21,6 +21,8 @@ namespace psm
     public:
         std::string Name;
         std::vector<Mesh> Meshes;
+        std::vector<Vertex> MeshVertices; //all model meshes verticces
+        std::vector<uint32_t> MeshIndices; //all model meshes indices
     private:
         BufferPtr mVertexBuffer;
         BufferPtr mIndexBuffer;

@@ -1,10 +1,9 @@
 #pragma once
 
-#include "glm/glm.hpp"
-
-#include "Vertex.h"
-
 #include <optional>
+
+#include "glm/glm.hpp"
+#include "Vertex.h"
 
 namespace psm
 {
@@ -18,9 +17,6 @@ namespace psm
 
     struct Mesh
     {
-        std::vector<Vertex> MeshVertices;
-        std::vector<uint32_t> MeshIndices;
-
         MeshRange Range;
 
         glm::mat4 LocalMatrix;

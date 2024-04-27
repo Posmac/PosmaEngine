@@ -3,6 +3,8 @@
 #include "Systems/InputSystem.h"
 #include "Systems/TimeSystem.h"
 
+#include "Materials/PbrMaterial.h"
+
 #include "RHI/VkCommon.h"
 
 namespace psm
@@ -13,31 +15,28 @@ namespace psm
         m_CameraDefaultMoveSpeed = 20.0f;
         m_CameraDefaultRotateSpeed = 150.0f;
 
-        std::shared_ptr<Model>  helmetModel = std::make_shared<Model>();
-        ModelLoader::Instance()->LoadModel("../Engine/Models/DamagedHelmet/glTF/DamagedHelmet.gltf", helmetModel.get());
+        std::vector<MeshPbrMaterial> modelMeshMaterials;
 
-        RawTextureData helmet_albedo{ Rgb_alpha };
-        TextureLoader::Instance()->LoadRawTextureData("../Engine/Models/DamagedHelmet/glTF/Default_albedo.jpg", &helmet_albedo);
-        ImagePtr helmet_albedo_texture = Renderer::Instance()->LoadTextureIntoMemory(helmet_albedo, 1);
+        std::shared_ptr<Model>  sponzaModel = std::make_shared<Model>();
+        ModelLoader::Instance()->LoadModel("../Engine/Models/Sponza/glTF/", "Sponza.gltf", sponzaModel.get(), modelMeshMaterials);
 
-        OpaqueInstances::Material material {};
-        OpaqueInstances::Instance instance;
-
-        //cube
-        material.Albedo = helmet_albedo_texture;
         glm::mat4 instanceMatrix = glm::mat4(1.0);
 
         instanceMatrix = glm::mat4(1.0);
         instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0,0,0));
         instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
-        instance.InstanceMatrix = instanceMatrix;
-        OpaqueInstances::GetInstance()->AddInstance(helmetModel, material, instance);
 
-        instanceMatrix = glm::mat4(1.0);
-        instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0, 5, 0));
-        instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
-        instance.InstanceMatrix = instanceMatrix;
-        OpaqueInstances::GetInstance()->AddInstance(helmetModel, material, instance);
+        OpaqueInstances::Instance instance = { instanceMatrix };
+
+        OpaqueInstances::OpaqModelMeshInstances opaqModelMeshInstances = { instance };
+
+        OpaqueInstances::OpaqModelMeshMaterials opaqModelMeshMaterials(modelMeshMaterials.size());
+        for(int i = 0; i < modelMeshMaterials.size(); i++)
+        {
+            opaqModelMeshMaterials[i].Albedo = modelMeshMaterials[i].Albedo;
+        }
+
+        OpaqueInstances::GetInstance()->AddInstance(sponzaModel, opaqModelMeshMaterials, opaqModelMeshInstances);
 
         OpaqueInstances::GetInstance()->UpdateInstanceBuffer();
         OpaqueInstances::GetInstance()->UpdateMeshToModelData();

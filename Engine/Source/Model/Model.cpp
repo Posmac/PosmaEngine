@@ -41,10 +41,6 @@ namespace psm
         };
 
         device->BindIndexBuffer(commandBuffer, indexBindConfig);
-
-        /*VkDeviceSize offset = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_VertexBuffer, &offset);
-        vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);*/
     }
 
     void Model::Deinit()
@@ -55,14 +51,8 @@ namespace psm
 
     void Model::Init(DevicePtr device, CommandPoolPtr commandPool)
     {
-        uint32_t totalVertices = 0;
-        uint32_t totalIndices = 0;
-
-        for (auto& mesh : Meshes)
-        {
-            totalVertices += mesh.MeshVertices.size();
-            totalIndices += mesh.MeshIndices.size();
-        }
+        uint32_t totalVertices = MeshVertices.size();
+        uint32_t totalIndices = MeshIndices.size();
 
         SBufferConfig vertexBufferConfig =
         {
@@ -81,23 +71,6 @@ namespace psm
         mVertexBuffer = device->CreateBuffer(vertexBufferConfig);
         BufferPtr vertexStagingBuffer = device->CreateBuffer(stagingVertexBufferConfig);
 
-        ////vertex buffer
-        //VkDeviceSize vertexBufferSize = sizeof(Vertex) * totalVertices;
-        //VkBuffer vertexStagingBuffer;
-        //VkDeviceMemory vertexStagingBufferMemory;
-
-        //vk::CreateBuffer(vk::Device, vk::PhysicalDevice, vertexBufferSize,
-        //    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        //    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        //    &vertexStagingBuffer, &vertexStagingBufferMemory);
-
-        //vk::CreateBuffer(vk::Device, vk::PhysicalDevice, vertexBufferSize,
-        //    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        //    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        //    &m_VertexBuffer, &m_VertexBufferMemory);
-
-        //index buffer
-
         SBufferConfig indexBufferConfig =
         {
             .Size = sizeof(uint32_t) * totalIndices,
@@ -115,89 +88,54 @@ namespace psm
         mIndexBuffer = device->CreateBuffer(indexBufferConfig);
         BufferPtr indexStagingBuffer = device->CreateBuffer(stagingIndexBufferConfig);
 
-       /* VkDeviceSize indexBufferSize = sizeof(uint32_t) * totalIndices;
-        VkBuffer indexStagingBuffer;
-        VkDeviceMemory indexStagingBufferMemory;
-
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, indexBufferSize,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &indexStagingBuffer, &indexStagingBufferMemory);
-
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, indexBufferSize,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            &m_IndexBuffer, &m_IndexBufferMemory);*/
-
         //copy data
-        uint64_t vertexOffset = 0;
-        uint64_t indexOffset = 0;
+        //map vertex buffer
+        void* pVertexData;
+        uint64_t totalVerticesSize = sizeof(Vertex) * totalVertices;
 
-        //VkDeviceSize vertexOffset = 0;
-        //VkDeviceSize indexOffset = 0;
-
-        for (auto& mesh : Meshes)
+        SBufferMapConfig vMapConfig =
         {
-            void* vertexData;
-            uint64_t currentVerticesSize = sizeof(Vertex) * mesh.MeshVertices.size();
-
-            SBufferMapConfig vMapConfig =
-            {
-                .Size = currentVerticesSize,
-                .Offset = vertexOffset,
-                .pData = &vertexData,
-                .Flags = 0
-            };
-
-            vertexStagingBuffer->Map(vMapConfig);
-
-            memcpy(vertexData, mesh.MeshVertices.data(), currentVerticesSize);
-
-            SBufferFlushConfig vFlushConfig =
-            {
-                .Size = currentVerticesSize,
-                .Offset = vertexOffset,
-            };
-
-            vertexStagingBuffer->Flush(vFlushConfig);
-            vertexStagingBuffer->Unmap();
-
-            vertexOffset += currentVerticesSize;
-
-            void* indexData;
-            uint64_t currentIndicesSize = sizeof(uint32_t) * mesh.MeshIndices.size();
-
-            SBufferMapConfig iMapConfig =
-            {
-                .Size = currentIndicesSize,
-                .Offset = indexOffset,
-                .pData = &indexData,
-                .Flags = 0
-            };
-
-            indexStagingBuffer->Map(iMapConfig);
-           /* vkMapMemory(vk::Device, indexStagingBufferMemory, indexOffset,
-                currentIndicesSize, 0, &indexData);*/
-            memcpy(indexData, mesh.MeshIndices.data(), currentIndicesSize);
-
-            SBufferFlushConfig iFlushConfig =
-            {
-                .Size = currentIndicesSize,
-                .Offset = indexOffset,
-            };
-            indexStagingBuffer->Flush(iFlushConfig);
-
-            /*range.memory = indexStagingBufferMemory;
-            range.offset = indexOffset;
-            range.size = currentIndicesSize;*/
-
-            //vkFlushMappedMemoryRanges(vk::Device, 1, &range);
-            
-            indexStagingBuffer->Unmap();
-
-            //vkUnmapMemory(vk::Device, indexStagingBufferMemory);
-            indexOffset += currentIndicesSize;
+            .Size = totalVerticesSize,
+            .Offset = 0,
+            .pData = &pVertexData,
+            .Flags = 0
         };
+
+        vertexStagingBuffer->Map(vMapConfig);
+
+        //map index buffer
+        void* pIndexData;
+        uint64_t totalIndicesSize = sizeof(uint32_t) * totalIndices;
+
+        SBufferMapConfig iMapConfig =
+        {
+            .Size = totalIndicesSize,
+            .Offset = 0,
+            .pData = &pIndexData,
+            .Flags = 0
+        };
+
+        indexStagingBuffer->Map(iMapConfig);
+
+        memcpy(pVertexData, MeshVertices.data(), sizeof(Vertex) * MeshVertices.size());
+        memcpy(pIndexData, MeshIndices.data(), sizeof(uint32_t) * MeshIndices.size());
+
+        SBufferFlushConfig vFlushConfig =
+        {
+            .Size = totalVerticesSize,
+            .Offset = 0,
+        };
+
+        vertexStagingBuffer->Flush(vFlushConfig);
+        vertexStagingBuffer->Unmap();
+
+        SBufferFlushConfig iFlushConfig =
+        {
+            .Size = totalIndicesSize,
+            .Offset = 0,
+        };
+        indexStagingBuffer->Flush(iFlushConfig);
+        indexStagingBuffer->Unmap();
 
         SCommandBufferConfig commandBufferConfig =
         {
@@ -252,22 +190,5 @@ namespace psm
 
         submitFence->Wait(wait);
         commandPool->FreeCommandBuffers({ commandBuffer });
-        //__debugbreak();
-        
-        /*VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(vk::Device, commandPool);
-
-        vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
-            vertexStagingBuffer, m_VertexBuffer, vertexBufferSize);
-
-        vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
-            indexStagingBuffer, m_IndexBuffer, indexBufferSize);
-
-        putils::EndSingleTimeCommandBuffer(vk::Device, commandPool, commandBuffer, vk::Queues.GraphicsQueue);*/
-
-        /*vk::DestroyBuffer(vk::Device, vertexStagingBuffer);
-        vk::FreeMemory(vk::Device, vertexStagingBufferMemory);
-
-        vk::DestroyBuffer(vk::Device, indexStagingBuffer);
-        vk::FreeMemory(vk::Device, indexStagingBufferMemory);*/
     }
 }

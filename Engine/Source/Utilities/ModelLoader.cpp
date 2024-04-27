@@ -3,6 +3,9 @@
 #include "RHI/Common.h"
 #include "RHI/VkCommon.h"
 
+#include "TextureLoader.h"
+#include "Render/Renderer.h"
+
 namespace psm
 {
     ModelLoader* ModelLoader::s_Instance = nullptr;
@@ -17,12 +20,13 @@ namespace psm
         return s_Instance;
     }
 
-    void ModelLoader::LoadModel(const std::string& path, Model* model)
+    void ModelLoader::LoadModel(const std::string& pathToModel, const std::string& modelName, Model* model, std::vector<MeshPbrMaterial>& modelMeshMaterials)
     {
         Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenUVCoords);
+        std::string fullPath = pathToModel + modelName;
+        const aiScene* scene = importer.ReadFile(fullPath, aiProcess_Triangulate | aiProcess_GenUVCoords);
 
-        model->Name = path;
+        model->Name = fullPath;
 
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
@@ -32,11 +36,11 @@ namespace psm
         }
 
         aiNode* rootNode = scene->mRootNode;
-        ProcessNode(rootNode, scene, model);
+        ProcessNode(rootNode, scene, model, pathToModel, modelMeshMaterials);
         model->Init(mDevice, mCommandPool);
     }
 
-    void ModelLoader::ProcessNode(aiNode* node, const aiScene* scene, Model* model)
+    void ModelLoader::ProcessNode(aiNode* node, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials)
     {
         for(unsigned int i = 0; i < node->mNumMeshes; i++)
         {
@@ -49,18 +53,23 @@ namespace psm
             };
 
             model->Meshes.push_back(mesh);
-            ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene, model);
+            modelMeshMaterials.push_back({});
+            ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene, model, pathToModel, modelMeshMaterials);
         }
         for(unsigned int i = 0; i < node->mNumChildren; i++)
         {
-            ProcessNode(node->mChildren[i], scene, model);
+            ProcessNode(node->mChildren[i], scene, model, pathToModel, modelMeshMaterials);
         }
     }
 
-    void ModelLoader::ProcessMesh(aiMesh * aiMesh, const aiScene * scene, Model* model)
+    void ModelLoader::ProcessMesh(aiMesh* aiMesh, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials)
     {
         //std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-        Mesh& mesh = model->Meshes[model->Meshes.size() - 1];
+        unsigned meshIndex = model->Meshes.size() - 1;
+        Mesh& mesh = model->Meshes[meshIndex];
+
+        mesh.Range.VerticesOffset = model->MeshVertices.size();
+        mesh.Range.IndicesOffset = model->MeshIndices.size();
 
         for(unsigned int i = 0; i < aiMesh->mNumVertices; i++)
         {
@@ -76,14 +85,7 @@ namespace psm
                 vertex.TexCoord = { 0, 0 };
             }
 
-            /*if(uniqueVertices.count(vertex) == 0)
-            {
-                uniqueVertices[vertex] = static_cast<uint32_t>(mesh.MeshVertices.size());
-            }*/
-
-            mesh.MeshVertices.push_back(vertex);
-
-            //mesh.MeshIndices.push_back(uniqueVertices[vertex]);
+            model->MeshVertices.push_back(vertex);
         }
 
         for(unsigned int i = 0; i < aiMesh->mNumFaces; i++)
@@ -91,14 +93,39 @@ namespace psm
             aiFace face = aiMesh->mFaces[i];
             for(unsigned int j = 0; j < face.mNumIndices; j++)
             {
-                mesh.MeshIndices.push_back(face.mIndices[j]);
+                model->MeshIndices.push_back(face.mIndices[j]);
             }
         }
 
-        mesh.Range.IndicesCount = mesh.MeshIndices.size();
-        mesh.Range.VerticesCount = mesh.MeshVertices.size();
-        mesh.Range.IndicesOffset = 0;
-        mesh.Range.VerticesOffset = 0;
+        mesh.Range.VerticesCount = model->MeshVertices.size() - mesh.Range.VerticesOffset;
+        mesh.Range.IndicesCount = model->MeshIndices.size() - mesh.Range.IndicesOffset;
+
+        //load material
+        if(scene->mNumMaterials)
+        {
+            aiMaterial* meshMaterial = scene->mMaterials[aiMesh->mMaterialIndex];
+            if(meshMaterial != nullptr)
+            {
+                auto albedoTextureCount = meshMaterial->GetTextureCount(aiTextureType_BASE_COLOR);
+                std::string pathToTexture;
+
+                MeshPbrMaterial& pbrMat = modelMeshMaterials[meshIndex];
+
+                if(albedoTextureCount)
+                {
+                    aiString path;
+                    meshMaterial->GetTexture(aiTextureType_BASE_COLOR, 0, &path);
+                    pathToTexture = pathToModel + std::string(path.C_Str());
+                    RawTextureData albedoTextureData{ Rgb_alpha };
+                    TextureLoader::Instance()->LoadRawTextureData(pathToTexture, &albedoTextureData);
+                    pbrMat.Albedo = Renderer::Instance()->LoadTextureIntoMemory(albedoTextureData, 1);
+                }
+                else
+                {
+                    __debugbreak();
+                }
+            }
+        }
     }
 
     void ModelLoader::Init(DevicePtr device, CommandPoolPtr commandPool)

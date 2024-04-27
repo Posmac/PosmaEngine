@@ -68,10 +68,10 @@ namespace psm
         std::vector<FramebufferPtr> mShadowFramebuffers;
 
         //imgui data (for debugging)
-        float range = 250;
-        float nearPlane = -200;
-        float farPlane = 200;
-        glm::vec3 position = glm::vec3(50.0f, 50.0f, 0.0f);
+        float range = 25;
+        float nearPlane = -10;
+        float farPlane = 10;
+        glm::vec3 position = glm::vec3(1.0f, -1.0f, 0.0f);
         glm::vec3 lookAt = glm::vec3(0, 0, 0);
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
         float depthBias = 1;

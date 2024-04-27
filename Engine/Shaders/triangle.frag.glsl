@@ -5,7 +5,7 @@ layout(location = 0) out vec4 AttachmentColor;
 layout (location = 0) in vec4 WorldPosition;
 layout (location = 1) in vec2 TexCoord;
 
-//is changed very frequently
+//is changed very frequently (material)
 layout(set = 2, binding = 0) uniform sampler2D Albedo;
 
 //shadow 
@@ -26,5 +26,5 @@ void main()
     float shadowMapDepth = texture(DirectionalShadowMap, projCoords.xy).r; 
     float depth = ndc.z < shadowMapDepth ? 1.0 : 0.0;
 
-	AttachmentColor = texture(Albedo, TexCoord.xy) * depth; 
+	AttachmentColor = texture(Albedo, TexCoord); 
 }
