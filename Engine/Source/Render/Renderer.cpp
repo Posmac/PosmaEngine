@@ -15,7 +15,10 @@
 #include "RHI/Vulkan/CVkCommandPool.h"
 #include "RHI/Vulkan/CVkRenderPass.h"
 #include "RHI/Vulkan/CVkBuffer.h"
+#include "RHI/Vulkan/CVkImGui.h"
 #endif
+
+#include "imgui/imgui.h"
 
 namespace psm
 {
@@ -174,10 +177,11 @@ namespace psm
 
         //init mesh systems
         SResourceExtent3D swapchainSize = mSwapchain->GetSwapchainSize();
-        OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, mShadowMapRenderPass ,{ swapchainSize.width, swapchainSize.height }, mShadowMapSize);
+        OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, mShadowMapRenderPass, { swapchainSize.width, swapchainSize.height }, mShadowMapSize);
         ModelLoader::Instance()->Init(mDevice, mCommandPool);
 
         //InitImGui(hWnd);
+        mGui = mDevice->CreateGui(mRenderPass, mCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
 
         isInit = true;
     }
@@ -423,28 +427,12 @@ namespace psm
         OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mGlobalBuffer, shadowMapBuffer, mDirDepthShadowMaps[mCurrentFrame]);
         OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame]);
 
-        //render IMGui
-        //vkimgui::PrepareNewFrame();
-
-        //{
-        //    ImGui::Begin("Data");
-        //    //ImGui::Text("This is some text.");
-
-        //    ImGui::SliderFloat("range", &range, -1000.0f, 1000.0f);
-        //    ImGui::SliderFloat("nearPlane", &nearPlane, -1000.0f, 1000.0f);
-        //    ImGui::SliderFloat("farPlane", &farPlane, -1000.0f, 1000.0f);
-
-        //    ImGui::SliderFloat3("position", &position[0], -10, 10);
-        //    ImGui::SliderFloat3("lookAt", &lookAt[0], -10, 10);
-        //    ImGui::SliderFloat3("up", &up[0], -10, 10);
-
-        //    ImGui::SliderFloat("Bias", &depthBias, -10, 10);
-        //    ImGui::SliderFloat("Slope", &depthSlope, -10, 10);
-
-        //    ImGui::End();
-        //}
-
-        //vkimgui::Render(m_CommandBuffers[m_CurrentFrame]);
+        mGui->PrepareNewFrame();
+        {
+            bool showDemo = true;
+            ImGui::ShowDemoWindow(&showDemo);
+        }
+        mGui->Render(mCommandBuffers[mCurrentFrame]);
 
         //continue
         mRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);

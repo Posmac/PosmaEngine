@@ -18,6 +18,7 @@
 #include "CVkSampler.h"
 #include "CVkPipeline.h"
 #include "CVkDescriptorSetLayout.h"
+#include "CVkImGui.h"
 #include "../Memory/UntypedBuffer.h"
 
 #include <Windows.h>
@@ -481,6 +482,11 @@ namespace psm
     DescriptorSetLayoutPtr CVkDevice::CreateDescriptorSetLayout(const SDescriptorSetLayoutConfig& config)
     {
         return std::make_shared<CVkDescriptorSetLayout>(RenderDevice, config);
+    }
+
+    ImGuiPtr CVkDevice::CreateGui(RenderPassPtr renderPass, CommandPoolPtr commandPool, uint8_t swapchainImagesCount, ESamplesCount samplesCount)
+    {
+        return std::make_shared<CVkImGui>(RenderDevice, renderPass, commandPool, swapchainImagesCount, samplesCount);
     }
 
     DescriptorSetPtr CVkDevice::AllocateDescriptorSets(SDescriptorSetAllocateConfig& config)

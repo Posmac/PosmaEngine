@@ -65,6 +65,23 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     ShowWindow(hWnd, nCmdShow);
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    auto* ctx = ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+    //io.ConfigViewportsNoAutoMerge = true;
+    //io.ConfigViewportsNoTaskBarIcon = true;
+    ImGui::SetCurrentContext(ctx);
+
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    ImGui_ImplWin32_Init(hWnd);
+
     psm::Engine::Instance()->Init(hWnd, hInstance);
     app.Init(Width, Height);
 
@@ -88,6 +105,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     }
 
     psm::Engine::Instance()->Dispose();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
     CloseConsole();
 
     return 0;

@@ -260,6 +260,7 @@
     <ClCompile Include="Source\RHI\Vulkan\CVkDescriptorSetLayout.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkFence.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkFramebuffer.cpp" />
+    <ClCompile Include="Source\RHI\Vulkan\CVkImGui.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkPipeline.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkPipelineLayout.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkRenderPass.cpp" />

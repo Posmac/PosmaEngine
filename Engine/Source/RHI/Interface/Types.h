@@ -26,6 +26,7 @@ namespace psm
     class IPipeline;
     class IShader;
     class IPushConstant;
+    class IImGui;
 
     using DevicePtr = std::shared_ptr<IDevice>;
     using SwapchainPtr = std::shared_ptr<ISwapchain>;
@@ -49,4 +50,5 @@ namespace psm
     using DescriptorSetLayoutPtr = std::shared_ptr<IDescriptorSetLayout>;
     using ShaderPtr = std::shared_ptr<IShader>;
     using PushConstantPtr = std::shared_ptr<IPushConstant>;
+    using ImGuiPtr = std::shared_ptr<IImGui>;
 }

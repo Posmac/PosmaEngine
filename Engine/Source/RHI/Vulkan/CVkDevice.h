@@ -36,6 +36,7 @@ namespace psm
         virtual FramebufferPtr CreateFramebuffer(const SFramebufferConfig& config) override;
         virtual DescriptorPoolPtr CreateDescriptorPool(const SDescriptorPoolConfig& config) override;
         virtual DescriptorSetLayoutPtr CreateDescriptorSetLayout(const SDescriptorSetLayoutConfig& config) override;
+        virtual ImGuiPtr CreateGui(RenderPassPtr renderPass, CommandPoolPtr commandPool, uint8_t swapchainImagesCount, ESamplesCount samplesCount) override;
 
         virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) override;
         virtual void Submit(const SSubmitConfig& config) override;
