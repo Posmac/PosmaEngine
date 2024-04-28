@@ -3,12 +3,10 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include <string>
 
 #include "Mesh.h"
-#include "Render/Vk.h"
-#include "Vulkan/Core.h"
-#include "Include/vulkan/vulkan.h"
-#include "Vulkan/Buffer.h"
+#include "RHI/Interface/Types.h"
 
 namespace psm
 {
@@ -17,18 +15,16 @@ namespace psm
     public:
         Model();
         Model(std::vector<Mesh>& meshes);
-        void BindBuffers(VkCommandBuffer commandBuffer) const;
-        void Init(VkCommandPool commandPool);
+        void BindBuffers(DevicePtr device, CommandBufferPtr commandBuffer);
+        void Init(DevicePtr device, CommandPoolPtr commandPool);
         void Deinit();
     public:
         std::string Name;
         std::vector<Mesh> Meshes;
+        std::vector<Vertex> MeshVertices; //all model meshes verticces
+        std::vector<uint32_t> MeshIndices; //all model meshes indices
     private:
-
-        VkBuffer m_VertexBuffer; //contains all geometry data of all meshes
-        VkDeviceMemory m_VertexBufferMemory;
-
-        VkBuffer m_IndexBuffer; //contains all indices of all meshes
-        VkDeviceMemory m_IndexBufferMemory;
+        BufferPtr mVertexBuffer;
+        BufferPtr mIndexBuffer;
     };
 }

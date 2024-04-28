@@ -23,6 +23,9 @@ void CloseConsole();
 
 psm::Application app;
 
+constexpr uint32_t Width = 1280;
+constexpr uint32_t Height = 720;
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
     CreateConsole();
@@ -52,7 +55,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     HWND hWnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
         windowClassName, windowName, WS_OVERLAPPEDWINDOW,
-        320, 180, 1280, 720, NULL, NULL, hInstance, NULL);
+        320, 180, Width, Height, NULL, NULL, hInstance, NULL);
 
     if(hWnd == NULL)
     {
@@ -62,8 +65,25 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     ShowWindow(hWnd, nCmdShow);
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    auto* ctx = ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+    //io.ConfigViewportsNoAutoMerge = true;
+    //io.ConfigViewportsNoTaskBarIcon = true;
+    ImGui::SetCurrentContext(ctx);
+
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    ImGui_ImplWin32_Init(hWnd);
+
     psm::Engine::Instance()->Init(hWnd, hInstance);
-    app.Init();
+    app.Init(Width, Height);
 
     bool isAppRuning = true;
     while(isAppRuning)
@@ -85,6 +105,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     }
 
     psm::Engine::Instance()->Dispose();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
     CloseConsole();
 
     return 0;

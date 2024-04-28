@@ -1,5 +1,15 @@
 #include "Model.h"
 
+#include "RHI/Configs/PipelineConfig.h"
+
+#ifdef RHI_VULKAN
+#include "RHI/Vulkan/CVkDevice.h"
+#include "RHI/Vulkan/CVkCommandBuffer.h"
+#include "RHI/Vulkan/CVkBuffer.h"
+#include "RHI/Vulkan/CVkFence.h"
+#include "RHI/Vulkan/CVkCommandPool.h"
+#endif
+
 namespace psm
 {
     Model::Model()
@@ -12,114 +22,173 @@ namespace psm
         this->Meshes = std::move(meshes);
     }
 
-    void Model::BindBuffers(VkCommandBuffer commandBuffer) const
+    void Model::BindBuffers(DevicePtr device, CommandBufferPtr commandBuffer)
     {
-        VkDeviceSize offset = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_VertexBuffer, &offset);
-        vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        SVertexBufferBindConfig vertexBindConfig =
+        {
+            .FirstSlot = 0,
+            .BindingCount = 1,
+            .Offsets = {0},
+            .Buffers = &mVertexBuffer,
+        };
+
+        device->BindVertexBuffers(commandBuffer, vertexBindConfig);
+
+        SIndexBufferBindConfig indexBindConfig =
+        {
+            .Type = EIndexType::UINT32,
+            .Buffer = mIndexBuffer
+        };
+
+        device->BindIndexBuffer(commandBuffer, indexBindConfig);
     }
 
     void Model::Deinit()
     {
-        vk::DestroyBuffer(vk::Device, m_VertexBuffer);
-        vk::FreeMemory(vk::Device, m_VertexBufferMemory);
+        /*vk::DestroyBuffer(vk::Device, m_VertexBuffer);
+        vk::FreeMemory(vk::Device, m_VertexBufferMemory);*/
     }
 
-    void Model::Init(VkCommandPool commandPool)
+    void Model::Init(DevicePtr device, CommandPoolPtr commandPool)
     {
-        uint32_t totalVertices = 0;
-        uint32_t totalIndices = 0;
+        uint32_t totalVertices = MeshVertices.size();
+        uint32_t totalIndices = MeshIndices.size();
 
-        for (auto& mesh : Meshes)
+        SBufferConfig vertexBufferConfig =
         {
-            totalVertices += mesh.MeshVertices.size();
-            totalIndices += mesh.MeshIndices.size();
-        }
-
-        //vertex buffer
-        VkDeviceSize vertexBufferSize = sizeof(Vertex) * totalVertices;
-        VkBuffer vertexStagingBuffer;
-        VkDeviceMemory vertexStagingBufferMemory;
-
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, vertexBufferSize,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &vertexStagingBuffer, &vertexStagingBufferMemory);
-
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, vertexBufferSize,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            &m_VertexBuffer, &m_VertexBufferMemory);
-
-        //index buffer
-        VkDeviceSize indexBufferSize = sizeof(uint32_t) * totalIndices;
-        VkBuffer indexStagingBuffer;
-        VkDeviceMemory indexStagingBufferMemory;
-
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, indexBufferSize,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &indexStagingBuffer, &indexStagingBufferMemory);
-
-        vk::CreateBuffer(vk::Device, vk::PhysicalDevice, indexBufferSize,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            &m_IndexBuffer, &m_IndexBufferMemory);
-
-        //copy data
-        VkDeviceSize vertexOffset = 0;
-        VkDeviceSize indexOffset = 0;
-
-        for (auto& mesh : Meshes)
-        {
-            void* vertexData;
-            VkDeviceSize currentVerticesSize = sizeof(Vertex) * mesh.MeshVertices.size();
-            vkMapMemory(vk::Device, vertexStagingBufferMemory, vertexOffset,
-                currentVerticesSize, 0, &vertexData);
-            memcpy(vertexData, mesh.MeshVertices.data(), currentVerticesSize);
-
-            VkMappedMemoryRange range{};
-            range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-            range.pNext = nullptr;
-            range.memory = vertexStagingBufferMemory;
-            range.offset = vertexOffset;
-            range.size = currentVerticesSize;
-
-            vkFlushMappedMemoryRanges(vk::Device, 1, &range);
-
-            vkUnmapMemory(vk::Device, vertexStagingBufferMemory);
-            vertexOffset += currentVerticesSize;
-
-            void* indexData;
-            VkDeviceSize currentIndicesSize = sizeof(uint32_t) * mesh.MeshIndices.size();
-            vkMapMemory(vk::Device, indexStagingBufferMemory, indexOffset,
-                currentIndicesSize, 0, &indexData);
-            memcpy(indexData, mesh.MeshIndices.data(), currentIndicesSize);
-
-            range.memory = indexStagingBufferMemory;
-            range.offset = indexOffset;
-            range.size = currentIndicesSize;
-
-            vkFlushMappedMemoryRanges(vk::Device, 1, &range);
-
-            vkUnmapMemory(vk::Device, indexStagingBufferMemory);
-            indexOffset += currentIndicesSize;
+            .Size = sizeof(Vertex) * totalVertices,
+            .Usage = EBufferUsage::USAGE_TRANSFER_DST_BIT | EBufferUsage::USAGE_VERTEX_BUFFER_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         };
 
-        VkCommandBuffer commandBuffer = putils::BeginSingleTimeCommandBuffer(vk::Device, commandPool);
+        SBufferConfig stagingVertexBufferConfig =
+        {
+            .Size = sizeof(Vertex) * totalVertices,
+            .Usage = EBufferUsage::USAGE_TRANSFER_SRC_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
 
-        vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
-            vertexStagingBuffer, m_VertexBuffer, vertexBufferSize);
+        mVertexBuffer = device->CreateBuffer(vertexBufferConfig);
+        BufferPtr vertexStagingBuffer = device->CreateBuffer(stagingVertexBufferConfig);
 
-        vk::CopyBuffer(vk::Device, commandBuffer, vk::Queues.GraphicsQueue,
-            indexStagingBuffer, m_IndexBuffer, indexBufferSize);
+        SBufferConfig indexBufferConfig =
+        {
+            .Size = sizeof(uint32_t) * totalIndices,
+            .Usage = EBufferUsage::USAGE_TRANSFER_DST_BIT | EBufferUsage::USAGE_INDEX_BUFFER_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        };
 
-        putils::EndSingleTimeCommandBuffer(vk::Device, commandPool, commandBuffer, vk::Queues.GraphicsQueue);
+        SBufferConfig stagingIndexBufferConfig =
+        {
+            .Size = sizeof(uint32_t) * totalIndices,
+            .Usage = EBufferUsage::USAGE_TRANSFER_SRC_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
 
-        vk::DestroyBuffer(vk::Device, vertexStagingBuffer);
-        vk::FreeMemory(vk::Device, vertexStagingBufferMemory);
+        mIndexBuffer = device->CreateBuffer(indexBufferConfig);
+        BufferPtr indexStagingBuffer = device->CreateBuffer(stagingIndexBufferConfig);
 
-        vk::DestroyBuffer(vk::Device, indexStagingBuffer);
-        vk::FreeMemory(vk::Device, indexStagingBufferMemory);
+        //copy data
+        //map vertex buffer
+        void* pVertexData;
+        uint64_t totalVerticesSize = sizeof(Vertex) * totalVertices;
+
+        SBufferMapConfig vMapConfig =
+        {
+            .Size = totalVerticesSize,
+            .Offset = 0,
+            .pData = &pVertexData,
+            .Flags = 0
+        };
+
+        vertexStagingBuffer->Map(vMapConfig);
+
+        //map index buffer
+        void* pIndexData;
+        uint64_t totalIndicesSize = sizeof(uint32_t) * totalIndices;
+
+        SBufferMapConfig iMapConfig =
+        {
+            .Size = totalIndicesSize,
+            .Offset = 0,
+            .pData = &pIndexData,
+            .Flags = 0
+        };
+
+        indexStagingBuffer->Map(iMapConfig);
+
+        memcpy(pVertexData, MeshVertices.data(), sizeof(Vertex) * MeshVertices.size());
+        memcpy(pIndexData, MeshIndices.data(), sizeof(uint32_t) * MeshIndices.size());
+
+        SBufferFlushConfig vFlushConfig =
+        {
+            .Size = totalVerticesSize,
+            .Offset = 0,
+        };
+
+        vertexStagingBuffer->Flush(vFlushConfig);
+        vertexStagingBuffer->Unmap();
+
+        SBufferFlushConfig iFlushConfig =
+        {
+            .Size = totalIndicesSize,
+            .Offset = 0,
+        };
+        indexStagingBuffer->Flush(iFlushConfig);
+        indexStagingBuffer->Unmap();
+
+        SCommandBufferConfig commandBufferConfig =
+        {
+            .Size = 1,
+            .IsBufferLevelPrimary = true
+        };
+
+        std::vector<CommandBufferPtr> commandBuffers = device->CreateCommandBuffers(commandPool, commandBufferConfig);
+        CommandBufferPtr commandBuffer = commandBuffers[0];
+
+        SCommandBufferBeginConfig beginConfig =
+        {
+            .BufferIndex = 0,
+            .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
+        };
+
+        commandBuffer->Begin(beginConfig);
+
+        device->CopyBuffer(commandBuffer, vertexBufferConfig.Size, vertexStagingBuffer, mVertexBuffer);
+        device->CopyBuffer(commandBuffer, indexBufferConfig.Size ,indexStagingBuffer, mIndexBuffer);
+
+        commandBuffer->End();
+
+        SFenceConfig fenceConfig =
+        {
+            .Signaled = false
+        };
+
+        FencePtr submitFence = device->CreateFence(fenceConfig);
+
+        SSubmitConfig submitConfig =
+        {
+            .Queue = device->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .SubmitCount = 1,
+            .WaitStageFlags = EPipelineStageFlags::NONE,
+            .WaitSemaphoresCount = 0,
+            .pWaitSemaphores = nullptr,
+            .CommandBuffersCount = 1,
+            .pCommandBuffers = &commandBuffer,
+            .SignalSemaphoresCount = 0,
+            .pSignalSemaphores = nullptr,
+            .Fence = submitFence,
+        };
+
+        device->Submit(submitConfig);
+
+        SFenceWaitConfig wait =
+        {
+            .WaitAll = true,
+            .Timeout = 100'000'000,
+        };
+
+        submitFence->Wait(wait);
+        commandPool->FreeCommandBuffers({ commandBuffer });
     }
 }

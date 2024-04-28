@@ -5,9 +5,11 @@
 #include "Render/Renderer.h"
 #include "Utilities/ModelLoader.h"
 #include "Utilities/TextureLoader.h"
-#include "Render/Camera.h"
-#include "Render/PerFrameData.h"
-#include "Render/Instances/OpaqueInstances.h"
+#include "Render/Camera/Camera.h"
+#include "Render/GlobalBuffer.h"
+#include "Render/Actors/OpaqueInstances.h"
+
+#include "RHI/VkCommon.h"
 
 namespace psm
 {
@@ -15,7 +17,7 @@ namespace psm
     {
     public:
         Application() = default;
-        void Init();
+        void Init(uint32_t width, uint32_t height);
         void Update();
         void Deinit();
         void ResizeWindow(HWND hWnd, uint32_t width, uint32_t height);

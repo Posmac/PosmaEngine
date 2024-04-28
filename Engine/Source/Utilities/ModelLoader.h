@@ -6,13 +6,18 @@
 #include <cassert>
 #include <unordered_map>
 
-#include "Core/Log.h"
-
-#include "tiny_obj_loader.h"
-
 #include "Model/Mesh.h"
 #include "Model/Vertex.h"
 #include "Model/Model.h"
+
+#include "Materials/PbrMaterial.h"
+
+#include "RHI/Interface/Types.h"
+
+#include <assimp/Importer.hpp>
+#include <assimp/cimport.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 namespace psm
 {
@@ -28,10 +33,13 @@ namespace psm
         static ModelLoader* s_Instance;
         //class specific
     public:
-        void Init(VkCommandPool commandPool);
-
-        void LoadModel(const std::string& path, Model* model);
+        void Init(DevicePtr device, CommandPoolPtr commandPool);
+        void LoadModel(const std::string& pathToModel, const std::string& modelName, Model* model, std::vector<MeshPbrMaterial>& modelMeshMaterials);
     private:
-        VkCommandPool m_CommandPool;
+        void ProcessNode(aiNode* node, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
+        void ProcessMesh(aiMesh* mesh, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
+    private:
+        DevicePtr mDevice;
+        CommandPoolPtr mCommandPool;
     };
 }

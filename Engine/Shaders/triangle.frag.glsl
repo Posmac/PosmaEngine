@@ -5,44 +5,26 @@ layout(location = 0) out vec4 AttachmentColor;
 layout (location = 0) in vec4 WorldPosition;
 layout (location = 1) in vec2 TexCoord;
 
-layout(set = 0, binding = 1) uniform sampler2D DirShadowMap;
+//is changed very frequently (material)
+layout(set = 2, binding = 0) uniform sampler2D Albedo;
 
-layout(set = 0, binding = 2) uniform ShadowBuffer
+//shadow 
+layout(set = 3, binding = 0) uniform ShadowsBuffer
 {
-	mat4 DirLightMatrix;
-} shadowData;
+    mat4 DirectionalViewProjectionMatrix;
+} shadowBuffer;
 
-//is changed very frequently
-layout(set = 1, binding = 0) uniform sampler2D Albedo;
-
-const vec2 offsets[9] = vec2[](
-    vec2( -1, -1 ),
-    vec2( -1, 0 ),
-    vec2( -1, 1 ),
-    vec2( 0, -1 ),
-    vec2( 0, 0 ),
-    vec2( 0, 1 ),
-    vec2( 1, -1 ),
-    vec2( 1, 0 ),
-    vec2( 1, 1 )
-);
+layout(set = 3, binding = 1) uniform sampler2D DirectionalShadowMap;
 
 void main()
 {
-	vec4 texCoords = shadowData.DirLightMatrix * WorldPosition;
-	texCoords /= texCoords.w;
+    vec4 ndc = shadowBuffer.DirectionalViewProjectionMatrix * WorldPosition;
+	ndc /= ndc.w;
 
-	vec2 uv = texCoords.xy * 0.5 + 0.5;
+    vec4 projCoords = ndc * 0.5 + 0.5;
 
-	float shadow = 0.0;
-	vec2 texelSize = 1.0 / textureSize(DirShadowMap, 0);
+    float shadowMapDepth = texture(DirectionalShadowMap, projCoords.xy).r; 
+    float depth = ndc.z < shadowMapDepth ? 1.0 : 0.0;
 
-	for(int i = 0; i < 9; i++)
-	{
-	    float pcfDepth = texture(DirShadowMap, uv + offsets[i]).r; 
-	    shadow += texCoords.z > pcfDepth ? 1.0 : 0.0;        
-	}
-	shadow /= 9.0;
-
-	AttachmentColor = texture(Albedo, TexCoord) * (1.0 - shadow); 
+	AttachmentColor = texture(Albedo, TexCoord); 
 }

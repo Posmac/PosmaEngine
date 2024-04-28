@@ -8,8 +8,7 @@
 
 namespace psm
 {
-
-    struct Texture
+    /*struct Texture
     {
         VkImage Image;
         VkDeviceMemory ImageMemory;
@@ -19,7 +18,7 @@ namespace psm
     struct TextureParameters
     {
 
-    };
+    };*/
 
     enum RGB_Type
     {

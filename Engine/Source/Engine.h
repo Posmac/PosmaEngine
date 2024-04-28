@@ -2,9 +2,8 @@
 
 #include <Windows.h>
 
-#include "Render/Vk.h"
 #include "Render/Renderer.h"
-#include "Core/Log.h"
+//#include "Core/Log.h"
 
 namespace psm
 {
@@ -16,9 +15,8 @@ namespace psm
         void operator=(const Engine&) = delete;
         static Engine* Instance();
     private:
-        Engine() = default;
+        Engine() {};
         static Engine* s_Instance;
-    //class specific
     public:
         void Init(HWND hWnd, HINSTANCE hInstance);
         void Dispose();

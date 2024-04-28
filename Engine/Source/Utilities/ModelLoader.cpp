@@ -1,8 +1,13 @@
 #include "ModelLoader.h"
 
+#include "RHI/Common.h"
+#include "RHI/VkCommon.h"
+
+#include "TextureLoader.h"
+#include "Render/Renderer.h"
+
 namespace psm
 {
-
     ModelLoader* ModelLoader::s_Instance = nullptr;
 
     ModelLoader* ModelLoader::Instance()
@@ -15,79 +20,117 @@ namespace psm
         return s_Instance;
     }
 
-    void ModelLoader::LoadModel(const std::string& path, Model* model)
+    void ModelLoader::LoadModel(const std::string& pathToModel, const std::string& modelName, Model* model, std::vector<MeshPbrMaterial>& modelMeshMaterials)
     {
-        tinyobj::attrib_t attrib;
-        std::vector<tinyobj::shape_t> shapes;
-        std::vector<tinyobj::material_t> materials;
-        std::string warn, err;
+        Assimp::Importer importer;
+        std::string fullPath = pathToModel + modelName;
+        const aiScene* scene = importer.ReadFile(fullPath, aiProcess_Triangulate | aiProcess_GenUVCoords);
 
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str()))
+        model->Name = fullPath;
+
+        if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
-            LOG_ERROR("Failed to load model: " + path);
-            assert(true);
+            LogMessage(MessageSeverity::Error, "ERROR::ASSIMP::" + std::string(importer.GetErrorString()));
+            __debugbreak();
             return;
         }
 
-        std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+        aiNode* rootNode = scene->mRootNode;
+        ProcessNode(rootNode, scene, model, pathToModel, modelMeshMaterials);
+        model->Init(mDevice, mCommandPool);
+    }
 
-        Mesh mesh{};
-
-        for (const auto& shape : shapes)
+    void ModelLoader::ProcessNode(aiNode* node, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials)
+    {
+        for(unsigned int i = 0; i < node->mNumMeshes; i++)
         {
-            for (const auto& index : shape.mesh.indices)
+            const glm::mat4 nodeToParent = reinterpret_cast<const glm::mat4&>(node->mTransformation.Transpose());
+            const glm::mat4 parentToNode = glm::inverse(nodeToParent);
+            Mesh mesh =
             {
-                Vertex vertex{};
+                .LocalMatrix = nodeToParent,
+                .InvLocalMatrix = parentToNode
+            };
 
-                vertex.Position =
-                {
-                    glm::vec4(
-                    attrib.vertices[3 * index.vertex_index + 0],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2],
-                    1.0)
-                };
+            model->Meshes.push_back(mesh);
+            modelMeshMaterials.push_back({});
+            ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene, model, pathToModel, modelMeshMaterials);
+        }
+        for(unsigned int i = 0; i < node->mNumChildren; i++)
+        {
+            ProcessNode(node->mChildren[i], scene, model, pathToModel, modelMeshMaterials);
+        }
+    }
 
-                vertex.TexCoord =
-                {
-                    glm::vec2(
-                    attrib.texcoords[2 * index.texcoord_index + 0],
-                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1])
-                };
+    void ModelLoader::ProcessMesh(aiMesh* aiMesh, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials)
+    {
+        //std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+        unsigned meshIndex = model->Meshes.size() - 1;
+        Mesh& mesh = model->Meshes[meshIndex];
 
-                vertex.Normal =
-                {
-                    glm::vec4(
-                    attrib.normals[3 * index.normal_index + 0] ,
-                    attrib.normals[3 * index.normal_index + 1],
-                    attrib.normals[3 * index.normal_index + 2],
-                    1.0)
-                };
+        mesh.Range.VerticesOffset = model->MeshVertices.size();
+        mesh.Range.IndicesOffset = model->MeshIndices.size();
 
-                if (uniqueVertices.count(vertex) == 0)
-                {
-                    uniqueVertices[vertex] =
-                        static_cast<uint32_t>(mesh.MeshVertices.size());
-                    mesh.MeshVertices.push_back(vertex);
-                }
+        for(unsigned int i = 0; i < aiMesh->mNumVertices; i++)
+        {
+            Vertex vertex;
+            vertex.Position = { aiMesh->mVertices[i].x, aiMesh->mVertices[i].y, aiMesh->mVertices[i].z, 1.0 };
+            vertex.Normal = { aiMesh->mNormals[i].x, aiMesh->mNormals[i].y, aiMesh->mNormals[i].z, 1.0 };
+            if(aiMesh->mTextureCoords[0])
+            {
+                vertex.TexCoord = { aiMesh->mTextureCoords[0][i].x, aiMesh->mTextureCoords[0][i].y };
+            }
+            else
+            {
+                vertex.TexCoord = { 0, 0 };
+            }
 
-                mesh.MeshIndices.push_back(uniqueVertices[vertex]);
+            model->MeshVertices.push_back(vertex);
+        }
+
+        for(unsigned int i = 0; i < aiMesh->mNumFaces; i++)
+        {
+            aiFace face = aiMesh->mFaces[i];
+            for(unsigned int j = 0; j < face.mNumIndices; j++)
+            {
+                model->MeshIndices.push_back(face.mIndices[j]);
             }
         }
 
-        mesh.Range.IndicesCount = mesh.MeshIndices.size();
-        mesh.Range.VerticesCount = mesh.MeshVertices.size();
-        mesh.Range.IndicesOffset = 0;
-        mesh.Range.VerticesOffset = 0;
+        mesh.Range.VerticesCount = model->MeshVertices.size() - mesh.Range.VerticesOffset;
+        mesh.Range.IndicesCount = model->MeshIndices.size() - mesh.Range.IndicesOffset;
 
-        model->Name = path;
-        model->Meshes.push_back(mesh);
+        //load material
+        if(scene->mNumMaterials)
+        {
+            aiMaterial* meshMaterial = scene->mMaterials[aiMesh->mMaterialIndex];
+            if(meshMaterial != nullptr)
+            {
+                auto albedoTextureCount = meshMaterial->GetTextureCount(aiTextureType_BASE_COLOR);
+                std::string pathToTexture;
 
-        model->Init(m_CommandPool);
+                MeshPbrMaterial& pbrMat = modelMeshMaterials[meshIndex];
+
+                if(albedoTextureCount)
+                {
+                    aiString path;
+                    meshMaterial->GetTexture(aiTextureType_BASE_COLOR, 0, &path);
+                    pathToTexture = pathToModel + std::string(path.C_Str());
+                    RawTextureData albedoTextureData{ Rgb_alpha };
+                    TextureLoader::Instance()->LoadRawTextureData(pathToTexture, &albedoTextureData);
+                    pbrMat.Albedo = Renderer::Instance()->LoadTextureIntoMemory(albedoTextureData, 1);
+                }
+                else
+                {
+                    __debugbreak();
+                }
+            }
+        }
     }
 
-    void ModelLoader::Init(VkCommandPool commandPool)
+    void ModelLoader::Init(DevicePtr device, CommandPoolPtr commandPool)
     {
-        m_CommandPool = commandPool;
+        mDevice = device;
+        mCommandPool = commandPool;
     }
 }
