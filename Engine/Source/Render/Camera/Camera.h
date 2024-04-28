@@ -55,8 +55,8 @@ namespace psm
         void LogCameraInfo();
 
     private:
-        glm::vec4 m_CameraPosition;
-        glm::quat m_CameraRotation;
+        glm::vec4 m_CameraPosition; //in world space
+        glm::quat m_CameraRotation; //in world space
 
         glm::mat4 m_ProjectionMatrix;
         glm::mat4 m_ViewMatrix;

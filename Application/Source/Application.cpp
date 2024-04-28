@@ -157,12 +157,12 @@ namespace psm
         bool cameraRotated = false;
         glm::vec3 eulerRotation = glm::vec3(0);
         //Y
-        if(InputSystem::Instance()->IsKeyDown(KEY_Q))
+        if(InputSystem::Instance()->IsKeyDown(KEY_LEFT))
         {
             cameraRotated = true;
             eulerRotation += glm::vec3(0, 1, 0);
         }
-        if(InputSystem::Instance()->IsKeyDown(KEY_E))
+        if(InputSystem::Instance()->IsKeyDown(KEY_RIGHT))
         {
             cameraRotated = true;
             eulerRotation += glm::vec3(0, -1, 0);
@@ -178,27 +178,18 @@ namespace psm
             cameraRotated = true;
             eulerRotation += glm::vec3(-1, 0, 0);
         }
-        //Z
-        if(InputSystem::Instance()->IsKeyDown(KEY_LEFT))
-        {
-            cameraRotated = true;
-            eulerRotation += glm::vec3(0, 0, -1);
-        }
-        if(InputSystem::Instance()->IsKeyDown(KEY_RIGHT))
-        {
-            cameraRotated = true;
-            eulerRotation += glm::vec3(0, 0, 1);
-        }
 
         if(cameraRotated)
         {
             //m_Camera.RotateWorldEuler(eulerRotation * deltaTime * m_CameraDefaultRotateSpeed);
             m_Camera.RotateWorldEulerZConstrained(eulerRotation * deltaTime * m_CameraDefaultRotateSpeed);
         }
+
         if(cameraMoved)
         {
             m_Camera.TranslateWorld(offset * deltaTime * m_CameraDefaultMoveSpeed);
         }
+
         if(resetCamera)
         {
             m_Camera.SetWorldPosition(glm::vec4(0, 0, 0, 1));

@@ -98,9 +98,20 @@ namespace psm
 
     void Camera::RecalculateFromWorld()
     {
-        glm::mat4 rotation = glm::mat4_cast(m_CameraRotation);
-        glm::mat4 translation = glm::translate(glm::mat4(1.0), glm::vec3(m_InvViewMatrix[3]));
-        m_InvViewMatrix = translation * rotation;
+        glm::mat3 basis = glm::mat3_cast(m_CameraRotation);
+
+        glm::vec4 r1 = glm::vec4(basis[0], m_InvViewMatrix[3].x);
+        glm::vec4 r2 = glm::vec4(basis[1], m_InvViewMatrix[3].y);
+        glm::vec4 r3 = glm::vec4(basis[2], m_InvViewMatrix[3].z);
+
+        m_InvViewMatrix =
+        {
+            r1.x, r2.x, r3.x, 0.0,
+            r1.y, r2.y, r3.y, 0.0,
+            r1.z, r2.z, r3.z, 0.0,
+            r1.w, r2.w, r3.w, 1.0,
+        };
+
         m_ViewMatrix = glm::inverse(m_InvViewMatrix);
 
         m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
@@ -140,9 +151,9 @@ namespace psm
     void Camera::RotateWorldEulerZConstrained(const glm::vec3& offset)
     {
         glm::vec3 radiansOffset = glm::radians(offset);
-        m_CameraRotation *= glm::angleAxis(radiansOffset.x, glm::vec3(GetRightLocal()));
+        m_CameraRotation *= glm::angleAxis(radiansOffset.x, glm::vec3(GetRightWorld()));
         m_CameraRotation *= glm::angleAxis(radiansOffset.y, glm::vec3(0, 1, 0));
-        
+
         glm::normalize(m_CameraRotation);
     }
 
