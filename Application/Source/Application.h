@@ -25,8 +25,15 @@ namespace psm
         //TODO:: should be moved to another class later
         void ProcessInput();
     private:
+
+        glm::vec2 m_Resolution;
+
         Camera m_Camera;
         float m_CameraDefaultMoveSpeed;
         float m_CameraDefaultRotateSpeed;
+
+        //mouse rotation
+        glm::vec2 m_PivotMousePosition;
+        bool m_isMouseLBPressed;
     };
 }

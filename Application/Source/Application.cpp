@@ -12,8 +12,12 @@ namespace psm
     void Application::Init(uint32_t width, uint32_t height)
     {
         m_Camera = Camera(60.0f, width / height, 0.1f, 1000.0f);
-        m_CameraDefaultMoveSpeed = 20.0f;
-        m_CameraDefaultRotateSpeed = 150.0f;
+        m_CameraDefaultMoveSpeed = 10.0f;
+        m_CameraDefaultRotateSpeed = 100.0f;
+
+        m_isMouseLBPressed = false;
+
+        m_Resolution = { width, height };
 
         std::vector<MeshPbrMaterial> sponzaModelMeshMaterials;
         std::shared_ptr<Model>  sponzaModel = std::make_shared<Model>();
@@ -156,28 +160,33 @@ namespace psm
 
         bool cameraRotated = false;
         glm::vec3 eulerRotation = glm::vec3(0);
-        //Y
-        if(InputSystem::Instance()->IsKeyDown(KEY_LEFT))
+
+        if(InputSystem::Instance()->IsMouseButtonPressed(MouseKeys::LEFT))
         {
-            cameraRotated = true;
-            eulerRotation += glm::vec3(0, 1, 0);
+            m_PivotMousePosition = InputSystem::Instance()->GetMousePosition();
+            m_isMouseLBPressed = true;
         }
-        if(InputSystem::Instance()->IsKeyDown(KEY_RIGHT))
+
+        if(InputSystem::Instance()->IsMouseButtonDown(MouseKeys::LEFT))
         {
+            glm::vec2 currentMousePos = InputSystem::Instance()->GetMousePosition();
+            glm::vec2 difference = currentMousePos - m_PivotMousePosition;
+
+            difference /= (m_Resolution * 0.5f);
+
+            eulerRotation += glm::vec3(difference, 0.0);
+
+            std::cout << eulerRotation.x << " | " << eulerRotation.y << std::endl;
+
+            std::swap(eulerRotation.x, eulerRotation.y);
+
             cameraRotated = true;
-            eulerRotation += glm::vec3(0, -1, 0);
         }
-        //X
-        if(InputSystem::Instance()->IsKeyDown(KEY_UP))
+
+        /*if(InputSystem::Instance()->IsMouseButtonReleased(MouseKeys::LEFT))
         {
-            cameraRotated = true;
-            eulerRotation += glm::vec3(1, 0, 0);
-        }
-        if(InputSystem::Instance()->IsKeyDown(KEY_DOWN))
-        {
-            cameraRotated = true;
-            eulerRotation += glm::vec3(-1, 0, 0);
-        }
+            
+        }*/
 
         if(cameraRotated)
         {
@@ -195,6 +204,7 @@ namespace psm
             m_Camera.SetWorldPosition(glm::vec4(0, 0, 0, 1));
             m_Camera.SetWorldRotationEuler(glm::vec3(0, 0, 0));
         }
+
         if(cameraMoved || resetCamera || cameraRotated)
         {
             m_Camera.RecalculateFromWorld();
