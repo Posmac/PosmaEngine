@@ -171,13 +171,16 @@ namespace psm
         mGlobalBuffer = mDevice->CreateBuffer(bufferConfig);
 
         //init shadow system
-        mShadowMapSize = { 1024, 1024 };
-        PrepareShadowMapRenderPass();
         Shadows::Instance()->Init(mDevice, mSwapchain->GetImagesCount());
+        PrepareShadowMapRenderPass();
 
         //init mesh systems
+
+        auto shadowParams = Shadows::Instance()->GetShadowParams();
+        auto shadowMapSize = shadowParams.DirectionalShadowTextureSize;
+
         SResourceExtent3D swapchainSize = mSwapchain->GetSwapchainSize();
-        OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, mShadowMapRenderPass, { swapchainSize.width, swapchainSize.height }, mShadowMapSize);
+        OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, mShadowMapRenderPass, { swapchainSize.width, swapchainSize.height }, { shadowMapSize.width, shadowMapSize.height });
         ModelLoader::Instance()->Init(mDevice, mCommandPool);
 
         //InitImGui(hWnd);
@@ -344,22 +347,25 @@ namespace psm
         UClearValue shadowMapClearColor;
         shadowMapClearColor.DepthStencil = { 1.0f, 0 };
 
+        auto shadowParams = Shadows::Instance()->GetShadowParams();
+        auto shadowMapSize = shadowParams.DirectionalShadowTextureSize;
+
         SRenderPassBeginConfig shadowMapRenderPassBeginConfig =
         {
             .RenderPass = mShadowMapRenderPass,
             .Framebuffer = mShadowMapFramebuffers[imageIndex],
             .CommandBuffer = mCommandBuffers[mCurrentFrame],
             .Offset = {0, 0},
-            .Extent = mShadowMapSize,
+            .Extent = {shadowMapSize.width, shadowMapSize.height},
             .ClearValuesCount = 1,
             .pClearValues = &shadowMapClearColor,
             .SubpassContents = ESubpassContents::INLINE
         };
 
         mShadowMapRenderPass->BeginRenderPass(shadowMapRenderPassBeginConfig);
-        mDevice->SetViewport(mCommandBuffers[mCurrentFrame], 0, 0, static_cast<float>(mShadowMapSize.width), static_cast<float>(mShadowMapSize.height), 0.0f, 1.0f);
-        mDevice->SetScissors(mCommandBuffers[mCurrentFrame], { 0,0 }, mShadowMapSize);
-        mDevice->SetDepthBias(mCommandBuffers[mCurrentFrame], 0.1f, 0.0f, 0.1f);
+        mDevice->SetViewport(mCommandBuffers[mCurrentFrame], 0, 0, static_cast<float>(shadowMapSize.width), static_cast<float>(shadowMapSize.height), 0.0f, 1.0f);
+        mDevice->SetScissors(mCommandBuffers[mCurrentFrame], { 0,0 }, { shadowMapSize.width, shadowMapSize.height });
+        mDevice->SetDepthBias(mCommandBuffers[mCurrentFrame], shadowParams.DepthBias, 0.0f, shadowParams.DepthSlope);
 
         //update some matrix buffers
 
@@ -429,8 +435,7 @@ namespace psm
 
         mGui->PrepareNewFrame();
         {
-            bool showDemo = true;
-            ImGui::ShowDemoWindow(&showDemo);
+            Shadows::Instance()->DrawShadowParams();
         }
         mGui->Render(mCommandBuffers[mCurrentFrame]);
 
@@ -549,15 +554,6 @@ namespace psm
             {
                 .SrcSubpass = VK_SUBPASS_EXTERNAL,
                 .DstSubpass = 0,
-                .SrcStageMask = EPipelineStageFlags::LATE_FRAGMENT_TESTS_BIT,
-                .DstStageMask = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
-                .SrcAccessMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_READ_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-                .DstAccessMask = EAccessFlags::SHADER_READ_BIT,
-                .DependencyFlags = EDependencyFlags::NONE,
-            }
-            /*{
-                .SrcSubpass = VK_SUBPASS_EXTERNAL,
-                .DstSubpass = 0,
                 .SrcStageMask = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
                 .DstStageMask = EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
                 .SrcAccessMask = EAccessFlags::SHADER_READ_BIT,
@@ -572,7 +568,7 @@ namespace psm
                 .SrcAccessMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
                 .DstAccessMask = EAccessFlags::SHADER_READ_BIT,
                 .DependencyFlags = EDependencyFlags::BY_REGION_BIT,
-            }*/
+            }
         };
 
         SRenderPassConfig renderPassConfig =
@@ -589,13 +585,16 @@ namespace psm
 
         mShadowMapRenderPass = mDevice->CreateRenderPass(renderPassConfig);
 
+        auto shadowParams = Shadows::Instance()->GetShadowParams();
+        auto shadowMapSize = shadowParams.DirectionalShadowTextureSize;
+
         mShadowMapFramebuffers.resize(mSwapchain->GetImagesCount());
         mDirDepthShadowMaps.resize(mSwapchain->GetImagesCount());
         for(int i = 0; i < mShadowMapFramebuffers.size(); i++)
         {
             SImageConfig imageConfig =
             {
-                .ImageSize = {mShadowMapSize.width,mShadowMapSize.height, 1},
+                .ImageSize = {shadowMapSize.width,shadowMapSize.height, 1},
                 .MipLevels = 1,
                 .ArrayLevels = 1,
                 .Type = EImageType::TYPE_2D,
@@ -616,7 +615,7 @@ namespace psm
             SFramebufferConfig framebufferConfig =
             {
                 .Attachments = {mDirDepthShadowMaps[i]->GetImageView()},
-                .Size = mShadowMapSize, //shadow maps size {2048, 2048} as example
+                .Size = {shadowMapSize.width, shadowMapSize.height},
                 .RenderPass = mShadowMapRenderPass,
             };
 

@@ -27,13 +27,8 @@ namespace psm
 
         m_CameraRotation = startingRotation;
         m_CameraPosition = startingPosition;
-        glm::mat4 viewMatrix = glm::mat4_cast(m_CameraRotation);
-        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0), glm::vec3(m_CameraPosition));
-        m_InvViewMatrix = viewMatrix * translationMatrix;
-        m_ViewMatrix = glm::inverse(m_InvViewMatrix);
-
-        m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
-        m_InvViewProjectionMatrix = glm::inverse(m_ViewProjectionMatrix);
+        m_InvViewMatrix = m_ViewMatrix = glm::mat4(1.0);
+        RecalculateFromWorld();
     }
 
     glm::mat4& Camera::GetProjectionMatrix()

@@ -1,4 +1,4 @@
-#include "ModelLoader.h"
+﻿#include "ModelLoader.h"
 
 #include "RHI/Common.h"
 #include "RHI/VkCommon.h"
@@ -23,8 +23,12 @@ namespace psm
     void ModelLoader::LoadModel(const std::string& pathToModel, const std::string& modelName, Model* model, std::vector<MeshPbrMaterial>& modelMeshMaterials)
     {
         Assimp::Importer importer;
+
+        //importer.SetPropertyInteger(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, aiComponent_TANGENTS_AND_BITANGENTS);
+        //importer.SetPropertyInteger(AI_CONFIG_PP_PTV_NORMALIZE, true);
+
         std::string fullPath = pathToModel + modelName;
-        const aiScene* scene = importer.ReadFile(fullPath, aiProcess_Triangulate | aiProcess_GenUVCoords);
+        const aiScene* scene = importer.ReadFile(fullPath, aiProcess_PreTransformVertices);
 
         model->Name = fullPath;
 
@@ -122,7 +126,7 @@ namespace psm
                 }
                 else
                 {
-                    __debugbreak();
+                    pbrMat.Albedo = TextureLoader::Instance()->GetWhiteTexture();
                 }
             }
         }

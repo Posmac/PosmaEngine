@@ -75,7 +75,6 @@ namespace psm
 
         RenderPassPtr mShadowMapRenderPass;
         std::vector<FramebufferPtr> mShadowMapFramebuffers;
-        SResourceExtent2D mShadowMapSize;
         std::vector<ImagePtr> mDirDepthShadowMaps;
 
         //gui

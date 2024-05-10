@@ -3,23 +3,13 @@
 #include <string>
 #include <stdexcept>
 
+#include "RHI/Interface/Types.h"
+
 #include "Include/vulkan/vulkan.h"
 #include "stb_image.h"
 
 namespace psm
 {
-    /*struct Texture
-    {
-        VkImage Image;
-        VkDeviceMemory ImageMemory;
-        VkImageView ImageView;
-    };
-
-    struct TextureParameters
-    {
-
-    };*/
-
     enum RGB_Type
     {
         Default = 0, // only used for desired_channels
@@ -54,7 +44,10 @@ namespace psm
     public:
         void LoadRawTextureData(const std::string& path, RawTextureData* data);
         void CleanRawTextureData(void* data);
-    private:
+        void AddWhiteDefaultTexture(ImagePtr& whiteTexture);
+        ImagePtr GetWhiteTexture() const;
 
+    private:
+        ImagePtr mWhiteTexture;
     };
 }

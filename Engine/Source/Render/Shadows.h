@@ -17,6 +17,24 @@ constexpr int MAX_POINT_LIGHT_SOURCES = 16;
 
 namespace psm
 {
+    struct ShadowsParams
+    {
+        SResourceExtent3D DirectionalShadowTextureSize;
+
+        float DepthBias = 0.25f;
+        float DepthSlope = 0.25f;
+    };
+
+    struct DirectionalShadowsData
+    {
+        float Range = 25.0f;
+        float NearPlane = -500.0f;
+        float FarPlane = 500.0f;
+        glm::vec3 Position = glm::vec3(100.0f, 100.0f, 0.0f);
+        glm::vec3 LookAt = glm::vec3(0, 0, 0);
+        glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
+    };
+
     class Shadows
     {
     public:
@@ -45,6 +63,10 @@ namespace psm
         ShadowsBuffer& GetBufferData();
         BufferPtr& GetGPUBuffer();
         void Update();
+        void DrawShadowParams();
+
+        ShadowsParams& GetShadowParams();
+
     private:
 
         DevicePtr mDeviceInternal;
@@ -52,7 +74,6 @@ namespace psm
         ShadowsBuffer mShadowsBuffer;
         BufferPtr mGPUShadowBuffer;
         EFormat mDepthFormat;
-        SResourceExtent3D mDepthSize;
 
         //dir light depth image
         std::vector<ImagePtr> mDirDepthShadowMaps;
@@ -67,14 +88,8 @@ namespace psm
         RenderPassPtr mShadowRenderPass;
         std::vector<FramebufferPtr> mShadowFramebuffers;
 
-        //imgui data (for debugging)
-        float range = 25;
-        float nearPlane = -10;
-        float farPlane = 10;
-        glm::vec3 position = glm::vec3(1.0f, -1.0f, 0.0f);
-        glm::vec3 lookAt = glm::vec3(0, 0, 0);
-        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-        float depthBias = 1;
-        float depthSlope = 1;
+        //
+        DirectionalShadowsData mDirectionalLightData;
+        ShadowsParams mShadowParams;
     };
 }

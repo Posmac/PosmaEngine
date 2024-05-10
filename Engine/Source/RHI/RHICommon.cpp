@@ -31,7 +31,7 @@ namespace psm
 
         if(severity == MessageSeverity::Fatal)
         {
-            throw std::runtime_error(message);
+             throw std::runtime_error(message);
         }
     }
 

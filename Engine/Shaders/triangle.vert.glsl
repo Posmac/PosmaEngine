@@ -26,6 +26,7 @@ layout(set = 1, binding = 0) uniform ModelData
 
 layout (location = 0) out vec4 WorldPosition;
 layout (location = 1) out vec2 TexCoord;
+layout (location = 2) out vec4 ClipPos;
 
 void main()
 {
@@ -34,5 +35,6 @@ void main()
 	mat4 meshToModel = mat4(meshToParentRow1, meshToParentRow2, meshToParentRow3, meshToParentRow4);
 	mat4 modelToWorld = modelData.ModelToWorldMatrix * meshToModel;
 	WorldPosition = modelToWorld * localPosition;
-	gl_Position = globalBuffer.ViewProjectionMatrix * WorldPosition;
+	ClipPos = globalBuffer.ViewProjectionMatrix * WorldPosition;
+	gl_Position = ClipPos;
 }

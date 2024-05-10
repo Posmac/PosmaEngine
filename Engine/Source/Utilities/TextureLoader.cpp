@@ -1,5 +1,7 @@
 #include "TextureLoader.h"
 
+#include "RHI/Vulkan/CVkImage.h"
+
 #include <iostream>
 #include <fstream>
 
@@ -39,5 +41,15 @@ namespace psm
         Width = Height = NrChannels = 0;
         Data = nullptr;
         Type = type;
+    }
+
+    void TextureLoader::AddWhiteDefaultTexture(ImagePtr& whiteTexture)
+    {
+        mWhiteTexture = whiteTexture;
+    }
+
+    ImagePtr TextureLoader::GetWhiteTexture() const
+    {
+        return mWhiteTexture;
     }
 }

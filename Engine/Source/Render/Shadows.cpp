@@ -5,6 +5,8 @@
 #include "RHI/Vulkan/CVkBuffer.h"
 #endif
 
+#include "imgui/imgui.h"
+
 namespace psm
 {
     Shadows* Shadows::s_Instance = nullptr;
@@ -25,7 +27,7 @@ namespace psm
 
         mDepthFormat = mDeviceInternal->FindSupportedFormat({EFormat::D32_SFLOAT, EFormat::D32_SFLOAT_S8_UINT, EFormat::D32_SFLOAT_S8_UINT}, EImageTiling::OPTIMAL, EFeatureFormat::DEPTH_STENCIL_ATTACHMENT_BIT);
 
-        mDepthSize = { 1024, 1024, 1 };
+        mShadowParams.DirectionalShadowTextureSize = { 4096, 4096, 1 };
 
         InitShadowsBuffer();
         InitDirectionalLightData(swapchainImages);
@@ -55,7 +57,7 @@ namespace psm
         {
             SImageConfig imageConfig =
             {
-                .ImageSize = mDepthSize,
+                .ImageSize = mShadowParams.DirectionalShadowTextureSize,
                 .MipLevels = 1,
                 .ArrayLevels = 1,
                 .Type = EImageType::TYPE_2D,
@@ -134,8 +136,9 @@ namespace psm
 
     void Shadows::Update()
     {
-        glm::mat4 lightView = glm::lookAt(position, lookAt, up);
-        glm::mat4 lightProjection = glm::orthoZO(-range, range, -range, range, nearPlane, farPlane);
+        glm::mat4 lightView = glm::lookAt(mDirectionalLightData.Position, mDirectionalLightData.LookAt, mDirectionalLightData.Up);
+        float range = mDirectionalLightData.Range;
+        glm::mat4 lightProjection = glm::orthoZO(-range, range, -range, range, mDirectionalLightData.NearPlane, mDirectionalLightData.FarPlane);
         mShadowsBuffer.DirectionalLightViewProjectionMatrix = lightProjection * lightView;
 
         void* mapping;
@@ -153,5 +156,28 @@ namespace psm
         mat->DirectionalLightViewProjectionMatrix = mShadowsBuffer.DirectionalLightViewProjectionMatrix;
 
         mGPUShadowBuffer->Unmap();
+    }
+
+    void Shadows::DrawShadowParams()
+    {
+        ImGui::Begin("Hello, world!");
+        ImGui::Text("Shadow maps render params");
+
+        ImGui::SliderFloat("range", &mDirectionalLightData.Range, -100.0f, 100.0f);
+        ImGui::SliderFloat("nearPlane", &mDirectionalLightData.NearPlane, -500.0f, 500.0f);
+        ImGui::SliderFloat("farPlane", &mDirectionalLightData.FarPlane, -500.0f, 500.0f);
+        ImGui::SliderFloat("depthBias", &mShadowParams.DepthBias, -10.0f, 10.0f);
+        ImGui::SliderFloat("depthSlope", &mShadowParams.DepthSlope, -10.0f, 10.0f);
+
+        ImGui::SliderFloat3("position", &mDirectionalLightData.Position[0], -100, 100);
+        ImGui::SliderFloat3("lookAt", &mDirectionalLightData.LookAt[0], -10, 10);
+        ImGui::SliderFloat3("up", &mDirectionalLightData.Up[0], -1, 1);
+
+        ImGui::End();
+    }
+
+    ShadowsParams& Shadows::GetShadowParams()
+    {
+        return mShadowParams;
     }
 }
