@@ -14,7 +14,7 @@ namespace psm
     class CVkDescriptorSetLayout : public IDescriptorSetLayout, std::enable_shared_from_this<CVkDescriptorSetLayout>
     {
     public:
-        CVkDescriptorSetLayout(DevicePtr device, const SDescriptorSetLayoutConfig& config);
+        CVkDescriptorSetLayout(const DevicePtr& device, const SDescriptorSetLayoutConfig& config);
         virtual ~CVkDescriptorSetLayout();
 
         virtual void* Raw() override;

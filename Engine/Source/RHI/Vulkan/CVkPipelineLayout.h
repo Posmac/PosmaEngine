@@ -15,7 +15,7 @@ namespace psm
     class CVkPipelineLayout : public IPipelineLayout, std::enable_shared_from_this<CVkPipelineLayout>
     {
     public:
-        CVkPipelineLayout(DevicePtr device, const SPipelineLayoutConfig& config);
+        CVkPipelineLayout(const DevicePtr& device, const SPipelineLayoutConfig& config);
         virtual ~CVkPipelineLayout();
 
         virtual void* Raw() override;

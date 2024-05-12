@@ -13,7 +13,7 @@ namespace psm
     class CVkImGui : public IImGui, public std::enable_shared_from_this<CVkImGui>
     {
     public:
-        CVkImGui(DevicePtr device, RenderPassPtr renderPass, CommandPoolPtr commandPool, uint8_t imagesCount, ESamplesCount samplesCount);
+        CVkImGui(const DevicePtr& device, const RenderPassPtr& renderPass, const CommandPoolPtr& commandPool, uint8_t imagesCount, ESamplesCount samplesCount);
         virtual ~CVkImGui();
 
         virtual void PrepareNewFrame() override;

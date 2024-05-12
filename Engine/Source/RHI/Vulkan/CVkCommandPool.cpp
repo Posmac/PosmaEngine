@@ -5,7 +5,7 @@
 
 namespace psm
 {
-    CVkCommandPool::CVkCommandPool(DevicePtr device, const SCommandPoolConfig& config)
+    CVkCommandPool::CVkCommandPool(const DevicePtr& device, const SCommandPoolConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
         assert(mDeviceInternal != nullptr);

@@ -11,7 +11,7 @@ namespace psm
     class CVkFramebuffer : public IFramebuffer, std::enable_shared_from_this<CVkFramebuffer>
     {
     public:
-        CVkFramebuffer(DevicePtr device, const SFramebufferConfig& config);
+        CVkFramebuffer(const DevicePtr& device, const SFramebufferConfig& config);
         virtual ~CVkFramebuffer();
 
         virtual void* Raw() override;

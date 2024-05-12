@@ -5,7 +5,7 @@
 
 namespace psm
 {
-    CVkFramebuffer::CVkFramebuffer(DevicePtr device, const SFramebufferConfig& config)
+    CVkFramebuffer::CVkFramebuffer(const DevicePtr& device, const SFramebufferConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
         assert(mDeviceInternal != nullptr);

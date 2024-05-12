@@ -1,8 +1,5 @@
 #include "CVkSwapchain.h"
 
-//XXX RM
-//#include "RenderBackend/SwapChain.h"
-
 #include "CVkDevice.h"
 #include "CVkSemaphore.h"
 #include "RHI/RHICommon.h"
@@ -11,7 +8,7 @@
 
 namespace psm
 {
-    CVkSwapchain::CVkSwapchain(DevicePtr device, const SSwapchainConfig& config)
+    CVkSwapchain::CVkSwapchain(const DevicePtr& device, const SSwapchainConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
         if(mDeviceInternal == nullptr)

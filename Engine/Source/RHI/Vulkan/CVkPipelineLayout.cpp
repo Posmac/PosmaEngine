@@ -5,7 +5,7 @@
 
 namespace psm
 {
-    CVkPipelineLayout::CVkPipelineLayout(DevicePtr device, const SPipelineLayoutConfig& config)
+    CVkPipelineLayout::CVkPipelineLayout(const DevicePtr& device, const SPipelineLayoutConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 

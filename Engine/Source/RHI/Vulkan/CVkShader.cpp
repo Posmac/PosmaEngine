@@ -8,7 +8,7 @@
 
 namespace psm
 {
-    CVkShader::CVkShader(DevicePtr device, const std::string path, EShaderStageFlag shaderType)
+    CVkShader::CVkShader(const DevicePtr& device, const std::string path, EShaderStageFlag shaderType)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 

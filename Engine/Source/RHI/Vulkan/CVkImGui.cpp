@@ -15,7 +15,7 @@
 
 namespace psm
 {
-    CVkImGui::CVkImGui(DevicePtr device, RenderPassPtr renderPass, CommandPoolPtr cmdPool, uint8_t imagesCount, ESamplesCount samplesCount)
+    CVkImGui::CVkImGui(const DevicePtr& device, const RenderPassPtr& renderPass, const CommandPoolPtr& cmdPool, uint8_t imagesCount, ESamplesCount samplesCount)
     {
         mDeviceInternal = device;
 

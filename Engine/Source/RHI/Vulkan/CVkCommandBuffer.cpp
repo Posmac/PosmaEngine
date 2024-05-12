@@ -6,7 +6,7 @@
 
 namespace psm
 {
-    CVkCommandBuffer::CVkCommandBuffer(DevicePtr device, VkCommandBuffer commandBuffer)
+    CVkCommandBuffer::CVkCommandBuffer(const DevicePtr& device, VkCommandBuffer commandBuffer)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
         assert(mDeviceInternal != nullptr);

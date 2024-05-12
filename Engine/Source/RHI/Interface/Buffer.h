@@ -14,9 +14,9 @@ namespace psm
     public:
         IBuffer() = default;
         virtual ~IBuffer() = default;
-        virtual void Map(SBufferMapConfig& config) = 0;
+        virtual void Map(const SBufferMapConfig& config) = 0;
         virtual void Unmap() = 0;
-        virtual void Flush(SBufferFlushConfig& config) = 0;
+        virtual void Flush(const SBufferFlushConfig& config) = 0;
         virtual void UpdateBuffer(const SUntypedBuffer& data) = 0;
         virtual uint64_t Size() = 0;
     };

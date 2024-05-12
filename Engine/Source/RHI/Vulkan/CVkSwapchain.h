@@ -12,7 +12,7 @@ namespace psm
     class CVkSwapchain : public ISwapchain, public std::enable_shared_from_this<CVkSwapchain>
     {
     public:
-        CVkSwapchain(DevicePtr device, const SSwapchainConfig& config);
+        CVkSwapchain(const DevicePtr& device, const SSwapchainConfig& config);
         virtual ~CVkSwapchain();
 
         virtual void Resize(uint32_t width, uint32_t height) override;

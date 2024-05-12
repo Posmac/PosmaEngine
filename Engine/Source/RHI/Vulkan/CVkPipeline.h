@@ -16,7 +16,7 @@ namespace psm
     class CVkPipeline : public IPipeline, std::enable_shared_from_this<CVkPipeline>
     {
     public:
-        CVkPipeline(DevicePtr device, const SPipelineConfig& config);
+        CVkPipeline(const DevicePtr& device, const SPipelineConfig& config);
         virtual ~CVkPipeline();
 
         virtual void Bind(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint) override;

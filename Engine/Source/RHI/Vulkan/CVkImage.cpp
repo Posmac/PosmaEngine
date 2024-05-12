@@ -6,7 +6,7 @@
 
 namespace psm
 {
-    CVkImage::CVkImage(DevicePtr device, const SImageConfig& config)
+    CVkImage::CVkImage(const DevicePtr& device, const SImageConfig& config)
     {
         mImageConfig = config;
 

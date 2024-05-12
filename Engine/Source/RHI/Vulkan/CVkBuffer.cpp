@@ -7,7 +7,7 @@
 
 namespace psm
 {
-    CVkBuffer::CVkBuffer(DevicePtr device, const SBufferConfig& config)
+    CVkBuffer::CVkBuffer(const DevicePtr& device, const SBufferConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 
@@ -206,7 +206,7 @@ namespace psm
         FreeMemory(mDeviceInternal, mVkMemory);
     }
 
-    void CVkBuffer::Map(SBufferMapConfig& config)
+    void CVkBuffer::Map(const SBufferMapConfig& config)
     {
         vkMapMemory(mDeviceInternal, mVkMemory, config.Offset, config.Size, 0, config.pData);
     }
@@ -216,7 +216,7 @@ namespace psm
         vkUnmapMemory(mDeviceInternal, mVkMemory);
     }
 
-    void CVkBuffer::Flush(SBufferFlushConfig & config)
+    void CVkBuffer::Flush(const SBufferFlushConfig & config)
     {
         //can be made once at the finish
         VkMappedMemoryRange range{};

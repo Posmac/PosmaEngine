@@ -16,7 +16,7 @@ namespace psm
     class CVkRenderPass : public IRenderPass, std::enable_shared_from_this<CVkRenderPass>
     {
     public:
-        CVkRenderPass(DevicePtr device, const SRenderPassConfig& config);
+        CVkRenderPass(const DevicePtr& device, const SRenderPassConfig& config);
         virtual ~CVkRenderPass();
 
         virtual void BeginRenderPass(const SRenderPassBeginConfig& config) override;

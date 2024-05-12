@@ -12,7 +12,7 @@ namespace psm
     class CVkFence : public IFence, public std::enable_shared_from_this<CVkFence>
     {
     public:
-        CVkFence(DevicePtr device, const SFenceConfig& config);
+        CVkFence(const DevicePtr& device, const SFenceConfig& config);
         ~CVkFence();
         virtual void Wait(const SFenceWaitConfig& config) override;
         virtual void Reset() override;

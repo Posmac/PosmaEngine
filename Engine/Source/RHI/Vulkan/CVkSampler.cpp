@@ -8,7 +8,7 @@
 
 namespace psm
 {
-    CVkSampler::CVkSampler(DevicePtr device, const SSamplerConfig& config)
+    CVkSampler::CVkSampler(const DevicePtr& device, const SSamplerConfig& config)
     {
         mVkDevice = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 

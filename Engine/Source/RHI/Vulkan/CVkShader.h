@@ -14,7 +14,7 @@ namespace psm
     class CVkShader : public IShader, std::enable_shared_from_this<CVkShader>
     {
     public:
-        CVkShader(DevicePtr device, const std::string path, EShaderStageFlag shaderType);
+        CVkShader(const DevicePtr& device, const std::string path, EShaderStageFlag shaderType);
         virtual ~CVkShader();
 
         virtual void* Raw() override;

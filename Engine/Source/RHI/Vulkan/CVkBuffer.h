@@ -12,11 +12,11 @@ namespace psm
     class CVkBuffer : public IBuffer, std::enable_shared_from_this<CVkBuffer>
     {
     public:
-        CVkBuffer(DevicePtr device, const SBufferConfig& config);
+        CVkBuffer(const DevicePtr& device, const SBufferConfig& config);
         virtual ~CVkBuffer();
-        virtual void Map(SBufferMapConfig& config) override;
+        virtual void Map(const SBufferMapConfig& config) override;
         virtual void Unmap() override;
-        virtual void Flush(SBufferFlushConfig& config) override;
+        virtual void Flush(const SBufferFlushConfig& config) override;
         virtual void UpdateBuffer(const SUntypedBuffer& data) override;
         virtual uint64_t Size() override;
 

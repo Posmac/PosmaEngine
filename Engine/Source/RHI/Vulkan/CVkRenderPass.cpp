@@ -13,7 +13,7 @@
 
 namespace psm
 {
-    CVkRenderPass::CVkRenderPass(DevicePtr device, const SRenderPassConfig& config)
+    CVkRenderPass::CVkRenderPass(const DevicePtr& device, const SRenderPassConfig& config)
     {
         //Get all VkAttachmentDescription for current subpass
         std::vector<VkAttachmentDescription> attachmentDescriptions;

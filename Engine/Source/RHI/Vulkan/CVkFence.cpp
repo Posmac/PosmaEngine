@@ -4,7 +4,7 @@
 
 namespace psm
 {
-    CVkFence::CVkFence(DevicePtr device, const SFenceConfig& config)
+    CVkFence::CVkFence(const DevicePtr& device, const SFenceConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 

@@ -14,7 +14,7 @@ namespace psm
     class CVkImage : public IImage, std::enable_shared_from_this<CVkImage>
     {
     public:
-        CVkImage(DevicePtr device, const SImageConfig& config);
+        CVkImage(const DevicePtr& device, const SImageConfig& config);
         virtual ~CVkImage();
     public:
         virtual EImageType GetImageType() const override;

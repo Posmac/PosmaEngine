@@ -9,7 +9,7 @@
 
 namespace psm
 {
-    CVkPipeline::CVkPipeline(DevicePtr device, const SPipelineConfig& config)
+    CVkPipeline::CVkPipeline(const DevicePtr& device, const SPipelineConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
         assert(mDeviceInternal != nullptr);

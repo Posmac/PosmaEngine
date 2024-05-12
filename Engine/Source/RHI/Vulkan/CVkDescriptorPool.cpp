@@ -5,7 +5,7 @@
 
 namespace psm
 {
-    CVkDescriptorPool::CVkDescriptorPool(DevicePtr device, const SDescriptorPoolConfig& config)
+    CVkDescriptorPool::CVkDescriptorPool(const DevicePtr& device, const SDescriptorPoolConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 

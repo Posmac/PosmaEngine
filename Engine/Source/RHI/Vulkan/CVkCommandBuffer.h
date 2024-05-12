@@ -14,7 +14,7 @@ namespace psm
     class CVkCommandBuffer : public ICommandBuffer, std::enable_shared_from_this<CVkCommandBuffer>
     {
     public:
-        CVkCommandBuffer(DevicePtr device, VkCommandBuffer commandBuffer);
+        CVkCommandBuffer(const DevicePtr& device, VkCommandBuffer commandBuffer);
         virtual ~CVkCommandBuffer();
 
         virtual void Reset() override;

@@ -7,7 +7,7 @@
 
 namespace psm
 {
-    CVkDescriptorSetLayout::CVkDescriptorSetLayout(DevicePtr device, const SDescriptorSetLayoutConfig& config)
+    CVkDescriptorSetLayout::CVkDescriptorSetLayout(const DevicePtr& device, const SDescriptorSetLayoutConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
 
