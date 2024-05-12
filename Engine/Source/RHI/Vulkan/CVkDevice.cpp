@@ -261,7 +261,7 @@ namespace psm
         return std::make_shared<CVkImage>(RenderDevice, config);
     }
 
-    ImagePtr CVkDevice::CreateImageWithData(CommandPoolPtr commandPool, const SImageConfig& config, const SUntypedBuffer& data, const SImageToBufferCopyConfig& copyConfig)
+    ImagePtr CVkDevice::CreateImageWithData(const CommandPoolPtr& commandPool, const SImageConfig& config, const SUntypedBuffer& data, const SImageToBufferCopyConfig& copyConfig)
     {
         ImagePtr image = std::make_shared<CVkImage>(RenderDevice, config);
 
@@ -448,7 +448,7 @@ namespace psm
         return std::make_shared<CVkCommandPool>(RenderDevice, config);
     }
 
-    std::vector<CommandBufferPtr> CVkDevice::CreateCommandBuffers(CommandPoolPtr commandPool, const SCommandBufferConfig& config)
+    std::vector<CommandBufferPtr> CVkDevice::CreateCommandBuffers(const CommandPoolPtr& commandPool, const SCommandBufferConfig& config)
     {
         std::vector<CommandBufferPtr> commandBuffers(config.Size);
         std::vector<VkCommandBuffer> vkCommandBuffers(config.Size);
@@ -488,7 +488,7 @@ namespace psm
         return std::make_shared<CVkDescriptorSetLayout>(RenderDevice, config);
     }
 
-    ImGuiPtr CVkDevice::CreateGui(RenderPassPtr renderPass, CommandPoolPtr commandPool, uint8_t swapchainImagesCount, ESamplesCount samplesCount)
+    ImGuiPtr CVkDevice::CreateGui(const RenderPassPtr& renderPass, const CommandPoolPtr& commandPool, uint8_t swapchainImagesCount, ESamplesCount samplesCount)
     {
         return std::make_shared<CVkImGui>(RenderDevice, renderPass, commandPool, swapchainImagesCount, samplesCount);
     }
@@ -519,7 +519,7 @@ namespace psm
         return std::make_shared<CVkDescriptorSet>(mDevice, vkSet, vkPool);
     }
 
-    void CVkDevice::ImageLayoutTransition(CommandBufferPtr commandBuffer, ImagePtr image, const SImageLayoutTransition& config)
+    void CVkDevice::ImageLayoutTransition(const CommandBufferPtr& commandBuffer, const ImagePtr& image, const SImageLayoutTransition& config)
     {
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -546,7 +546,7 @@ namespace psm
             1, &barrier);
     }
 
-    bool CVkDevice::CheckFenceStatus(FencePtr fence)
+    bool CVkDevice::CheckFenceStatus(const FencePtr& fence)
     {
         return vkGetFenceStatus(mDevice, reinterpret_cast<VkFence>(fence->Raw())) != VK_SUCCESS;
     }
@@ -627,7 +627,7 @@ namespace psm
         vkDeviceWaitIdle(mDevice);
     }
 
-    void CVkDevice::BindVertexBuffers(CommandBufferPtr commandBuffer, const SVertexBufferBindConfig& config)
+    void CVkDevice::BindVertexBuffers(const CommandBufferPtr& commandBuffer, const SVertexBufferBindConfig& config)
     {
         std::vector<VkBuffer> buffers(config.BindingCount);
         for(int i = 0; i < buffers.size(); i++)
@@ -642,14 +642,14 @@ namespace psm
                                config.Offsets.data());
     }
 
-    void CVkDevice::BindIndexBuffer(CommandBufferPtr commandBuffer, const SIndexBufferBindConfig& config)
+    void CVkDevice::BindIndexBuffer(const CommandBufferPtr& commandBuffer, const SIndexBufferBindConfig& config)
     {
         vkCmdBindIndexBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()),
                              reinterpret_cast<VkBuffer>(config.Buffer->Raw()),
                              0, ToVulkan(config.Type));
     }
 
-    void CVkDevice::CopyBuffer(CommandBufferPtr commandBuffer, uint64_t size, BufferPtr sourceBuffer, BufferPtr destinationBuffer)
+    void CVkDevice::CopyBuffer(const CommandBufferPtr& commandBuffer, uint64_t size, const BufferPtr& sourceBuffer, const BufferPtr& destinationBuffer)
     {
         //command buffer should be bind at this time!!
 
@@ -672,7 +672,7 @@ namespace psm
         //    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);
     }
 
-    void CVkDevice::CopyBufferToImage(CommandBufferPtr commandBuffer, BufferPtr sourceBuffer, ImagePtr destrinationImage, SResourceExtent3D copySize,
+    void CVkDevice::CopyBufferToImage(const CommandBufferPtr& commandBuffer, const BufferPtr& sourceBuffer, const ImagePtr& destrinationImage, SResourceExtent3D copySize,
                                       EImageAspect imageAspect, EImageLayout imageLayoutAfterCopy)
     {
         VkBufferImageCopy copy{};
@@ -693,7 +693,7 @@ namespace psm
                                ToVulkan(imageLayoutAfterCopy), 1, &copy);
     }
 
-    void CVkDevice::BindDescriptorSets(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint, PipelineLayoutPtr pipelineLayout, const std::vector<DescriptorSetPtr>& descriptors)
+    void CVkDevice::BindDescriptorSets(const CommandBufferPtr& commandBuffer, EPipelineBindPoint bindPoint, const PipelineLayoutPtr& pipelineLayout, const std::vector<DescriptorSetPtr>& descriptors)
     {
         std::vector<VkDescriptorSet> vkDescriptors(descriptors.size());
         for(int i = 0; i < vkDescriptors.size(); i++)
@@ -707,13 +707,13 @@ namespace psm
                                 vkDescriptors.size(), vkDescriptors.data(), 0, nullptr);
     }
 
-    void CVkDevice::DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance)
+    void CVkDevice::DrawIndexed(const CommandBufferPtr& commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance)
     {
         vkCmdDrawIndexed(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()), range.IndicesCount, totalInstances,
                      range.IndicesOffset, range.VerticesOffset, firstInstance);
     }
 
-    void CVkDevice::SetDepthBias(CommandBufferPtr commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
+    void CVkDevice::SetDepthBias(const CommandBufferPtr& commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
     {
         vkCmdSetDepthBias(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()),
                  depthBiasConstantFactor,
@@ -721,7 +721,7 @@ namespace psm
                  depthBiasSlopeFactor);
     }
 
-    void CVkDevice::SetViewport(CommandBufferPtr commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth)
+    void CVkDevice::SetViewport(const CommandBufferPtr& commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth)
     {
         VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw());
         VkViewport viewport =
@@ -737,7 +737,7 @@ namespace psm
         vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
     }
 
-    void CVkDevice::SetScissors(CommandBufferPtr commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent)
+    void CVkDevice::SetScissors(const CommandBufferPtr& commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent)
     {
         VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw());
 
@@ -749,7 +749,7 @@ namespace psm
         vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
     }
 
-    void CVkDevice::UpdateDescriptorSets(DescriptorSetPtr descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers)
+    void CVkDevice::UpdateDescriptorSets(const DescriptorSetPtr& descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers)
     {
         std::vector<VkWriteDescriptorSet> writeDescriptors(updateTextures.size() + updateBuffers.size());
 

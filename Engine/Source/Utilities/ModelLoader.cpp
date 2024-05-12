@@ -1,7 +1,7 @@
 ﻿#include "ModelLoader.h"
 
 #include "RHI/Common.h"
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
 
 #include "TextureLoader.h"
 #include "Render/Renderer.h"

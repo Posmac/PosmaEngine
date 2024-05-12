@@ -93,15 +93,15 @@ namespace psm
         //class related
     public:
         
-        void Init(DevicePtr device, RenderPassPtr renderPass, RenderPassPtr shadowRenderPass, SResourceExtent2D windowSize, SResourceExtent2D shadowMapSize);
+        void Init(DevicePtr device, const RenderPassPtr& renderPass, const RenderPassPtr& shadowRenderPass, SResourceExtent2D windowSize, SResourceExtent2D shadowMapSize);
         void Deinit();
 
-        void Render(CommandBufferPtr commandBuffer);
-        void RenderDepth(CommandBufferPtr commandBuffer);
+        void Render(const CommandBufferPtr& commandBuffer);
+        void RenderDepth(const CommandBufferPtr& commandBuffer);
         void AddInstance(std::shared_ptr<Model> model, const OpaqModelMeshMaterials& materials, const OpaqModelMeshInstances& instances);
 
-        void UpdateDefaultDescriptors(BufferPtr globalBuffer, BufferPtr shadowMapBuffer, ImagePtr dirDepthShadowMap);
-        void UpdateDepthDescriptors(BufferPtr globalBuffer);
+        void UpdateDefaultDescriptors(const BufferPtr& globalBuffer, const BufferPtr& shadowMapBuffer, const ImagePtr& dirDepthShadowMap);
+        void UpdateDepthDescriptors(const BufferPtr& globalBuffer);
 
         void UpdateInstanceBuffer();
         void UpdateMeshToModelData();
@@ -109,8 +109,8 @@ namespace psm
         void SetupDescriptors();
         void SetupMaterialDescriptor(DescriptorSetPtr& descriptorSet, const Material& material);
 
-        void CreateDepthPipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize);
-        void CreateDefaultPipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize);
+        void CreateDepthPipeline(const RenderPassPtr& renderPass, SResourceExtent2D viewportSize);
+        void CreateDefaultPipeline(const RenderPassPtr& renderPass, SResourceExtent2D viewportSize);
 
     private:
         std::unordered_map<std::shared_ptr<Model>, uint32_t> m_Models;

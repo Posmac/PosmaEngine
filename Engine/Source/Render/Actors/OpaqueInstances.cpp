@@ -25,8 +25,8 @@ namespace psm
     }
 
     void OpaqueInstances::Init(DevicePtr device,
-                               RenderPassPtr defaultRenderPass,
-                               RenderPassPtr shadowRenderPass,
+                               const RenderPassPtr& defaultRenderPass,
+                               const RenderPassPtr& shadowRenderPass,
                                SResourceExtent2D windowSize,
                                SResourceExtent2D shadowMapSize)
     {
@@ -89,7 +89,7 @@ namespace psm
 
     }
 
-    void OpaqueInstances::Render(CommandBufferPtr commandBuffer)
+    void OpaqueInstances::Render(const CommandBufferPtr& commandBuffer)
     {
         if(m_Models.size() == 0)
         {
@@ -134,7 +134,7 @@ namespace psm
         }
     }
 
-    void OpaqueInstances::RenderDepth(CommandBufferPtr commandBuffer)
+    void OpaqueInstances::RenderDepth(const CommandBufferPtr& commandBuffer)
     {
         if(m_Models.size() == 0)
         {
@@ -250,7 +250,7 @@ namespace psm
         }
     }
 
-    void OpaqueInstances::CreateDefaultPipeline(RenderPassPtr renderPass, SResourceExtent2D extent)
+    void OpaqueInstances::CreateDefaultPipeline(const RenderPassPtr& renderPass, SResourceExtent2D extent)
     {
         constexpr uint32_t descriptorSetLayoutsSize = 4;
         DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
@@ -559,7 +559,7 @@ namespace psm
         mDeviceInternal->UpdateDescriptorSets(descriptorSet, texturesUpdateInfo, {});
     }
 
-    void OpaqueInstances::CreateDepthPipeline(RenderPassPtr renderPass, SResourceExtent2D viewportSize)
+    void OpaqueInstances::CreateDepthPipeline(const RenderPassPtr& renderPass, SResourceExtent2D viewportSize)
     {
         constexpr uint32_t descriptorSetLayoutsSize = 2;
         DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
@@ -854,7 +854,7 @@ namespace psm
         mInstanceToWorldConstantBuffer->Unmap();
     }
 
-    void OpaqueInstances::UpdateDefaultDescriptors(BufferPtr globalBuffer, BufferPtr shadowMapBuffer, ImagePtr dirDepthShadowMap)
+    void OpaqueInstances::UpdateDefaultDescriptors(const BufferPtr& globalBuffer, const BufferPtr& shadowMapBuffer, const ImagePtr& dirDepthShadowMap)
     {
         std::vector<SUpdateBuffersConfig> buffersInfo =
         {
@@ -894,7 +894,7 @@ namespace psm
         mDeviceInternal->UpdateDescriptorSets(mDefaultPassDepthDataSet, textureUpdateInfo, shadowBuffersInfo);
     }
 
-    void OpaqueInstances::UpdateDepthDescriptors(BufferPtr lightSources)
+    void OpaqueInstances::UpdateDepthDescriptors(const BufferPtr& lightSources)
     {
         SUpdateBuffersConfig buffers =
         {

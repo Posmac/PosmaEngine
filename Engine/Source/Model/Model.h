@@ -15,8 +15,8 @@ namespace psm
     public:
         Model();
         Model(std::vector<Mesh>& meshes);
-        void BindBuffers(DevicePtr device, CommandBufferPtr commandBuffer);
-        void Init(DevicePtr device, CommandPoolPtr commandPool);
+        void Init(const DevicePtr& device, const CommandPoolPtr& commandPool);
+        void BindBuffers(const DevicePtr& device, const CommandBufferPtr& commandBuffer);
         void Deinit();
     public:
         std::string Name;

@@ -22,7 +22,7 @@ namespace psm
         this->Meshes = std::move(meshes);
     }
 
-    void Model::BindBuffers(DevicePtr device, CommandBufferPtr commandBuffer)
+    void Model::BindBuffers(const DevicePtr& device, const CommandBufferPtr& commandBuffer)
     {
         SVertexBufferBindConfig vertexBindConfig =
         {
@@ -49,7 +49,7 @@ namespace psm
         vk::FreeMemory(vk::Device, m_VertexBufferMemory);*/
     }
 
-    void Model::Init(DevicePtr device, CommandPoolPtr commandPool)
+    void Model::Init(const DevicePtr& device, const CommandPoolPtr& commandPool)
     {
         uint32_t totalVertices = MeshVertices.size();
         uint32_t totalIndices = MeshIndices.size();
