@@ -5,7 +5,7 @@
 
 #include "Materials/PbrMaterial.h"
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
 
 namespace psm
 {

@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
 
 #include "RHI/Interface/RenderPass.h"
 #include "RHI/Interface/Types.h"
@@ -21,7 +21,8 @@ namespace psm
 
         virtual void BeginRenderPass(const SRenderPassBeginConfig& config) override;
         virtual void EndRenderPass(CommandBufferPtr commandBuffer) override;
-        virtual void* GetNativeRawPtr() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
     private:
         VkDevice mDeviceInternal;
         VkRenderPass mRenderPass;

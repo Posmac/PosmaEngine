@@ -2,7 +2,8 @@
 
 #include <vector>
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
+
 #include "RHI/Interface/Types.h"
 #include "RHI/Enums/PipelineFormats.h"
 #include "RHI/Enums/RenderPassFormats.h"
@@ -39,10 +40,5 @@ namespace psm
         uint32_t DynamicStatesCount;
         SInputAssemblyConfig InputAssembly;
         SRasterizationConfig Rasterization;
-    };
-
-    struct SPipelineBindConfig
-    {
-
     };
 }

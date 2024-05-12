@@ -1,13 +1,13 @@
 #pragma once
 
+#include "IObject.h"
+
 namespace psm
 {
-    class IShader
+    class IShader : public IObject
     {
     public:
         IShader() = default;
         virtual ~IShader() = default;
-
-        virtual void* GetPointer() = 0;
     };
 }

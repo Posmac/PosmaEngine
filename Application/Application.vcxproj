@@ -115,7 +115,7 @@ XCOPY  /s /i /y "$(SolutionDir)Engine\Shaders" "$(SolutionDir)x64/Engine/Shaders
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;RHI_VULKAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)Engine\External;$(SolutionDir)Engine\Source;$(SolutionDir)Application\Source;D:\VulkanSDK\1.3.216.0</AdditionalIncludeDirectories>
@@ -139,7 +139,7 @@ XCOPY  /s /i /y "$(SolutionDir)Engine\Models" "$(SolutionDir)x64/Engine/Models"<
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;RHI_VULKAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External\assimp\include;D:\Education\DLK\engine\Engine\External;$(SolutionDir)Application\Source;D:\VulkanSDK\1.3.216.0;$(SolutionDir)Engine\Source</AdditionalIncludeDirectories>

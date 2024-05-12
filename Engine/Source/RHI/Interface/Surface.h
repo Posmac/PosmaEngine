@@ -1,17 +1,15 @@
 #pragma once
 
-#include "../VkCommon.h"
-#include "../Configs/SurfaceConfig.h"
+#include "RHI/RHICommon.h"
+#include "IObject.h"
 #include "Types.h"
 
 namespace psm
 {
-    class ISurface
+    class ISurface : public IObject
     {
     public:
         ISurface() = default;
         virtual ~ISurface() = default;
-
-        virtual void* GetSurface() = 0;
     };
 }

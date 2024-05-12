@@ -60,4 +60,31 @@ namespace psm
         STORAGE_BUFFER_DYNAMIC = 9,
         INPUT_ATTACHMENT = 10,
     };
+
+    enum class ESubpassContents : uint32_t
+    {
+        INLINE = 0,
+        SECONDARY_COMMAND_BUFFERS = 1,
+    };
+
+    enum class EFrontFace : uint32_t
+    {
+        COUNTER_CLOCKWISE = 0,
+        CLOCKWISE = 1,
+    };
+
+    enum class ECullMode : uint32_t
+    {
+        NONE = 0,
+        FRONT_BIT = 0x00000001,
+        BACK_BIT = 0x00000002,
+        FRONT_AND_BACK = 0x00000003,
+    };
+
+    enum class EPolygonMode : uint32_t
+    {
+        FILL = 0,
+        LINE = 1,
+        POINT = 2,
+    };
 }

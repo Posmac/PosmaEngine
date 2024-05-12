@@ -115,7 +115,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);RHI_VULKAN</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;RHI_VULKAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External\assimp\include;D:\Education\DLK\engine\Engine\External;D:\VulkanSDK\1.3.216.0;$(SolutionDir)Engine\Source</AdditionalIncludeDirectories>
@@ -139,7 +139,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);RHI_VULKAN</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;RHI_VULKAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>D:\Education\DLK\engine\Engine\External;D:\VulkanSDK\1.3.216.0;$(SolutionDir)Engine\Source</AdditionalIncludeDirectories>
@@ -164,13 +164,14 @@
     <ClInclude Include="Source\RHI\Configs\RenderPassConfig.h" />
     <ClInclude Include="Source\RHI\Configs\ShadersConfig.h" />
     <ClInclude Include="Source\RHI\Configs\SyncronizationConfigs.h" />
+    <ClInclude Include="Source\RHI\Enums\CommandBuffer.h" />
     <ClInclude Include="Source\RHI\Enums\PipelineFormats.h" />
     <ClInclude Include="Source\RHI\Enums\RenderPassFormats.h" />
-    <ClInclude Include="Source\RHI\Interface\Barrier.h" />
     <ClInclude Include="Source\RHI\Interface\CommandBuffer.h" />
     <ClInclude Include="Source\RHI\Interface\CommandPool.h" />
     <ClInclude Include="Source\RHI\Interface\DescriptorPool.h" />
     <ClInclude Include="Source\RHI\Interface\Framebuffer.h" />
+    <ClInclude Include="Source\RHI\Interface\IObject.h" />
     <ClInclude Include="Source\RHI\Interface\Pipeline.h" />
     <ClInclude Include="Source\RHI\Interface\Semaphore.h" />
     <ClInclude Include="Source\RHI\Interface\Shaders.h" />
@@ -192,11 +193,9 @@
     <ClInclude Include="Source\RHI\Vulkan\CVkShader.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkSurface.h" />
     <ClInclude Include="Source\RHI\Configs\BufferConfig.h" />
-    <ClInclude Include="Source\RHI\Configs\CommandQueueConfig.h" />
     <ClInclude Include="Source\RHI\Configs\PipelineConfig.h" />
     <ClInclude Include="Source\RHI\Configs\PipelineLayoutConfig.h" />
     <ClInclude Include="Source\RHI\Configs\SamplerConfig.h" />
-    <ClInclude Include="Source\RHI\Configs\SurfaceConfig.h" />
     <ClInclude Include="Source\RHI\Configs\SwapchainConfig.h" />
     <ClInclude Include="Source\RHI\Configs\TextureConfig.h" />
     <ClInclude Include="Source\RHI\Enums\BufferFormats.h" />
@@ -234,7 +233,6 @@
     <ClInclude Include="Source\RHI\Vulkan\CVkImGui.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkSampler.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkSwapchain.h" />
-    <ClInclude Include="Source\RHI\VkCommon.h" />
     <ClInclude Include="Source\RHI\Vulkan\QueueFamilyIndices.h" />
     <ClInclude Include="Source\RHI\Vulkan\TypeConvertor.h" />
     <ClInclude Include="Source\RHI\Interface\Device.h" />
@@ -281,7 +279,6 @@
     <ClCompile Include="External\tiny_obj_loader.cpp" />
     <ClCompile Include="Source\Core\Log.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
-    <ClCompile Include="Source\Model\Mesh.cpp" />
     <ClCompile Include="Source\Model\Model.cpp" />
     <ClCompile Include="Source\Model\Vertex.cpp" />
     <ClCompile Include="Source\Render\Camera\Camera.cpp" />

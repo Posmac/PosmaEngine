@@ -162,9 +162,6 @@
     <ClInclude Include="Source\RHI\Configs\PipelineLayoutConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\Configs\CommandQueueConfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\RHI\Configs\PipelineConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -172,9 +169,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Interface\Surface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\RHI\Configs\SurfaceConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Vulkan\CVkSurface.h">
@@ -198,9 +192,6 @@
     <ClInclude Include="Source\RHI\Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\VkCommon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\RHI\Interface\Pipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -211,9 +202,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Interface\Semaphore.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\RHI\Interface\Barrier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Vulkan\CVkFence.h">
@@ -294,6 +282,12 @@
     <ClInclude Include="Tests\RHITest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\RHI\Enums\CommandBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Interface\IObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine.cpp">
@@ -336,9 +330,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="External\tiny_obj_loader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Model\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Model\Model.cpp">

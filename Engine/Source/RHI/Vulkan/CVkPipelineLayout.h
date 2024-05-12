@@ -18,7 +18,8 @@ namespace psm
         CVkPipelineLayout(DevicePtr device, const SPipelineLayoutConfig& config);
         virtual ~CVkPipelineLayout();
 
-        virtual void* GetPointer() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
 
     private:
         VkDevice mDeviceInternal;

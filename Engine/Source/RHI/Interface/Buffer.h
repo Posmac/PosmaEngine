@@ -2,15 +2,14 @@
 
 #include <cstdint>
 
-#include "../Configs/BufferConfig.h"
-#include "../Interface/Types.h"
-#include "../Memory/UntypedBuffer.h"
+#include "RHI/Configs/BufferConfig.h"
+#include "RHI/Interface/Types.h"
+#include "RHI/Memory/UntypedBuffer.h"
+#include "IObject.h"
 
 namespace psm
 {
-    class IDevice;
-
-    class IBuffer
+    class IBuffer : public IObject
     {
     public:
         IBuffer() = default;
@@ -20,7 +19,5 @@ namespace psm
         virtual void Flush(SBufferFlushConfig& config) = 0;
         virtual void UpdateBuffer(const SUntypedBuffer& data) = 0;
         virtual uint64_t Size() = 0;
-
-        virtual void* GetPointer() = 0;
     };
 }

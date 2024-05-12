@@ -16,7 +16,8 @@ namespace psm
         virtual ~CVkSemaphore();
         virtual void Wait() override;
         virtual void Signal() override; //support by 1.3 only
-        virtual void* GetRawData() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
     private:
         VkSemaphore mSemaphore;
         VkDevice mDeviceInternal;

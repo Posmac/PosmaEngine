@@ -71,14 +71,14 @@ namespace psm
             .QueueFamily = data.vkData.GraphicsQueueIndex,
             .Queue = reinterpret_cast<VkQueue>(data.vkData.GraphicsQueue),
             .PipelineCache = nullptr,
-            .DescriptorPool = reinterpret_cast<VkDescriptorPool>(mDescriptorPool->GetPointer()),
+            .DescriptorPool = reinterpret_cast<VkDescriptorPool>(mDescriptorPool->Raw()),
             .Subpass = 0,
             .MinImageCount = imagesCount,          // >= 2
             .ImageCount = imagesCount,             // >= MinImageCount
             .MSAASamples = ToVulkan(samplesCount),            // >= VK_SAMPLE_COUNT_1_BIT (0 -> default to VK_SAMPLE_COUNT_1_BIT)
         };
 
-        ImGui_ImplVulkan_Init(&info, reinterpret_cast<VkRenderPass>(renderPass->GetNativeRawPtr()));
+        ImGui_ImplVulkan_Init(&info, reinterpret_cast<VkRenderPass>(renderPass->Raw()));
 
         {
             SCommandBufferConfig bufferConfig =
@@ -98,7 +98,7 @@ namespace psm
 
             cmdBuff->Begin(begin);
 
-            ImGui_ImplVulkan_CreateFontsTexture(reinterpret_cast<VkCommandBuffer>(cmdBuff->GetRawPointer()));
+            ImGui_ImplVulkan_CreateFontsTexture(reinterpret_cast<VkCommandBuffer>(cmdBuff->Raw()));
 
             cmdBuff->End();
 
@@ -144,6 +144,6 @@ namespace psm
     void CVkImGui::Render(CommandBufferPtr commandBuffer)
     {
         ImGui::Render();
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()));
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()));
     }
 }

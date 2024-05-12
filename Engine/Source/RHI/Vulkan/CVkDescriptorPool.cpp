@@ -34,7 +34,12 @@ namespace psm
         vkDestroyDescriptorPool(mDeviceInternal, mDescriptorPool, nullptr);
     }
 
-    void* CVkDescriptorPool::GetPointer()
+    void* CVkDescriptorPool::Raw()
+    {
+        return mDescriptorPool;
+    }
+
+    void* CVkDescriptorPool::Raw() const
     {
         return mDescriptorPool;
     }

@@ -8,25 +8,23 @@
 
 #include "RHI/Configs/PipelineConfig.h"
 #include "RHI/Configs/PipelineLayoutConfig.h"
+#include "IObject.h"
 
 namespace psm
 {
-    class IPipelineLayout
+    class IPipelineLayout : public IObject
     {
     public:
         IPipelineLayout() = default;
         virtual ~IPipelineLayout() = default;
-
-        virtual void* GetPointer() = 0;
     };
 
-    class IPipeline
+    class IPipeline : public IObject
     {
     public:
         IPipeline() = default;
         virtual ~IPipeline() = default;
 
         virtual void Bind(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint) = 0;
-        virtual void* GetPointer() = 0;
     };
 }

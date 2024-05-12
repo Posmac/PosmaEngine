@@ -2,11 +2,11 @@
 
 #include "RHI/Interface/Types.h"
 #include "RHI/Configs/RenderPassConfig.h"
+#include "IObject.h"
 
 namespace psm
 {
-
-    class IRenderPass
+    class IRenderPass : public IObject
     {
     public:
         IRenderPass() = default;
@@ -14,6 +14,5 @@ namespace psm
 
         virtual void BeginRenderPass(const SRenderPassBeginConfig& config) = 0;
         virtual void EndRenderPass(CommandBufferPtr commandBuffer) = 0;
-        virtual void* GetNativeRawPtr() = 0;//TODO: abstract to IUnknown??
     };
 }

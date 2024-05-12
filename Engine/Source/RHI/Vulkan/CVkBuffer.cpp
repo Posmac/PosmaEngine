@@ -253,7 +253,12 @@ namespace psm
         return mSize;
     }
 
-    void* CVkBuffer::GetPointer()
+    void* CVkBuffer::Raw()
+    {
+        return mVkBuffer;
+    }
+
+    void* CVkBuffer::Raw() const
     {
         return mVkBuffer;
     }

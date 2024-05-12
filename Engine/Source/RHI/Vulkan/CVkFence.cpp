@@ -37,7 +37,12 @@ namespace psm
         ///not used in case of fences
     }
 
-    void* CVkFence::GetPointer()
+    void* CVkFence::Raw()
+    {
+        return mFence;
+    }
+
+    void* CVkFence::Raw() const
     {
         return mFence;
     }

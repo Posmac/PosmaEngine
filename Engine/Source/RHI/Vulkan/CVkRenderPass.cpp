@@ -1,6 +1,6 @@
 #include "CVkRenderPass.h"
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
 #include "TypeConvertor.h"
 #include "CVkDevice.h"
 #include "CVkCommandBuffer.h"
@@ -197,9 +197,9 @@ namespace psm
 
     void CVkRenderPass::BeginRenderPass(const SRenderPassBeginConfig& config)
     {
-        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(config.CommandBuffer->GetRawPointer());
-        VkRenderPass vkRenderPass = reinterpret_cast<VkRenderPass>(config.RenderPass->GetNativeRawPtr());
-        VkFramebuffer vkFramebuffer = reinterpret_cast<VkFramebuffer>(config.Framebuffer->GetRawPointer());
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(config.CommandBuffer->Raw());
+        VkRenderPass vkRenderPass = reinterpret_cast<VkRenderPass>(config.RenderPass->Raw());
+        VkFramebuffer vkFramebuffer = reinterpret_cast<VkFramebuffer>(config.Framebuffer->Raw());
 
         std::vector<VkClearValue> clearValues;
         clearValues.resize(config.ClearValuesCount);
@@ -237,11 +237,16 @@ namespace psm
 
     void CVkRenderPass::EndRenderPass(CommandBufferPtr commandBuffer)
     {
-        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer());
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw());
         vkCmdEndRenderPass(vkCommandBuffer);
     }
 
-    void* CVkRenderPass::GetNativeRawPtr()
+    void* CVkRenderPass::Raw()
+    {
+        return mRenderPass;
+    }
+
+    void* CVkRenderPass::Raw() const
     {
         return mRenderPass;
     }

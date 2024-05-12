@@ -3,7 +3,8 @@
 #include <unordered_map>
 #include <memory>
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
+
 #include "RHI/Interface/Types.h"
 
 #include "Model/Model.h"

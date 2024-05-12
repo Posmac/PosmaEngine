@@ -121,14 +121,24 @@ namespace psm
         return static_cast<uint32_t>(mImageConfig.SamplesCount);
     }
 
-    void* CVkImage::GetImageView()
+    void* CVkImage::Raw()
+    {
+        return mImage;
+    }
+
+    void* CVkImage::Raw() const
+    {
+        return mImage;
+    }
+
+    void* CVkImage::RawImageView()
     {
         return mImageView;
     }
 
-    void* CVkImage::GetImage()
+    void* CVkImage::RawImageView() const
     {
-        return mImage;
+        return mImageView;
     }
 
     uint32_t CVkImage::FindMemoryType(VkPhysicalDevice gpu, uint32_t typeFilter, VkMemoryPropertyFlags props)

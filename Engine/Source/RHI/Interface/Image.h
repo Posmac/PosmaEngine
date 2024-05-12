@@ -2,12 +2,14 @@
 
 #include <cstdint>
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
+#include "IObject.h"
+
 #include "RHI/Enums/ImageFormats.h"
 
 namespace psm
 {
-    class IImage
+    class IImage : public IObject
     {
     public:
         IImage() = default;
@@ -23,7 +25,7 @@ namespace psm
         virtual uint32_t GetArrayLayers() const = 0;
         virtual uint32_t GetSampleCount() const = 0;
 
-        virtual void* GetImageView() = 0;
-        virtual void* GetImage() = 0;
+        virtual void* RawImageView() = 0;
+        virtual void* RawImageView() const  = 0;
     };
 }

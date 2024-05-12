@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
 #include <memory>
 
 #include "RHI/Interface/CommandPool.h"
@@ -16,7 +16,9 @@ namespace psm
         virtual ~CVkCommandPool();
 
         virtual void FreeCommandBuffers(const std::vector<CommandBufferPtr>& commandBuffers) override;
-        virtual void* GetCommandPool() override;
+        
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
 
     private:
         VkDevice mDeviceInternal;

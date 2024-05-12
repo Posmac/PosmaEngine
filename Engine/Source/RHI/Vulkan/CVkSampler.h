@@ -17,7 +17,9 @@ namespace psm
         CVkSampler(DevicePtr device, const SSamplerConfig& config);
         virtual ~CVkSampler();
 
-        virtual void* GetPointer() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
+
     private:
         VkDevice mVkDevice;
         VkSampler mVkSampler;

@@ -42,7 +42,12 @@ namespace psm
         vkEndCommandBuffer(mCommandBuffer);
     }
 
-    void* CVkCommandBuffer::GetRawPointer()
+    void* CVkCommandBuffer::Raw()
+    {
+        return mCommandBuffer;
+    }
+
+    void* CVkCommandBuffer::Raw() const
     {
         return mCommandBuffer;
     }

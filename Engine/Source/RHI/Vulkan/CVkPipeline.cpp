@@ -77,7 +77,7 @@ namespace psm
                 .pNext = nullptr,
                 .flags = 0,
                 .stage = ToVulkan(config.pShaderModules[i].Type),
-                .module = reinterpret_cast<VkShaderModule>(config.pShaderModules[i].Shader->GetPointer()),
+                .module = reinterpret_cast<VkShaderModule>(config.pShaderModules[i].Shader->Raw()),
                 .pName = config.pShaderModules[i].EntryPoint,
                 .pSpecializationInfo = nullptr,
             };
@@ -176,8 +176,8 @@ namespace psm
         graphicsPipelineInfo.pDepthStencilState = &depthInfo;
         graphicsPipelineInfo.pColorBlendState = &colorBlending;
         graphicsPipelineInfo.pDynamicState = &dynamicStateCreateInfo;
-        graphicsPipelineInfo.layout = reinterpret_cast<VkPipelineLayout>(config.PipelineLayout->GetPointer());
-        graphicsPipelineInfo.renderPass = reinterpret_cast<VkRenderPass>(config.RenderPass->GetNativeRawPtr());
+        graphicsPipelineInfo.layout = reinterpret_cast<VkPipelineLayout>(config.PipelineLayout->Raw());
+        graphicsPipelineInfo.renderPass = reinterpret_cast<VkRenderPass>(config.RenderPass->Raw());
         graphicsPipelineInfo.subpass = 0;
         graphicsPipelineInfo.basePipelineHandle = nullptr;
         graphicsPipelineInfo.basePipelineIndex = 0;
@@ -194,11 +194,16 @@ namespace psm
 
     void CVkPipeline::Bind(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint)
     {
-        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer());
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw());
         vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
     }
 
-    void* CVkPipeline::GetPointer()
+    void* CVkPipeline::Raw()
+    {
+        return mPipeline;
+    }
+
+    void* CVkPipeline::Raw() const
     {
         return mPipeline;
     }

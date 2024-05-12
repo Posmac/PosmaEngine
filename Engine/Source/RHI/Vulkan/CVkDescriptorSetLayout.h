@@ -17,7 +17,9 @@ namespace psm
         CVkDescriptorSetLayout(DevicePtr device, const SDescriptorSetLayoutConfig& config);
         virtual ~CVkDescriptorSetLayout();
 
-        virtual void* GetPointer() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
+
     private:
         VkDevice mDeviceInternal;
         VkDescriptorSetLayout mLayout;
@@ -29,7 +31,9 @@ namespace psm
         CVkDescriptorSet(VkDevice device, VkDescriptorSet set, VkDescriptorPool pool);
         virtual ~CVkDescriptorSet();
 
-        virtual void* GetPointer() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
+
     private:
         VkDevice mDeviceInternal;
         VkDescriptorSet mSet;

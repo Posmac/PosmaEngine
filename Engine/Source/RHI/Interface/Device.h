@@ -4,32 +4,34 @@
 #include <Windows.h>
 #include <filesystem>
 
-#include "../Enums/ImageFormats.h"
+#include "RHI/Enums/ImageFormats.h"
 
-#include "../Configs/TextureConfig.h"
-#include "../Configs/BufferConfig.h"
-#include "../Configs/SamplerConfig.h"
-#include "../Configs/SwapchainConfig.h"
-#include "../Configs/PipelineLayoutConfig.h"
-#include "../Configs/CommandQueueConfig.h"
-#include "../Configs/PipelineConfig.h"
-#include "../Configs/SyncronizationConfigs.h"
-#include "../Configs/RenderPassConfig.h"
-#include "../Configs/CommandBuffers.h"
-#include "../Configs/FramebuffersConfig.h"
-#include "../Configs/Barriers.h"
-#include "../Configs/ShadersConfig.h"
+#include "RHI/Configs/TextureConfig.h"
+#include "RHI/Configs/BufferConfig.h"
+#include "RHI/Configs/SamplerConfig.h"
+#include "RHI/Configs/SwapchainConfig.h"
+#include "RHI/Configs/PipelineLayoutConfig.h"
+#include "RHI/Configs/PipelineConfig.h"
+#include "RHI/Configs/SyncronizationConfigs.h"
+#include "RHI/Configs/RenderPassConfig.h"
+#include "RHI/Configs/CommandBuffers.h"
+#include "RHI/Configs/FramebuffersConfig.h"
+#include "RHI/Configs/Barriers.h"
+#include "RHI/Configs/ShadersConfig.h"
 
-#include "../Memory/UntypedBuffer.h"
+#include "RHI/Memory/UntypedBuffer.h"
 #include "Types.h"
-#include "../VkCommon.h"
-#include "../DeviceData.h"
+
+#include "RHI/RHICommon.h"
+
+#include "RHI/DeviceData.h"
+#include "IObject.h"
 
 namespace psm
 {
     struct MeshRange;
 
-    class IDevice
+    class IDevice : public IObject
     {
     public:
         IDevice() = default;
@@ -43,7 +45,6 @@ namespace psm
         virtual SamplerPtr CreateSampler(const SSamplerConfig& config) = 0;
         virtual SwapchainPtr CreateSwapchain(const SSwapchainConfig& config) = 0;
         virtual PipelineLayoutPtr CreatePipelineLayout(const SPipelineLayoutConfig& config) = 0;
-        virtual CommandQueuePtr CreateCommandQueue(const SCommandQueueConfig& config) = 0;
         virtual PipelinePtr CreateRenderPipeline(const SPipelineConfig& config) = 0;
         virtual ShaderPtr CreateShaderFromFilename(const std::string& path, EShaderStageFlag shaderType) = 0;
         virtual FencePtr CreateFence(const SFenceConfig& config) = 0;

@@ -31,7 +31,13 @@ namespace psm
     {
        
     }
-    void* CVkSemaphore::GetRawData()
+
+    void* CVkSemaphore::Raw()
+    {
+        return mSemaphore;
+    }
+
+    void* CVkSemaphore::Raw() const
     {
         return mSemaphore;
     }

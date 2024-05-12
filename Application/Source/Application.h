@@ -9,7 +9,7 @@
 #include "Render/GlobalBuffer.h"
 #include "Render/Actors/OpaqueInstances.h"
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
 
 namespace psm
 {

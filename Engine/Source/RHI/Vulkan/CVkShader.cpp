@@ -1,7 +1,7 @@
 #include "CVkShader.h"
 
 #include "CVkDevice.h"
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
 
 #include <iostream>
 #include <fstream>
@@ -42,7 +42,12 @@ namespace psm
         vkDestroyShaderModule(mDeviceInternal, mShader, nullptr);
     }
 
-    void* CVkShader::GetPointer()
+    void* CVkShader::Raw()
+    {
+        return mShader;
+    }
+
+    void* CVkShader::Raw() const
     {
         return mShader;
     }

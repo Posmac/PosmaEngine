@@ -29,7 +29,8 @@ namespace psm
         CVkSurface(const PlatformConfig& config);
         virtual ~CVkSurface() = default;
 
-        virtual void* GetSurface() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
 
     public:
         void DestroySurface();

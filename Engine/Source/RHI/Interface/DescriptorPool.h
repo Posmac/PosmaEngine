@@ -1,31 +1,27 @@
 #pragma once
 
+#include "IObject.h"
+
 namespace psm
 {
-    class IDescriptorPool
+    class IDescriptorPool : public IObject
     {
     public:
         IDescriptorPool() = default;
         virtual ~IDescriptorPool() = default;
-
-        virtual void* GetPointer() = 0;
     };
 
-    class IDescriptorSetLayout
+    class IDescriptorSetLayout : public IObject
     {
     public:
         IDescriptorSetLayout() = default;
         virtual ~IDescriptorSetLayout() = default;
-
-        virtual void* GetPointer() = 0;
     };
 
-    class IDescriptorSet
+    class IDescriptorSet : public IObject
     {
     public:
         IDescriptorSet() = default;
         virtual ~IDescriptorSet() = default;
-
-        virtual void* GetPointer() = 0;
     };
 }

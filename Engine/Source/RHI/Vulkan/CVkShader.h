@@ -17,7 +17,9 @@ namespace psm
         CVkShader(DevicePtr device, const std::string path, EShaderStageFlag shaderType);
         virtual ~CVkShader();
 
-        virtual void* GetPointer() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
+
     private:
         VkDevice mDeviceInternal;
         VkShaderModule mShader;

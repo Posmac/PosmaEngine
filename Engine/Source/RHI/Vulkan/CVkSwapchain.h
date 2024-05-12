@@ -1,12 +1,9 @@
 #pragma once
 
-//XXX RM
-//#include "RenderBackend/Win32Surface.h"
-
 #include "Include/vulkan/vulkan.h"
-#include "../Interface/Swapchain.h"
-#include "../VkCommon.h"
-#include "../Interface/Types.h"
+#include "RHI/Interface/Swapchain.h"
+#include "RHI/RHICommon.h"
+#include "RHI/Interface/Types.h"
 
 #include "TypeConvertor.h"
 
@@ -27,6 +24,9 @@ namespace psm
         virtual EFormat GetSwapchainImageFormat() override;
         virtual SResourceExtent3D GetSwapchainSize() override;
 
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
+
     private:
         void CheckFormatSupport(VkFormat& format, const std::vector<VkSurfaceFormatKHR>& formats);
         void CheckColorSpaceSupport(VkColorSpaceKHR& colorSpace, const std::vector<VkSurfaceFormatKHR>& formats);
@@ -39,7 +39,7 @@ namespace psm
         VkSwapchainKHR mSwapChain;
         VkFormat mSwapChainImageFormat;
         VkExtent2D mSwapChainExtent;
-        
+
         std::vector<VkImage> mSwapChainImages;
         std::vector<VkImageView> mSwapchainImageViews;
     };

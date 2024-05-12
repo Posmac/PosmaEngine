@@ -2,7 +2,6 @@
 
 #include "RHICommon.h"
 #include "Common.h"
-#include "VkCommon.h"
 #include "RHI/Vulkan/VkUtils.h"
 
 VkInstance Instance;

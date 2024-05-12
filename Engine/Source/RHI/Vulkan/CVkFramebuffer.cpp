@@ -9,7 +9,7 @@ namespace psm
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
         assert(mDeviceInternal != nullptr);
-        VkRenderPass vkRenderPass = reinterpret_cast<VkRenderPass>(config.RenderPass->GetNativeRawPtr());
+        VkRenderPass vkRenderPass = reinterpret_cast<VkRenderPass>(config.RenderPass->Raw());
         assert(vkRenderPass != nullptr);
 
         std::vector<VkImageView> attachments;
@@ -41,7 +41,12 @@ namespace psm
         vkDestroyFramebuffer(mDeviceInternal, mFramebuffer, nullptr);
     }
 
-    void* CVkFramebuffer::GetRawPointer()
+    void* CVkFramebuffer::Raw()
+    {
+        return mFramebuffer;
+    }
+
+    void* CVkFramebuffer::Raw() const
     {
         return mFramebuffer;
     }

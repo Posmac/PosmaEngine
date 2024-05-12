@@ -18,6 +18,10 @@ namespace psm
     public:
         CVkDevice(VkPhysicalDevice physicalDevice, SurfacePtr surface);
         virtual ~CVkDevice();
+
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
+
     public:
         virtual ImagePtr CreateImage(const SImageConfig& config) override;
         virtual ImagePtr CreateImageWithData(CommandPoolPtr commandPool, const SImageConfig& config, const SUntypedBuffer& data, const SImageToBufferCopyConfig& copyConfig) override;
@@ -25,7 +29,6 @@ namespace psm
         virtual SamplerPtr CreateSampler(const SSamplerConfig& config) override;
         virtual SwapchainPtr CreateSwapchain(const SSwapchainConfig& config) override;
         virtual PipelineLayoutPtr CreatePipelineLayout(const SPipelineLayoutConfig& config) override;
-        virtual CommandQueuePtr CreateCommandQueue(const SCommandQueueConfig& config) override;
         virtual PipelinePtr CreateRenderPipeline(const SPipelineConfig& config) override;
         virtual ShaderPtr CreateShaderFromFilename(const std::string& path, EShaderStageFlag shaderType) override;
         virtual FencePtr CreateFence(const SFenceConfig& config) override;

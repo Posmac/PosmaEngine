@@ -1,13 +1,13 @@
 #pragma once
 
+#include "IObject.h"
+
 namespace psm
 {
-    class IFramebuffer
+    class IFramebuffer : public IObject
     {
     public:
         IFramebuffer() = default;
         virtual ~IFramebuffer() = default;
-
-        virtual void* GetRawPointer() = 0;
     };
 }

@@ -5,7 +5,7 @@
 
 #include "Include/vulkan/vulkan.h"
 #include "RHI/Interface/Buffer.h"
-#include "../Memory/UntypedBuffer.h"
+#include "RHI/Memory/UntypedBuffer.h"
 
 namespace psm
 {
@@ -20,7 +20,8 @@ namespace psm
         virtual void UpdateBuffer(const SUntypedBuffer& data) override;
         virtual uint64_t Size() override;
 
-        virtual void* GetPointer() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
 
     private:
         VkResult CreateBuffer(VkDevice device,

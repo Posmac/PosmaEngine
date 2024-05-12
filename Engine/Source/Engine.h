@@ -3,7 +3,6 @@
 #include <Windows.h>
 
 #include "Render/Renderer.h"
-//#include "Core/Log.h"
 
 namespace psm
 {

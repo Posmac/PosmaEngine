@@ -2,7 +2,8 @@
 
 #include <vector>
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
+
 #include "RHI/Interface/Types.h"
 
 namespace psm
@@ -13,6 +14,4 @@ namespace psm
         SResourceExtent2D Size;
         RenderPassPtr RenderPass;
     };
-
-   
 }

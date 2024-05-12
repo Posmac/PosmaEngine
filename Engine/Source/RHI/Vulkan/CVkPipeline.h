@@ -20,7 +20,8 @@ namespace psm
         virtual ~CVkPipeline();
 
         virtual void Bind(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint) override;
-        virtual void* GetPointer() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
 
     private:
         VkDevice mDeviceInternal;

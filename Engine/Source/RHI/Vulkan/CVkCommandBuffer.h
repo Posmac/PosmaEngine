@@ -11,7 +11,6 @@
 
 namespace psm
 {
-    //TODO: Rewrite this class to hold only 1 VkCommandBuffer!!
     class CVkCommandBuffer : public ICommandBuffer, std::enable_shared_from_this<CVkCommandBuffer>
     {
     public:
@@ -21,7 +20,9 @@ namespace psm
         virtual void Reset() override;
         virtual void Begin(const SCommandBufferBeginConfig& config) override;
         virtual void End() override;
-        virtual void* GetRawPointer() override;
+        
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
 
     private:
         VkDevice mDeviceInternal;

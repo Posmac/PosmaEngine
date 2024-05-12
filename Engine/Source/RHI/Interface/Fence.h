@@ -1,10 +1,12 @@
 #pragma once
 
+#include "IObject.h"
+
 namespace psm
 {
     struct SFenceWaitConfig;
 
-    class IFence
+    class IFence : public IObject
     {
     public:
         IFence() = default;
@@ -12,7 +14,5 @@ namespace psm
         virtual void Wait(const SFenceWaitConfig& config) = 0;
         virtual void Reset() = 0;
         virtual void Signal() = 0;
-
-        virtual void* GetPointer() = 0;
     };
 }

@@ -1,13 +1,13 @@
 #pragma once
 
+#include "IObject.h"
+
 namespace psm
 {
-    class ISampler
+    class ISampler : public IObject
     {
     public:
         ISampler() = default;
         virtual ~ISampler() = default;
-
-        virtual void* GetPointer() = 0;
     };
 }

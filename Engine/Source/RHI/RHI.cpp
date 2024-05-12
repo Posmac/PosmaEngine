@@ -2,8 +2,8 @@
 
 #include "Interface/Device.h"
 
-#ifdef RHI_VULKAN
-#include "VkCommon.h"
+#if defined(RHI_VULKAN)
+#include "RHICommon.h"
 #include "RHIVulkan.h"
 #include "Vulkan/CVkDevice.h"
 #endif

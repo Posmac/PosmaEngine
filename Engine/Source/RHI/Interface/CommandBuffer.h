@@ -3,10 +3,11 @@
 #include <cstdint>
 
 #include "RHI/Configs/CommandBuffers.h"
+#include "IObject.h"
 
 namespace psm
 {
-    class ICommandBuffer
+    class ICommandBuffer : public IObject
     {
     public:
         ICommandBuffer() = default;
@@ -15,6 +16,5 @@ namespace psm
         virtual void Reset() = 0;
         virtual void Begin(const SCommandBufferBeginConfig& config) = 0;
         virtual void End() = 0;
-        virtual void* GetRawPointer() = 0;
     };
 }

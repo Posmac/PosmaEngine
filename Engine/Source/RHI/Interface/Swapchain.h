@@ -1,14 +1,15 @@
 #pragma once
 
 #include <Windows.h>
-#include "../VkCommon.h"
-#include "../Configs/SwapchainConfig.h"
+#include "RHI/RHICommon.h"
+#include "RHI/Configs/SwapchainConfig.h"
 #include "Types.h"
 #include "RHI/Enums/ImageFormats.h"
+#include "IObject.h"
 
 namespace psm
 {
-    class ISwapchain
+    class ISwapchain : public IObject
     {
     public:
         ISwapchain() = default;

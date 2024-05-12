@@ -2,13 +2,10 @@
 
 #include <array>
 
-#include "RHI/VkCommon.h"
 #include "RHI/Interface/Types.h"
 #include "RHI/Enums/ImageFormats.h"
 
-#ifdef RHI_VULKAN
-
-#endif
+#include "RHI/RHICommon.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"

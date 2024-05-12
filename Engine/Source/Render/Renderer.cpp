@@ -614,7 +614,7 @@ namespace psm
 
             SFramebufferConfig framebufferConfig =
             {
-                .Attachments = {mDirDepthShadowMaps[i]->GetImageView()},
+                .Attachments = {mDirDepthShadowMaps[i]->RawImageView()},
                 .Size = {shadowMapSize.width, shadowMapSize.height},
                 .RenderPass = mShadowMapRenderPass,
             };
@@ -652,7 +652,7 @@ namespace psm
         {
             SFramebufferConfig framebufferConfig =
             {
-                .Attachments = { mSwapchain->ImageAtIndex(i), mDepthRenderTargetTexture->GetImageView() },
+                .Attachments = { mSwapchain->ImageAtIndex(i), mDepthRenderTargetTexture->RawImageView() },
                 .Size = { swapchainSize.width, swapchainSize.height },
                 .RenderPass = mRenderPass
             };

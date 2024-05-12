@@ -2,7 +2,7 @@
 
 #include "CVkDevice.h"
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
 #include "RHI/Vulkan/TypeConvertor.h"
 
 namespace psm
@@ -39,7 +39,12 @@ namespace psm
         vkDestroyDescriptorSetLayout(mDeviceInternal, mLayout, nullptr);
     }
 
-    void* CVkDescriptorSetLayout::GetPointer()
+    void* CVkDescriptorSetLayout::Raw()
+    {
+        return mLayout;
+    }
+
+    void* CVkDescriptorSetLayout::Raw() const
     {
         return mLayout;
     }
@@ -56,7 +61,12 @@ namespace psm
         vkFreeDescriptorSets(mDeviceInternal, mPool, 1, &mSet);
     }
 
-    void* CVkDescriptorSet::GetPointer()
+    void* CVkDescriptorSet::Raw()
+    {
+        return mSet;
+    }
+
+    void* CVkDescriptorSet::Raw() const
     {
         return mSet;
     }

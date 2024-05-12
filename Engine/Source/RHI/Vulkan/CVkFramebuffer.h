@@ -14,7 +14,8 @@ namespace psm
         CVkFramebuffer(DevicePtr device, const SFramebufferConfig& config);
         virtual ~CVkFramebuffer();
 
-        virtual void* GetRawPointer() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
 
     private:
         VkDevice mDeviceInternal;

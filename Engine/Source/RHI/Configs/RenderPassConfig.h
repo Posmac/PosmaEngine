@@ -5,7 +5,9 @@
 
 #include "RHI/Enums/ImageFormats.h"
 #include "RHI/Enums/RenderPassFormats.h"
-#include "RHI/VkCommon.h"
+#include "RHI/Enums/PipelineFormats.h"
+
+#include "RHI/RHICommon.h"
 
 namespace psm
 {
@@ -72,12 +74,6 @@ namespace psm
         const SAttachmentReference* pDepthStencilAttachment;
         uint32_t PreserveAttachmentCount;
         const uint32_t* pPreserveAttachments;
-    };
-
-    enum class ESubpassContents : uint32_t
-    {
-        INLINE = 0,
-        SECONDARY_COMMAND_BUFFERS = 1,
     };
 
     union UClearColorValue

@@ -43,7 +43,12 @@ namespace psm
         vkDestroySampler(mVkDevice, mVkSampler, nullptr);
     }
 
-    void* CVkSampler::GetPointer()
+    void* CVkSampler::Raw()
+    {
+        return mVkSampler;
+    }
+
+    void* CVkSampler::Raw() const
     {
         return mVkSampler;
     }

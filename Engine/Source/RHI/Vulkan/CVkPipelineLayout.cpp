@@ -13,7 +13,7 @@ namespace psm
 
         for(int i = 0; i < config.LayoutsSize; i++)
         {
-            layouts[i] = reinterpret_cast<VkDescriptorSetLayout>(config.pLayouts[i]->GetPointer());
+            layouts[i] = reinterpret_cast<VkDescriptorSetLayout>(config.pLayouts[i]->Raw());
         }
 
         std::vector<VkPushConstantRange> pushConstants(config.PushConstantsSize);
@@ -45,7 +45,12 @@ namespace psm
         vkDestroyPipelineLayout(mDeviceInternal, mPipelineLayout, nullptr);
     }
 
-    void* CVkPipelineLayout::GetPointer()
+    void* CVkPipelineLayout::Raw()
+    {
+        return mPipelineLayout;
+    }
+
+    void* CVkPipelineLayout::Raw() const
     {
         return mPipelineLayout;
     }

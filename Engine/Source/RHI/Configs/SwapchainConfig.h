@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Interface/Types.h"
+#include "RHI/Interface/Types.h"
 
 namespace psm
 {

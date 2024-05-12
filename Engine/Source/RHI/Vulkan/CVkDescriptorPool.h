@@ -17,7 +17,8 @@ namespace psm
         CVkDescriptorPool(DevicePtr device, const SDescriptorPoolConfig& config);
         virtual ~CVkDescriptorPool();
 
-        virtual void* GetPointer() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
 
     private:
         VkDevice mDeviceInternal;

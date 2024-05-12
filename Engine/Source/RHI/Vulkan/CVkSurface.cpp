@@ -1,6 +1,6 @@
 #include "CVkSurface.h"
 
-#include "../VkCommon.h"
+#include "RHI/RHICommon.h"
 #include "CVkDevice.h"
 
 extern VkInstance Instance;
@@ -22,6 +22,16 @@ namespace psm
         VK_CHECK_RESULT(result);
     }
 
+    void* CVkSurface::Raw()
+    {
+        return mSurface;
+    }
+
+    void* CVkSurface::Raw() const
+    {
+        return mSurface;
+    }
+
     void CVkSurface::DestroySurface()
     {
         vkDestroySurfaceKHR(Instance, mSurface, nullptr);
@@ -32,7 +42,7 @@ namespace psm
         VkPhysicalDevice physicalDevice = reinterpret_cast<VkPhysicalDevice>(data.vkData.PhysicalDevice);
         assert(physicalDevice != nullptr);
 
-        VkSurfaceKHR vkSurface = reinterpret_cast<VkSurfaceKHR>(surface->GetSurface());
+        VkSurfaceKHR vkSurface = reinterpret_cast<VkSurfaceKHR>(surface->Raw());
         assert(vkSurface != nullptr);
 
         //get surface capabilities, formats and present modes
@@ -53,11 +63,6 @@ namespace psm
 
         mSurfaceData.PresentModes.resize(surfaceSupportedPresentModesCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, vkSurface, &surfaceSupportedPresentModesCount, mSurfaceData.PresentModes.data());
-    }
-
-    void* CVkSurface::GetSurface()
-    {
-        return mSurface;
     }
 
     CVkSurface::SurfaceData& CVkSurface::GetSurfaceData()

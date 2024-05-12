@@ -18,7 +18,9 @@ namespace psm
         virtual void Reset() override;
         virtual void Signal() override;
 
-        virtual void* GetPointer() override;
+        virtual void* Raw() override;
+        virtual void* Raw() const override;
+
     private:
         VkFence mFence;
         VkDevice mDeviceInternal;

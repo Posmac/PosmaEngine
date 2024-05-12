@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "RHI/VkCommon.h"
+#include "RHI/RHICommon.h"
 
 #include "RHI/Enums/ImageFormats.h"
 #include "RHI/Enums/ResourceFormats.h"

@@ -19,13 +19,12 @@
 #include "CVkPipeline.h"
 #include "CVkDescriptorSetLayout.h"
 #include "CVkImGui.h"
-#include "../Memory/UntypedBuffer.h"
+#include "RHI/Memory/UntypedBuffer.h"
 
 #include <Windows.h>
 #include <set>
 
-#include "../RHICommon.h"
-#include "../VkCommon.h"
+#include "RHI/RHICommon.h"
 #include "VkUtils.h"
 
 #include "Model/Mesh.h"
@@ -188,7 +187,7 @@ namespace psm
         for(const auto& family : availableQueueFamilyProperties)
         {
             VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, reinterpret_cast<VkSurfaceKHR>(surface->GetSurface()), &presentSupport);
+            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, reinterpret_cast<VkSurfaceKHR>(surface->Raw()), &presentSupport);
             if(family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
                 mQueues.GraphicsFamily = i;
@@ -245,6 +244,16 @@ namespace psm
     CVkDevice::~CVkDevice()
     {
         vkDestroyDevice(mDevice, nullptr);
+    }
+
+    void* CVkDevice::Raw()
+    {
+        return mDevice;
+    }
+
+    void* CVkDevice::Raw() const
+    {
+        return mDevice;
     }
 
     ImagePtr CVkDevice::CreateImage(const SImageConfig& config)
@@ -429,11 +438,6 @@ namespace psm
         return std::make_shared<CVkPipelineLayout>(RenderDevice, config);
     }
 
-    CommandQueuePtr CVkDevice::CreateCommandQueue(const SCommandQueueConfig& config)
-    {
-        return CommandQueuePtr();
-    }
-
     RenderPassPtr CVkDevice::CreateRenderPass(const SRenderPassConfig& config)
     {
         return std::make_shared<CVkRenderPass>(RenderDevice, config);
@@ -449,7 +453,7 @@ namespace psm
         std::vector<CommandBufferPtr> commandBuffers(config.Size);
         std::vector<VkCommandBuffer> vkCommandBuffers(config.Size);
 
-        VkCommandPool vkPool = reinterpret_cast<VkCommandPool>(commandPool->GetCommandPool());
+        VkCommandPool vkPool = reinterpret_cast<VkCommandPool>(commandPool->Raw());
 
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -491,7 +495,7 @@ namespace psm
 
     DescriptorSetPtr CVkDevice::AllocateDescriptorSets(SDescriptorSetAllocateConfig& config)
     {
-        VkDescriptorPool vkPool = reinterpret_cast<VkDescriptorPool>(config.DescriptorPool->GetPointer());
+        VkDescriptorPool vkPool = reinterpret_cast<VkDescriptorPool>(config.DescriptorPool->Raw());
         VkDescriptorSet vkSet;
 
         std::vector<VkDescriptorSetLayout> layouts;
@@ -499,7 +503,7 @@ namespace psm
 
         for(int i = 0; i < layouts.size(); i++)
         {
-            layouts[i] = reinterpret_cast<VkDescriptorSetLayout>(config.DescriptorSetLayouts[i]->GetPointer());
+            layouts[i] = reinterpret_cast<VkDescriptorSetLayout>(config.DescriptorSetLayouts[i]->Raw());
         }
 
         VkDescriptorSetAllocateInfo setsAllocInfo{};
@@ -522,7 +526,7 @@ namespace psm
         barrier.pNext = nullptr;
         barrier.oldLayout = ToVulkan(config.OldLayout);
         barrier.newLayout = ToVulkan(config.NewLayout);
-        barrier.image = reinterpret_cast<VkImage>(image->GetImage());
+        barrier.image = reinterpret_cast<VkImage>(image->Raw());
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.subresourceRange.aspectMask = ToVulkan(config.ImageAspectFlags);
@@ -533,7 +537,7 @@ namespace psm
         barrier.srcAccessMask = ToVulkan(config.SourceMask);
         barrier.dstAccessMask = ToVulkan(config.DestinationMask);
 
-        vkCmdPipelineBarrier(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
+        vkCmdPipelineBarrier(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()),
             ToVulkan(config.SourceStage),
             ToVulkan(config.DestinationStage),
             0,
@@ -544,13 +548,13 @@ namespace psm
 
     bool CVkDevice::CheckFenceStatus(FencePtr fence)
     {
-        return vkGetFenceStatus(mDevice, reinterpret_cast<VkFence>(fence->GetPointer())) != VK_SUCCESS;
+        return vkGetFenceStatus(mDevice, reinterpret_cast<VkFence>(fence->Raw())) != VK_SUCCESS;
     }
 
     void CVkDevice::InsertImageMemoryBarrier(const SImageBarrierConfig& config)
     {
-        VkImage vkImage = reinterpret_cast<VkImage>(config.Image->GetImage());
-        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(config.CommandBuffer->GetRawPointer());
+        VkImage vkImage = reinterpret_cast<VkImage>(config.Image->Raw());
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(config.CommandBuffer->Raw());
 
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -582,19 +586,19 @@ namespace psm
         std::vector<VkSemaphore> waitSemapthores(config.WaitSemaphoresCount);
         for(int i = 0; i < waitSemapthores.size(); i++)
         {
-            waitSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[i]->GetRawData());
+            waitSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[i]->Raw());
         }
 
         std::vector<VkSemaphore> signalSemapthores(config.WaitSemaphoresCount);
         for(int i = 0; i < signalSemapthores.size(); i++)
         {
-            signalSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pSignalSemaphores[i]->GetRawData());
+            signalSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pSignalSemaphores[i]->Raw());
         }
 
         std::vector<VkCommandBuffer> cmdBuffers(config.CommandBuffersCount);
         for(int i = 0; i < cmdBuffers.size(); i++)
         {
-            cmdBuffers[i] = reinterpret_cast<VkCommandBuffer>(config.pCommandBuffers[i]->GetRawPointer());
+            cmdBuffers[i] = reinterpret_cast<VkCommandBuffer>(config.pCommandBuffers[i]->Raw());
         }
 
         VkPipelineStageFlags stageFlags = ToVulkan(config.WaitStageFlags);
@@ -610,7 +614,7 @@ namespace psm
         submitInfo.signalSemaphoreCount = signalSemapthores.size();
         submitInfo.pSignalSemaphores = signalSemapthores.data();
 
-        VkResult result = vkQueueSubmit(reinterpret_cast<VkQueue>(config.Queue), config.SubmitCount, &submitInfo, reinterpret_cast<VkFence>(config.Fence->GetPointer()));
+        VkResult result = vkQueueSubmit(reinterpret_cast<VkQueue>(config.Queue), config.SubmitCount, &submitInfo, reinterpret_cast<VkFence>(config.Fence->Raw()));
     }
 
     void CVkDevice::Present(const SPresentConfig& config)
@@ -628,10 +632,10 @@ namespace psm
         std::vector<VkBuffer> buffers(config.BindingCount);
         for(int i = 0; i < buffers.size(); i++)
         {
-            buffers[i] = reinterpret_cast<VkBuffer>(config.Buffers[i]->GetPointer());
+            buffers[i] = reinterpret_cast<VkBuffer>(config.Buffers[i]->Raw());
         }
 
-        vkCmdBindVertexBuffers(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
+        vkCmdBindVertexBuffers(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()),
                                config.FirstSlot, //first binding 
                                config.BindingCount, //binding count
                                buffers.data(),
@@ -640,8 +644,8 @@ namespace psm
 
     void CVkDevice::BindIndexBuffer(CommandBufferPtr commandBuffer, const SIndexBufferBindConfig& config)
     {
-        vkCmdBindIndexBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
-                             reinterpret_cast<VkBuffer>(config.Buffer->GetPointer()),
+        vkCmdBindIndexBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()),
+                             reinterpret_cast<VkBuffer>(config.Buffer->Raw()),
                              0, ToVulkan(config.Type));
     }
 
@@ -658,9 +662,9 @@ namespace psm
              VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
              VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);*/
 
-        vkCmdCopyBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
-                        reinterpret_cast<VkBuffer>(sourceBuffer->GetPointer()),
-                        reinterpret_cast<VkBuffer>(destinationBuffer->GetPointer()),
+        vkCmdCopyBuffer(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()),
+                        reinterpret_cast<VkBuffer>(sourceBuffer->Raw()),
+                        reinterpret_cast<VkBuffer>(destinationBuffer->Raw()),
                         1, &copyRegion);
 
         //vk::InsertBufferMemoryBarrier(commandBuffer, dstBuffer, size,
@@ -683,9 +687,9 @@ namespace psm
         copy.imageSubresource.layerCount = 1;
         copy.imageSubresource.mipLevel = 0;
 
-        vkCmdCopyBufferToImage(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
-                               reinterpret_cast<VkBuffer>(sourceBuffer->GetPointer()),
-                               reinterpret_cast<VkImage>(destrinationImage->GetImage()),
+        vkCmdCopyBufferToImage(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()),
+                               reinterpret_cast<VkBuffer>(sourceBuffer->Raw()),
+                               reinterpret_cast<VkImage>(destrinationImage->Raw()),
                                ToVulkan(imageLayoutAfterCopy), 1, &copy);
     }
 
@@ -694,24 +698,24 @@ namespace psm
         std::vector<VkDescriptorSet> vkDescriptors(descriptors.size());
         for(int i = 0; i < vkDescriptors.size(); i++)
         {
-            vkDescriptors[i] = reinterpret_cast<VkDescriptorSet>(descriptors[i]->GetPointer());
+            vkDescriptors[i] = reinterpret_cast<VkDescriptorSet>(descriptors[i]->Raw());
         }
 
-        vkCmdBindDescriptorSets(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
+        vkCmdBindDescriptorSets(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()),
                                 ToVulkan(bindPoint),
-                                reinterpret_cast<VkPipelineLayout>(pipelineLayout->GetPointer()), 0,
+                                reinterpret_cast<VkPipelineLayout>(pipelineLayout->Raw()), 0,
                                 vkDescriptors.size(), vkDescriptors.data(), 0, nullptr);
     }
 
     void CVkDevice::DrawIndexed(CommandBufferPtr commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance)
     {
-        vkCmdDrawIndexed(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()), range.IndicesCount, totalInstances,
+        vkCmdDrawIndexed(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()), range.IndicesCount, totalInstances,
                      range.IndicesOffset, range.VerticesOffset, firstInstance);
     }
 
     void CVkDevice::SetDepthBias(CommandBufferPtr commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
     {
-        vkCmdSetDepthBias(reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer()),
+        vkCmdSetDepthBias(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()),
                  depthBiasConstantFactor,
                  depthBiasClamp,
                  depthBiasSlopeFactor);
@@ -719,7 +723,7 @@ namespace psm
 
     void CVkDevice::SetViewport(CommandBufferPtr commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth)
     {
-        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer());
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw());
         VkViewport viewport =
         {
             .x = viewPortX,
@@ -735,7 +739,7 @@ namespace psm
 
     void CVkDevice::SetScissors(CommandBufferPtr commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent)
     {
-        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->GetRawPointer());
+        VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw());
 
         VkRect2D scissor =
         {
@@ -754,7 +758,7 @@ namespace psm
         {
             buffersInfo[i] =
             {
-                .buffer = reinterpret_cast<VkBuffer>(updateBuffers[i].Buffer->GetPointer()),
+                .buffer = reinterpret_cast<VkBuffer>(updateBuffers[i].Buffer->Raw()),
                 .offset = updateBuffers[i].Offset,
                 .range = updateBuffers[i].Range
             };
@@ -768,7 +772,7 @@ namespace psm
             writeDescriptors[i].pBufferInfo = &buffersInfo[i];
             writeDescriptors[i].pImageInfo = nullptr;
             writeDescriptors[i].pTexelBufferView = nullptr;
-            writeDescriptors[i].dstSet = reinterpret_cast<VkDescriptorSet>(descriptorSet->GetPointer());
+            writeDescriptors[i].dstSet = reinterpret_cast<VkDescriptorSet>(descriptorSet->Raw());
         }
 
         std::vector<VkDescriptorImageInfo> imagesInfo(updateTextures.size());
@@ -776,8 +780,8 @@ namespace psm
         {
             imagesInfo[i] =
             {
-                .sampler = reinterpret_cast<VkSampler>(updateTextures[i].Sampler->GetPointer()),
-                .imageView = reinterpret_cast<VkImageView>(updateTextures[i].Image->GetImageView()),
+                .sampler = reinterpret_cast<VkSampler>(updateTextures[i].Sampler->Raw()),
+                .imageView = reinterpret_cast<VkImageView>(updateTextures[i].Image->RawImageView()),
                 .imageLayout = ToVulkan(updateTextures[i].ImageLayout)
             };
 
@@ -790,7 +794,7 @@ namespace psm
             writeDescriptors[i + buffersInfo.size()].pBufferInfo = nullptr;
             writeDescriptors[i + buffersInfo.size()].pImageInfo = &imagesInfo[i];
             writeDescriptors[i + buffersInfo.size()].pTexelBufferView = nullptr;
-            writeDescriptors[i + buffersInfo.size()].dstSet = reinterpret_cast<VkDescriptorSet>(descriptorSet->GetPointer());
+            writeDescriptors[i + buffersInfo.size()].dstSet = reinterpret_cast<VkDescriptorSet>(descriptorSet->Raw());
         }
 
         vkUpdateDescriptorSets(mDevice, writeDescriptors.size(), writeDescriptors.data(), 0, nullptr);

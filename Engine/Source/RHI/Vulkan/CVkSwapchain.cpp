@@ -28,7 +28,7 @@ namespace psm
         swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapchainCreateInfo.pNext = nullptr;
         swapchainCreateInfo.flags = 0;
-        swapchainCreateInfo.surface = reinterpret_cast<VkSurfaceKHR>(vkSurface->GetSurface());
+        swapchainCreateInfo.surface = reinterpret_cast<VkSurfaceKHR>(vkSurface->Raw());
         swapchainCreateInfo.minImageCount = 
             (data.Capabilities.minImageCount + 1 <= data.Capabilities.maxImageCount) ?
             data.Capabilities.minImageCount + 1 : data.Capabilities.maxImageCount;
@@ -84,7 +84,7 @@ namespace psm
     void CVkSwapchain::GetNextImage(const SSwapchainAquireNextImageConfig& config, uint32_t* index)
     {
         VkResult result = vkAcquireNextImageKHR(mDeviceInternal, mSwapChain, config.Timeout, 
-                                                reinterpret_cast<VkSemaphore>(config.Semaphore->GetRawData()),
+                                                reinterpret_cast<VkSemaphore>(config.Semaphore->Raw()),
                                                 nullptr, index);
 
         VK_CHECK_RESULT(result);
@@ -100,7 +100,7 @@ namespace psm
         std::vector<VkSemaphore> waitSemaphores(config.WaitSemaphoresCount);
         for(int i = 0; i < config.WaitSemaphoresCount; i++)
         {
-            waitSemaphores[i] = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[i]->GetRawData());
+            waitSemaphores[i] = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[i]->Raw());
         }
 
         VkPresentInfoKHR presentInfo = {};
@@ -133,6 +133,16 @@ namespace psm
     SResourceExtent3D CVkSwapchain::GetSwapchainSize()
     {
         return { mSwapChainExtent.width, mSwapChainExtent.height, 1 };
+    }
+
+    void* CVkSwapchain::Raw()
+    {
+        return mSwapChain;
+    }
+
+    void* CVkSwapchain::Raw() const
+    {
+        return mSwapChain;
     }
 
     void CVkSwapchain::CheckFormatSupport(VkFormat& format, const std::vector<VkSurfaceFormatKHR>& formats)
