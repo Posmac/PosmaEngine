@@ -885,7 +885,7 @@ namespace psm
             {
                 .Sampler = mSampler,
                 .Image = dirDepthShadowMap,
-                .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .ImageLayout = EImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL,
                 .DstBinding = 1,
                 .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
             }

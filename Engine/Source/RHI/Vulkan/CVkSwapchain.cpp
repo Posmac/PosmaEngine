@@ -221,7 +221,11 @@ namespace psm
     void CVkSwapchain::DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain)
     {
         for(auto& imageView : mSwapchainImageViews)
+        {
             vkDestroyImageView(mDeviceInternal, imageView, nullptr);
+        }
+
+        mSwapchainImageViews.clear();
 
         vkDestroySwapchainKHR(device, swapchain, nullptr);
     }

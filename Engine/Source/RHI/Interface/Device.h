@@ -39,6 +39,7 @@ namespace psm
     public:
         static DevicePtr CreateSystemDefaultDevice(const PlatformConfig& config);
 
+        virtual SurfacePtr CreateSurface(const PlatformConfig& config) = 0;
         virtual ImagePtr CreateImage(const SImageConfig& config) = 0;
         virtual ImagePtr CreateImageWithData(const CommandPoolPtr& commandPool, const SImageConfig& config, const SUntypedBuffer& data, const SImageToBufferCopyConfig& copyConfig) = 0;
         virtual BufferPtr CreateBuffer(const SBufferConfig& config) = 0;
@@ -60,7 +61,7 @@ namespace psm
         virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) = 0;
         virtual void Submit(const SSubmitConfig& config) = 0;
         virtual void Present(const SPresentConfig& config) = 0;
-        virtual void WaitIdle() = 0;
+        virtual bool WaitIdle() = 0;
         virtual void BindVertexBuffers(const CommandBufferPtr& commandBuffer, const SVertexBufferBindConfig& config) = 0;
         virtual void BindIndexBuffer(const CommandBufferPtr& commandBuffer, const SIndexBufferBindConfig& config) = 0;
         virtual void CopyBuffer(const CommandBufferPtr& commandBuffer, uint64_t size, const BufferPtr& sourceBuffer, const BufferPtr& destinationBuffer) = 0;//copy buffer fully
@@ -71,7 +72,6 @@ namespace psm
         virtual void UpdateDescriptorSets(const DescriptorSetPtr& descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) = 0;
         virtual DescriptorSetPtr AllocateDescriptorSets(SDescriptorSetAllocateConfig& config) = 0;
         virtual void ImageLayoutTransition(const CommandBufferPtr& commandBuffer, const ImagePtr& image, const SImageLayoutTransition& config) = 0;
-        virtual bool CheckFenceStatus(const FencePtr& fence) = 0;
         virtual void SetViewport(const CommandBufferPtr& commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth) = 0;
         virtual void SetScissors(const CommandBufferPtr& commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent) = 0;
 

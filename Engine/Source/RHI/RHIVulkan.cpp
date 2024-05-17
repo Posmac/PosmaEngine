@@ -6,9 +6,23 @@
 
 VkInstance Instance;
 VkDebugUtilsMessengerEXT DebugMessenger;
+VkDebugReportCallbackEXT DebugCallback;
 
 namespace psm
 {
+    static VKAPI_ATTR VkBool32 VKAPI_CALL DebugInfoCallback(VkDebugReportFlagsEXT flags,
+                                                            VkDebugReportObjectTypeEXT objectType,
+                                                            uint64_t object,
+                                                            size_t location,
+                                                            int32_t messageCode,
+                                                            const char* pLayerPrefix,
+                                                            const char* pMessage,
+                                                            void* pUserData)
+    {
+        LogMessage(MessageSeverity::Warning, pMessage);
+        return false;
+    }
+
     static VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageTypes,
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -109,20 +123,32 @@ namespace psm
 
     void InitVk(const InitOptions& options)
     {
+        VkDebugReportCallbackCreateInfoEXT reportInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
+            .pNext = nullptr,
+            .flags = VK_DEBUG_REPORT_DEBUG_BIT_EXT | VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT 
+                            | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT,
+            .pfnCallback = DebugInfoCallback,
+            .pUserData = nullptr,
+        };
+
         //create instance and debug utils messenger
         VkDebugUtilsMessengerCreateInfoEXT debugMessengerInfo =
         {
             .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-            .pNext = nullptr,
+            .pNext = &reportInfo,
             .flags = 0,
             .messageSeverity =
                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
             .messageType =
+                VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
                 VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
                 VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
             .pfnUserCallback = DebugMessengerCallback,
         };
+
 
         //create instance
         VkApplicationInfo applicationInfo{};
@@ -153,21 +179,34 @@ namespace psm
         VkResult res = vkCreateInstance(&instanceCreateInfo, nullptr, &Instance);
         VK_CHECK_RESULT(res);
 
-        auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(Instance, "vkCreateDebugUtilsMessengerEXT");
-        if(func != nullptr)
+        auto dbgMessengerFunc = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(Instance, "vkCreateDebugUtilsMessengerEXT");
+        if(dbgMessengerFunc != nullptr)
         {
-            VkResult result = func(Instance, &debugMessengerInfo, nullptr, &DebugMessenger);
+            VkResult result = dbgMessengerFunc(Instance, &debugMessengerInfo, nullptr, &DebugMessenger);
+            VK_CHECK_RESULT(result);
+        }
+
+        auto dbgCallbackFunc = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(Instance, "vkCreateDebugReportCallbackEXT");
+        if(dbgCallbackFunc != nullptr)
+        {
+            VkResult result = dbgCallbackFunc(Instance, &reportInfo, nullptr, &DebugCallback);
             VK_CHECK_RESULT(result);
         }
     }
 
     void DeinitVk()
     {
-        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(Instance, "vkDestroyDebugUtilsMessengerEXT");
+        auto dbgMessengerFunc = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(Instance, "vkDestroyDebugUtilsMessengerEXT");
 
-        if(func != nullptr)
+        if(dbgMessengerFunc != nullptr)
         {
-            func(Instance, DebugMessenger, nullptr);
+            dbgMessengerFunc(Instance, DebugMessenger, nullptr);
+        }
+
+        auto dbgCallbackFunc = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(Instance, "vkDestroyDebugReportCallbackEXT");
+        if(dbgCallbackFunc != nullptr)
+        {
+            dbgCallbackFunc(Instance, DebugCallback, nullptr);
         }
 
         vkDestroyInstance(Instance, nullptr);

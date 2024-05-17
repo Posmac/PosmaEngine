@@ -22,9 +22,10 @@ namespace psm
         vkDestroyFence(mDeviceInternal, mFence, nullptr);
     }
 
-    void CVkFence::Wait(const SFenceWaitConfig& config)
+    bool CVkFence::Wait(const SFenceWaitConfig& config)
     {
-        vkWaitForFences(mDeviceInternal, 1, &mFence, config.WaitAll, config.Timeout);
+        VkResult result = vkWaitForFences(mDeviceInternal, 1, &mFence, config.WaitAll, config.Timeout);
+        return result == VK_SUCCESS;
     }
 
     void CVkFence::Reset()

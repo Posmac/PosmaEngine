@@ -14,7 +14,7 @@ namespace psm
     public:
         CVkFence(const DevicePtr& device, const SFenceConfig& config);
         ~CVkFence();
-        virtual void Wait(const SFenceWaitConfig& config) override;
+        virtual bool Wait(const SFenceWaitConfig& config) override;
         virtual void Reset() override;
         virtual void Signal() override;
 

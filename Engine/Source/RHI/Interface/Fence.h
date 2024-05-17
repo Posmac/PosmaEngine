@@ -11,7 +11,7 @@ namespace psm
     public:
         IFence() = default;
         virtual ~IFence() = default;
-        virtual void Wait(const SFenceWaitConfig& config) = 0;
+        virtual bool Wait(const SFenceWaitConfig& config) = 0;
         virtual void Reset() = 0;
         virtual void Signal() = 0;
     };

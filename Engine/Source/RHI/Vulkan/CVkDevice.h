@@ -16,13 +16,14 @@ namespace psm
     class CVkDevice : public IDevice, public std::enable_shared_from_this<CVkDevice>
     {
     public:
-        CVkDevice(VkPhysicalDevice physicalDevice, SurfacePtr surface);
+        CVkDevice(VkPhysicalDevice physicalDevice, const PlatformConfig& config);
         virtual ~CVkDevice();
 
         virtual void* Raw() override;
         virtual void* Raw() const override;
 
     public:
+        virtual SurfacePtr CreateSurface(const PlatformConfig& config) override;
         virtual ImagePtr CreateImage(const SImageConfig& config) override;
         virtual ImagePtr CreateImageWithData(const CommandPoolPtr& commandPool, const SImageConfig& config, const SUntypedBuffer& data, const SImageToBufferCopyConfig& copyConfig) override;
         virtual BufferPtr CreateBuffer(const SBufferConfig& config) override;
@@ -44,7 +45,7 @@ namespace psm
         virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) override;
         virtual void Submit(const SSubmitConfig& config) override;
         virtual void Present(const SPresentConfig& config) override;
-        virtual void WaitIdle() override;
+        virtual bool WaitIdle() override;
         virtual void BindVertexBuffers(const CommandBufferPtr& commandBuffer, const SVertexBufferBindConfig& config) override;
         virtual void BindIndexBuffer(const CommandBufferPtr& commandBuffer, const SIndexBufferBindConfig& config) override;
         virtual void CopyBuffer(const CommandBufferPtr& commandBuffer, uint64_t size, const BufferPtr& sourceBuffer, const BufferPtr& destinationBuffer) override;//copy buffer fully
@@ -55,7 +56,6 @@ namespace psm
         virtual void UpdateDescriptorSets(const DescriptorSetPtr& descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) override;
         virtual DescriptorSetPtr AllocateDescriptorSets(SDescriptorSetAllocateConfig& config) override;
         virtual void ImageLayoutTransition(const CommandBufferPtr& commandBuffer, const ImagePtr& image, const SImageLayoutTransition& config) override;//TODO: Remove it, you have InsertImageMemoryBarrier
-        virtual bool CheckFenceStatus(const FencePtr& fence) override;
         virtual void SetViewport(const CommandBufferPtr& commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth) override;
         virtual void SetScissors(const CommandBufferPtr& commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent) override;
 

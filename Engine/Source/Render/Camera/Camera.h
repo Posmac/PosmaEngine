@@ -54,6 +54,12 @@ namespace psm
 
         void LogCameraInfo();
 
+        //events
+        void OnWindowResize(float fieldOfViewDeg,
+                            float aspect,
+                            float nearPlane,
+                            float farPlane);
+
     private:
         glm::vec4 m_CameraPosition; //in world space
         glm::quat m_CameraRotation; //in world space

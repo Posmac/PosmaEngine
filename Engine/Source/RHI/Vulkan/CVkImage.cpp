@@ -29,6 +29,7 @@ namespace psm
         mImageInfo.sharingMode = ToVulkan(config.SharingMode);
         mImageInfo.samples = ToVulkan(config.SamplesCount);
         mImageInfo.flags = ToVulkan(config.Flags);
+        mImageInfo.pQueueFamilyIndices = nullptr;
 
         VkResult result = vkCreateImage(mDeviceInternal, &mImageInfo, nullptr, &mImage);
         VK_CHECK_RESULT(result);
@@ -71,9 +72,9 @@ namespace psm
 
     CVkImage::~CVkImage()
     {
-        vkFreeMemory(mDeviceInternal, mImageMemory, nullptr);
-        vkDestroyImageView(mDeviceInternal, mImageView, nullptr);
         vkDestroyImage(mDeviceInternal, mImage, nullptr);
+        vkDestroyImageView(mDeviceInternal, mImageView, nullptr);
+        vkFreeMemory(mDeviceInternal, mImageMemory, nullptr);
     }
 
     EImageType CVkImage::GetImageType() const

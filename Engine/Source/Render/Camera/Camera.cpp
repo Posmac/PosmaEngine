@@ -129,6 +129,20 @@ namespace psm
         std::cout << "Camera local For: "; LogVec4(GetForwardLocal(), '\n');
     }
 
+    void Camera::OnWindowResize(float fieldOfViewDeg,
+                                float aspect,
+                                float nearPlane,
+                                float farPlane )
+    {
+        m_ProjectionMatrix = glm::perspective(glm::radians(fieldOfViewDeg), aspect, nearPlane, farPlane);
+        m_ProjectionMatrix[1][1] *= -1;//KOCTb|L' EBU4II
+
+        m_InvProjectionMatrix = glm::inverse(m_ProjectionMatrix);
+
+        //m_InvViewMatrix = m_ViewMatrix = glm::mat4(1.0);
+        RecalculateFromWorld();
+    }
+
     void Camera::RotateWorldEuler(const glm::vec3& offset)
     {
         glm::vec3 radiansOffset = glm::radians(offset);

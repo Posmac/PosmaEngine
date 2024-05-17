@@ -82,15 +82,14 @@ namespace psm
             gpu = physicalDevicesAvailable[0];
         }
 
-        //create surface
-        std::shared_ptr<CVkSurface> surface = std::make_shared<CVkSurface>(config);
-        return std::make_shared<CVkDevice>(gpu, std::static_pointer_cast<ISurface>(surface));
+        return std::make_shared<CVkDevice>(gpu, config);
     }
 
-    CVkDevice::CVkDevice(VkPhysicalDevice physicalDevice, SurfacePtr surface)
+    CVkDevice::CVkDevice(VkPhysicalDevice physicalDevice, const PlatformConfig& config)
     {
         mPhysicalDevice = physicalDevice;
-        mVkSurface = surface;
+
+        mVkSurface = CreateSurface(config);
 
         //check for features to enable
         VkPhysicalDeviceFeatures deviceFeatures{};
@@ -187,7 +186,7 @@ namespace psm
         for(const auto& family : availableQueueFamilyProperties)
         {
             VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, reinterpret_cast<VkSurfaceKHR>(surface->Raw()), &presentSupport);
+            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, reinterpret_cast<VkSurfaceKHR>(mVkSurface->Raw()), &presentSupport);
             if(family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
                 mQueues.GraphicsFamily = i;
@@ -254,6 +253,11 @@ namespace psm
     void* CVkDevice::Raw() const
     {
         return mDevice;
+    }
+
+    SurfacePtr CVkDevice::CreateSurface(const PlatformConfig& config)
+    {
+        return std::make_shared<CVkSurface>(config);
     }
 
     ImagePtr CVkDevice::CreateImage(const SImageConfig& config)
@@ -378,7 +382,7 @@ namespace psm
         submitFence->Wait(waitConfig);
 
         commandPool->FreeCommandBuffers({ commandBuffer });
-        WaitIdle();
+        //WaitIdle();
 
         return image;
     }
@@ -546,11 +550,6 @@ namespace psm
             1, &barrier);
     }
 
-    bool CVkDevice::CheckFenceStatus(const FencePtr& fence)
-    {
-        return vkGetFenceStatus(mDevice, reinterpret_cast<VkFence>(fence->Raw())) != VK_SUCCESS;
-    }
-
     void CVkDevice::InsertImageMemoryBarrier(const SImageBarrierConfig& config)
     {
         VkImage vkImage = reinterpret_cast<VkImage>(config.Image->Raw());
@@ -622,9 +621,10 @@ namespace psm
         mSwapchain->Present(config);
     }
 
-    void CVkDevice::WaitIdle()
+    bool CVkDevice::WaitIdle()
     {
-        vkDeviceWaitIdle(mDevice);
+        VkResult result = vkDeviceWaitIdle(mDevice);
+        return result == VK_SUCCESS;
     }
 
     void CVkDevice::BindVertexBuffers(const CommandBufferPtr& commandBuffer, const SVertexBufferBindConfig& config)
@@ -835,7 +835,9 @@ namespace psm
     }
 
     void CVkDevice::SetDebugNameForResource(void* resource, VkDebugReportObjectTypeEXT type, const char* debugName)
-    {}
+    {
+
+    }
 
     PipelinePtr CVkDevice::CreateRenderPipeline(const SPipelineConfig& config)
     {

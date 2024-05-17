@@ -11,7 +11,7 @@ namespace psm
 {
     void Application::Init(uint32_t width, uint32_t height)
     {
-        m_Camera = Camera(60.0f, width / height, 0.1f, 1000.0f);
+        m_Camera = Camera(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 1000.0f);
         m_CameraDefaultMoveSpeed = 10.0f;
         m_CameraDefaultRotateSpeed = 100.0f;
 
@@ -167,7 +167,7 @@ namespace psm
 
     void Application::ResizeWindow(HWND hWnd, uint32_t width, uint32_t height)
     {
-        //TODO: not working ang the moment
+        m_Camera.OnWindowResize(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 1000.0f);
         Renderer::Instance()->ResizeWindow(hWnd);
     }
 

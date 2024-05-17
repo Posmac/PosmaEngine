@@ -5,6 +5,8 @@
 #include <array>
 #include <vector>
 
+#include <queue>
+
 #include "Utilities/ModelLoader.h"
 #include "Actors/OpaqueInstances.h"
 #include "GlobalBuffer.h"
@@ -39,6 +41,7 @@ namespace psm
         void Render(GlobalBuffer& buffer);
         void ResizeWindow(HWND hWnd);
         void CreateSwapchain(HWND hWnd);
+        void CreateSwapchainSyncObjects();
         void CreateFramebuffers();
 
         void InitImGui(HWND hWnd);//needs to be initialized in another place
@@ -46,10 +49,12 @@ namespace psm
         ImagePtr LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels);//should be moved inside DevicePtr
     private:
         void PrepareShadowMapRenderPass();
+        void ResizeWindowInternal(HWND hWnd);
     private:
 
         //old
         HWND mWindow; //abstract it?
+        HINSTANCE hInstance;
 
         //new RHI data
         DevicePtr mDevice;
@@ -69,6 +74,7 @@ namespace psm
 
         bool isInit;
         uint32_t mCurrentFrame;
+        uint64_t mTotalFrames;
 
         ImagePtr mDepthRenderTargetTexture;
         EFormat mDepthStencilFormat;
@@ -79,5 +85,8 @@ namespace psm
 
         //gui
         ImGuiPtr mGui;
+
+        //resize handling (later add command queue)
+        std::queue<HWND> mWindowResizeQueue;
     };
 }

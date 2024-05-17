@@ -6,6 +6,7 @@
 inline std::vector<const char*> ValidationLayers =
 {
     "VK_LAYER_KHRONOS_validation",
+    "VK_LAYER_KHRONOS_profiles",
     "VK_LAYER_LUNARG_monitor",
     "VK_LAYER_LUNARG_api_dump",
     "VK_LAYER_LUNARG_core_validation",
@@ -23,6 +24,7 @@ inline std::vector<const char*> InstanceExtensions =
 
 inline std::vector<const char*> DeviceExtensions =
 {
+    "VK_KHR_portability_subset",
     "VK_KHR_swapchain",
 };
 

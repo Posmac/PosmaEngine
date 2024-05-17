@@ -44,24 +44,11 @@ namespace psm
         mCurrentFrame = 0;
 
         mDevice = device;
-        SSwapchainConfig swapchainConfig =
-        {
-            device->GetSurface()
-        };
+        
+        hInstance = static_cast<HINSTANCE>(config.win32.hInstance);
 
-        mSwapchain = mDevice->CreateSwapchain(swapchainConfig);
-
-        int swapchainImages = mSwapchain->GetImagesCount();
-        mImageAvailableSemaphores.resize(swapchainImages);
-        mRenderFinishedSemaphores.resize(swapchainImages);
-        mFlightFences.resize(swapchainImages);
-
-        for(int i = 0; i < swapchainImages; i++)
-        {
-            mFlightFences[i] = mDevice->CreateFence({ false });
-            mImageAvailableSemaphores[i] = mDevice->CreateSemaphore({ false });
-            mRenderFinishedSemaphores[i] = mDevice->CreateSemaphore({ false });
-        }
+        CreateSwapchain(static_cast<HWND>(config.win32.hWnd));
+        CreateSwapchainSyncObjects();
 
         //command buffers
         SCommandPoolConfig cmdPoolConfig =
@@ -133,7 +120,7 @@ namespace psm
             .pPreserveAttachments = nullptr
         };
 
-        /*SSubpassDependency dependency =
+        SSubpassDependency dependency =
         {
             .SrcSubpass = VK_SUBPASS_EXTERNAL,
             .DstSubpass = 0,
@@ -141,7 +128,7 @@ namespace psm
             .DstStageMask = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
             .SrcAccessMask = EAccessFlags::NONE,
             .DstAccessMask = EAccessFlags::COLOR_ATTACHMENT_WRITE_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        };*/
+        };
 
         SRenderPassConfig renderPassConfig =
         {
@@ -154,7 +141,7 @@ namespace psm
             .ResolveAttachemntReference = {},
 
             .SubpassDescriptions = {subpassDescription},
-            .SubpassDependensies = {}
+            .SubpassDependensies = {dependency}
         };
 
         mRenderPass = mDevice->CreateRenderPass(renderPassConfig);
@@ -183,8 +170,7 @@ namespace psm
         OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, mShadowMapRenderPass, { swapchainSize.width, swapchainSize.height }, { shadowMapSize.width, shadowMapSize.height });
         ModelLoader::Instance()->Init(mDevice, mCommandPool);
 
-        //InitImGui(hWnd);
-        mGui = mDevice->CreateGui(mRenderPass, mCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
+        InitImGui(static_cast<HWND>(config.win32.hWnd));
 
         isInit = true;
     }
@@ -206,7 +192,7 @@ namespace psm
             .Format = mDepthStencilFormat,
             .Tiling = EImageTiling::OPTIMAL,
             .InitialLayout = EImageLayout::UNDEFINED,
-            .Usage = EImageUsageType::USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .Usage = EImageUsageType::USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | EImageUsageType::USAGE_SAMPLED_BIT,
             .SharingMode = ESharingMode::EXCLUSIVE,
             .SamplesCount = ESamplesCount::COUNT_1,
             .Flags = EImageCreateFlags::NONE,
@@ -280,29 +266,31 @@ namespace psm
             .Timeout = static_cast<float>(100000000000)
         };
 
-        submitFence->Wait(waitConfig);
+        while(!submitFence->Wait(waitConfig))
+        {
+            LogMessage(MessageSeverity::Warning, "Wait for fence");
+        }
 
         mCommandPool->FreeCommandBuffers({ commandBuffer });
-        mDevice->WaitIdle();
     }
 
     void Renderer::Deinit()
-    {}
+    {
+
+    }
 
     void Renderer::Render(GlobalBuffer& buffer)
     {
+        if(mWindowResizeQueue.size() > 0)
+        {
+            ResizeWindowInternal(mWindowResizeQueue.front());
+            mWindowResizeQueue.pop();
+        }
+
         if(!isInit)
         {
             return;
         }
-
-        SFenceWaitConfig waitConfig =
-        {
-            .WaitAll = true,
-            .Timeout = FLT_MAX,
-        };
-
-        mFlightFences[mCurrentFrame]->Wait(waitConfig);
 
         //basic
         uint32_t imageIndex;
@@ -314,10 +302,6 @@ namespace psm
 
         mSwapchain->GetNextImage(nextImageConfig, &imageIndex);
 
-        mFlightFences[mCurrentFrame]->Reset();
-
-        mCommandBuffers[mCurrentFrame]->Reset();
-
         SCommandBufferBeginConfig commandBufferBegin =
         {
             .BufferIndex = mCurrentFrame,
@@ -328,21 +312,20 @@ namespace psm
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //shadow map pass
-
-        SImageLayoutTransition shadowMapLayoutTransition =
+        /*SImageLayoutTransition shadowMapLayoutTransition =
         {
             .Format = EFormat::D32_SFLOAT,
-            .OldLayout = EImageLayout::UNDEFINED,
+            .OldLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
             .NewLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .SourceStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
-            .DestinationStage = EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
+            .DestinationStage = EPipelineStageFlags::LATE_FRAGMENT_TESTS_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
             .SourceMask = EAccessFlags::SHADER_READ_BIT,
             .DestinationMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_READ_BIT,
             .ImageAspectFlags = EImageAspect::DEPTH_BIT,
             .MipLevel = 0,
         };
 
-        mDevice->ImageLayoutTransition(mCommandBuffers[mCurrentFrame], mDirDepthShadowMaps[mCurrentFrame], shadowMapLayoutTransition);
+        mDevice->ImageLayoutTransition(mCommandBuffers[mCurrentFrame], mDirDepthShadowMaps[mCurrentFrame], shadowMapLayoutTransition);*/
 
         UClearValue shadowMapClearColor;
         shadowMapClearColor.DepthStencil = { 1.0f, 0 };
@@ -378,9 +361,9 @@ namespace psm
         mShadowMapRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);
 
         //shadow maps layout transition
-        SImageLayoutTransition shadowMapLayoutTransitionReverse =
+        /*SImageLayoutTransition shadowMapLayoutTransitionReverse =
         {
-            .Format = EFormat::R32_SFLOAT,
+            .Format = EFormat::D32_SFLOAT,
             .OldLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .NewLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
             .SourceStage = EPipelineStageFlags::LATE_FRAGMENT_TESTS_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
@@ -390,8 +373,8 @@ namespace psm
             .ImageAspectFlags = EImageAspect::DEPTH_BIT,
             .MipLevel = 0,
         };
-
-        mDevice->ImageLayoutTransition(mCommandBuffers[mCurrentFrame], mDirDepthShadowMaps[mCurrentFrame], shadowMapLayoutTransitionReverse);
+        
+        mDevice->ImageLayoutTransition(mCommandBuffers[mCurrentFrame], mDirDepthShadowMaps[mCurrentFrame], shadowMapLayoutTransitionReverse);*/
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //default pass
@@ -472,9 +455,23 @@ namespace psm
 
         mDevice->Present(presentConfig);
 
-        mCurrentFrame = (mCurrentFrame + 1) % mSwapchain->GetImagesCount();
+        SFenceWaitConfig fenceWait =
+        {
+            .WaitAll = true,
+            .Timeout = FLT_MAX,
+        };
 
-        mDevice->WaitIdle();
+        while(!mFlightFences[mCurrentFrame]->Wait(fenceWait))
+        {
+            LogMessage(MessageSeverity::Info, "Waiting for fence");
+        };
+
+        mFlightFences[mCurrentFrame]->Reset();
+
+        mCommandBuffers[mCurrentFrame]->Reset();
+
+        mCurrentFrame = (mCurrentFrame + 1) % mSwapchain->GetImagesCount();
+        mTotalFrames++;
     }
 
     ImagePtr Renderer::LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels)
@@ -527,7 +524,7 @@ namespace psm
             .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
             .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
             .InitialLayout = EImageLayout::UNDEFINED,
-            .FinalLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            .FinalLayout = EImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL,
         };
 
         SAttachmentReference depthReference =
@@ -623,23 +620,69 @@ namespace psm
         }
     }
 
-    void Renderer::ResizeWindow(HWND hWnd)
+    void Renderer::ResizeWindowInternal(HWND hWnd)
     {
-        return;
-
         if(mDevice == nullptr)
             return;
 
+        while(!mDevice->WaitIdle())
+        {
+            LogMessage(MessageSeverity::Warning, "Wait idle");
+        }
+
+        mSwapchain = nullptr;
+        //mImageAvailableSemaphores.clear();
+        //mRenderFinishedSemaphores.clear();
+        //mFlightFences.clear();
+
+        mFramebuffers.clear();
+        mDepthRenderTargetTexture = nullptr;
+
         mWindow = hWnd;
-        CreateSwapchain(hWnd);
-        CreateFramebuffers();
+        psm::PlatformConfig platformConfig =
+        {
+            .win32 =
+            {
+                .hInstance = hInstance,
+                .hWnd = mWindow
+            }
+        };
+
+        mDevice->GetSurface() = nullptr;
+        mDevice->CreateSurface(platformConfig);
+        CreateSwapchain(mWindow);
         CreateDepthImage();
-        InitImGui(hWnd);
+        CreateFramebuffers();
     }
 
-    void Renderer::CreateSwapchain(HWND hWnd) //DELETE
+    void Renderer::ResizeWindow(HWND hWnd)
     {
+        mWindowResizeQueue.push(hWnd);
+    }
 
+    void Renderer::CreateSwapchain(HWND hWnd)
+    {
+        SSwapchainConfig swapchainConfig =
+        {
+            mDevice->GetSurface()
+        };
+
+        mSwapchain = mDevice->CreateSwapchain(swapchainConfig);
+    }
+
+    void Renderer::CreateSwapchainSyncObjects()
+    {
+        int swapchainImages = mSwapchain->GetImagesCount();
+        mImageAvailableSemaphores.resize(swapchainImages);
+        mRenderFinishedSemaphores.resize(swapchainImages);
+        mFlightFences.resize(swapchainImages);
+
+        for(int i = 0; i < swapchainImages; i++)
+        {
+            mFlightFences[i] = mDevice->CreateFence({ false });
+            mImageAvailableSemaphores[i] = mDevice->CreateSemaphore({ false });
+            mRenderFinishedSemaphores[i] = mDevice->CreateSemaphore({ false });
+        }
     }
 
     void Renderer::CreateFramebuffers()
@@ -663,6 +706,6 @@ namespace psm
 
     void Renderer::InitImGui(HWND hWnd)
     {
-
+        mGui = mDevice->CreateGui(mRenderPass, mCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
     }
 }
