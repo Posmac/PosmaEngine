@@ -68,6 +68,7 @@ namespace psm
 
         OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, mShadowMapRenderPass, { swapchainSize.width, swapchainSize.height }, { shadowMapSize.width, shadowMapSize.height });
         ModelLoader::Instance()->Init(mDevice, mCommandPool);
+        TextureLoader::Instance()->Init(mDevice, mCommandPool);
 
         InitImGui(static_cast<HWND>(config.win32.hWnd));
 
@@ -133,8 +134,11 @@ namespace psm
             LogMessage(MessageSeverity::Warning, "Wait idle");
         }
 
+        //XXX Maybe remove to engine later
         Shadows::Instance()->Deinit();
         OpaqueInstances::GetInstance()->Deinit();
+        ModelLoader::Instance()->Deinit();
+        TextureLoader::Instance()->Deinit();
 
         mGlobalBuffer = nullptr;
         mSwapchain = nullptr;
@@ -320,44 +324,6 @@ namespace psm
 
         mCurrentFrame = (mCurrentFrame + 1) % mSwapchain->GetImagesCount();
         mTotalFrames++;
-    }
-
-    ImagePtr Renderer::LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels)
-    {
-        if(textureData.Data == nullptr)
-        {
-            LogMessage(MessageSeverity::Error, "Raw texture data pointer is null");
-        }
-
-        SImageConfig imageConfig =
-        {
-            .ImageSize = { (uint32_t)textureData.Width, (uint32_t)textureData.Height, 1 },
-            .MipLevels = static_cast<int>(mipLevels),
-            .ArrayLevels = 1,
-            .Type = EImageType::TYPE_2D,
-            .Format = EFormat::R8G8B8A8_SRGB,
-            .Tiling = EImageTiling::OPTIMAL,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .Usage = EImageUsageType::USAGE_TRANSFER_SRC_BIT | EImageUsageType::USAGE_TRANSFER_DST_BIT | EImageUsageType::USAGE_SAMPLED_BIT,
-            .SharingMode = ESharingMode::EXCLUSIVE,
-            .SamplesCount = ESamplesCount::COUNT_1,
-            .Flags = EImageCreateFlags::NONE,
-            .ViewFormat = EFormat::R8G8B8A8_SRGB,
-            .ViewType = EImageViewType::TYPE_2D,
-            .ViewAspect = EImageAspect::COLOR_BIT
-        };
-
-        SUntypedBuffer textureBuffer(textureData.Width * textureData.Height * textureData.Type, textureData.Data);
-
-        SImageToBufferCopyConfig layoutTransition =
-        {
-            .FormatBeforeTransition = EFormat::R8G8B8A8_SRGB,
-            .LayoutBeforeTransition = EImageLayout::UNDEFINED,
-            .FormatAfterTransition = EFormat::R8G8B8A8_SRGB,
-            .LayoutAfterTransition = EImageLayout::SHADER_READ_ONLY_OPTIMAL
-        };
-
-        return mDevice->CreateImageWithData(mCommandPool, imageConfig, textureBuffer, layoutTransition);
     }
 
     void Renderer::PrepareShadowMapRenderPass()

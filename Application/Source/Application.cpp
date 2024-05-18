@@ -19,10 +19,7 @@ namespace psm
 
         m_Resolution = { width, height };
 
-        RawTextureData whiteTextureData{ Rgb_alpha };
-        TextureLoader::Instance()->LoadRawTextureData("../Engine/Textures/DefaultMagentaTexture.png", &whiteTextureData);
-        ImagePtr whiteTexture = Renderer::Instance()->LoadTextureIntoMemory(whiteTextureData, 1);
-        TextureLoader::Instance()->AddWhiteDefaultTexture(whiteTexture);
+        TextureLoader::Instance()->AddWhiteDefaultTexture("../Engine/Textures/DefaultMagentaTexture.png");
 
         {//add sponze instance(1)
 
@@ -52,8 +49,7 @@ namespace psm
         {//add damaged helmet (10)
 
             std::vector<MeshPbrMaterial> damagedHelmetMeshMaterials;
-            std::shared_ptr<Model>  damagedHelmetModel = std::make_shared<Model>();
-            ModelLoader::Instance()->LoadModel("../Engine/Models/DamagedHelmet/glTF/", "DamagedHelmet.gltf", damagedHelmetModel.get(), damagedHelmetMeshMaterials);
+            std::shared_ptr<Model>  damagedHelmetModel = ModelLoader::Instance()->LoadModel("../Engine/Models/DamagedHelmet/glTF/", "DamagedHelmet.gltf", damagedHelmetMeshMaterials);
 
             constexpr unsigned helmetsCount = 4;
 
@@ -101,8 +97,7 @@ namespace psm
         {//add cubes
 
             std::vector<MeshPbrMaterial> boxMaterials;
-            std::shared_ptr<Model>  boxModel = std::make_shared<Model>();
-            ModelLoader::Instance()->LoadModel("../Engine/Models/Box/", "Box.gltf", boxModel.get(), boxMaterials);
+            std::shared_ptr<Model>  boxModel = ModelLoader::Instance()->LoadModel("../Engine/Models/Box/", "Box.gltf", boxMaterials);
 
             constexpr unsigned boxCount = 2;
 

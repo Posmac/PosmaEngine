@@ -40,7 +40,6 @@ namespace psm
         void Render(GlobalBuffer& buffer);
         void ResizeWindow(HWND hWnd);
 
-        ImagePtr LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels);//should be moved inside DevicePtr
     private:
         void CreateDepthImage();
         void CreateSwapchain(HWND hWnd);

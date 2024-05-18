@@ -58,8 +58,6 @@ namespace psm
 
     void Engine::Deinit()
     {
-        ModelLoader::Instance()->Deinit();
-        TextureLoader::Instance()->Deinit();
         Renderer::Instance()->Deinit();
         ShutdownRHI();
     }

@@ -5,6 +5,7 @@
 #include <vector>
 #include <cassert>
 #include <unordered_map>
+#include <memory>
 
 #include "Model/Mesh.h"
 #include "Model/Vertex.h"
@@ -35,13 +36,15 @@ namespace psm
     public:
         void Init(DevicePtr device, CommandPoolPtr commandPool);
         void Deinit();
-        void LoadModel(const std::string& pathToModel, const std::string& modelName, Model* model, std::vector<MeshPbrMaterial>& modelMeshMaterials);
+        std::shared_ptr<Model>& LoadModel(const std::string& pathToModel, const std::string& modelName, std::vector<MeshPbrMaterial>& modelMeshMaterials);
     private:
-        void ProcessNode(aiNode* node, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
-        void ProcessMesh(aiMesh* mesh, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
+        void ProcessNode(aiNode* node, const aiScene* scene, std::shared_ptr<Model>& model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
+        void ProcessMesh(aiMesh* mesh, const aiScene* scene, std::shared_ptr<Model>& model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
     private:
         //came from mDevice
         DevicePtr mDevice;
         CommandPoolPtr mCommandPool;
+
+        std::unordered_map<std::string, std::shared_ptr<Model>> mModels;
     };
 }

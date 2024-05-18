@@ -22,6 +22,12 @@ namespace psm
         this->Meshes = std::move(meshes);
     }
 
+    Model::~Model()
+    {
+        mVertexBuffer = nullptr;
+        mIndexBuffer = nullptr;
+    }
+
     void Model::BindBuffers(const DevicePtr& device, const CommandBufferPtr& commandBuffer)
     {
         SVertexBufferBindConfig vertexBindConfig =
@@ -41,12 +47,6 @@ namespace psm
         };
 
         device->BindIndexBuffer(commandBuffer, indexBindConfig);
-    }
-
-    void Model::Deinit()
-    {
-        mVertexBuffer = nullptr;
-        mIndexBuffer = nullptr;
     }
 
     void Model::Init(const DevicePtr& device, const CommandPoolPtr& commandPool)

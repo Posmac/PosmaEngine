@@ -15,9 +15,9 @@ namespace psm
     public:
         Model();
         Model(std::vector<Mesh>& meshes);
+        virtual ~Model();
         void Init(const DevicePtr& device, const CommandPoolPtr& commandPool);
         void BindBuffers(const DevicePtr& device, const CommandBufferPtr& commandBuffer);
-        void Deinit();
     public:
         std::string Name;
         std::vector<Mesh> Meshes;

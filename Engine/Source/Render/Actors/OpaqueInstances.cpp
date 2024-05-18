@@ -86,8 +86,6 @@ namespace psm
 
     void OpaqueInstances::Deinit()
     {
-        for(auto& model : m_Models)
-            model.first->Deinit();
         m_Models.clear();
 
         m_PerModels.clear();
