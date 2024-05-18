@@ -44,129 +44,28 @@ namespace psm
         mCurrentFrame = 0;
 
         mDevice = device;
-        
+
         hInstance = static_cast<HINSTANCE>(config.win32.hInstance);
 
+        //init general things for rendering
         CreateSwapchain(static_cast<HWND>(config.win32.hWnd));
         CreateSwapchainSyncObjects();
-
-        //command buffers
-        SCommandPoolConfig cmdPoolConfig =
-        {
-            .QueueFamilyIndex = 0, //get from somewhere
-            .QueueType = EQueueType::GRAHPICS
-        };
-
-        mCommandPool = mDevice->CreateCommandPool(cmdPoolConfig);
-
-        SCommandBufferConfig cmdBuffersConfig =
-        {
-            .Size = mSwapchain->GetImagesCount(),
-            .IsBufferLevelPrimary = true,
-        };
-
-        mCommandBuffers = mDevice->CreateCommandBuffers(mCommandPool, cmdBuffersConfig);
-
+        CreateCommandPool();
+        CreateRenderFrameCommandBuffers();
         CreateDepthImage();
-
-        SAttachmentDescription colorDescription =
-        {
-            .Flags = EAttachmentDescriptionFlags::NONE,
-            .Format = mSwapchain->GetSwapchainImageFormat(),
-            .Samples = ESamplesCount::COUNT_1,
-            .LoadOperation = EAttachmentLoadOp::LOAD_OP_CLEAR,
-            .StoreOperation = EAttachmentStoreOp::STORE_OP_STORE,
-            .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
-            .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .FinalLayout = EImageLayout::PRESENT_SRC_KHR
-        };
-
-        SAttachmentDescription depthStencilDescription =
-        {
-            .Flags = EAttachmentDescriptionFlags::NONE,
-            .Format = mDepthStencilFormat,
-            .Samples = ESamplesCount::COUNT_1,
-            .LoadOperation = EAttachmentLoadOp::LOAD_OP_CLEAR,
-            .StoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
-            .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
-            .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .FinalLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-        };
-
-        SAttachmentReference colorAttachmentReference =
-        {
-            .Attachment = 0,
-            .Layout = EImageLayout::COLOR_ATTACHMENT_OPTIMAL
-        };
-
-        SAttachmentReference depthAttachmentReference =
-        {
-            .Attachment = 1,
-            .Layout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-        };
-
-        SSubpassDescription subpassDescription =
-        {
-            .PipelineBindPoint = EPipelineBindPoint::GRAPHICS,
-            .InputAttachmentCount = 0,
-            .pInputAttachments = nullptr,
-            .ColorAttachmentCount = 1,
-            .pColorAttachments = &colorAttachmentReference,
-            .pResolveAttachments = nullptr,
-            .pDepthStencilAttachment = &depthAttachmentReference,
-            .PreserveAttachmentCount = 0,
-            .pPreserveAttachments = nullptr
-        };
-
-        SSubpassDependency dependency =
-        {
-            .SrcSubpass = VK_SUBPASS_EXTERNAL,
-            .DstSubpass = 0,
-            .SrcStageMask = EPipelineStageFlags::BOTTOM_OF_PIPE_BIT,
-            .DstStageMask = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
-            .SrcAccessMask = EAccessFlags::NONE,
-            .DstAccessMask = EAccessFlags::COLOR_ATTACHMENT_WRITE_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        };
-
-        SRenderPassConfig renderPassConfig =
-        {
-            .ColorAttachements = {colorDescription},
-            .DepthAttachment = depthStencilDescription,
-            .ResolveAttachment = {},
-
-            .ColorAttachmentReference = colorAttachmentReference,
-            .DepthStencilAttachmentReference = depthAttachmentReference,
-            .ResolveAttachemntReference = {},
-
-            .SubpassDescriptions = {subpassDescription},
-            .SubpassDependensies = {dependency}
-        };
-
-        mRenderPass = mDevice->CreateRenderPass(renderPassConfig);
-
+        CreateDefaultRenderPass();
         CreateFramebuffers();
-
-        SBufferConfig bufferConfig =
-        {
-            .Size = sizeof(GlobalBuffer),
-            .Usage = EBufferUsage::USAGE_UNIFORM_BUFFER_BIT,
-            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
-        };
-
-        mGlobalBuffer = mDevice->CreateBuffer(bufferConfig);
+        CreateGlobalBuffer();
 
         //init shadow system
         Shadows::Instance()->Init(mDevice, mSwapchain->GetImagesCount());
         PrepareShadowMapRenderPass();
 
         //init mesh systems
-
         auto shadowParams = Shadows::Instance()->GetShadowParams();
         auto shadowMapSize = shadowParams.DirectionalShadowTextureSize;
-
         SResourceExtent3D swapchainSize = mSwapchain->GetSwapchainSize();
+
         OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, mShadowMapRenderPass, { swapchainSize.width, swapchainSize.height }, { shadowMapSize.width, shadowMapSize.height });
         ModelLoader::Instance()->Init(mDevice, mCommandPool);
 
@@ -203,22 +102,7 @@ namespace psm
 
         mDepthRenderTargetTexture = mDevice->CreateImage(imageConfig);
 
-        SCommandBufferConfig commandBufferConfig =
-        {
-            .Size = 1,
-            .IsBufferLevelPrimary = true
-        };
-
-        std::vector<CommandBufferPtr> commandBuffers = mDevice->CreateCommandBuffers(mCommandPool, commandBufferConfig);
-        CommandBufferPtr commandBuffer = commandBuffers[0];
-
-        SCommandBufferBeginConfig beginConfig =
-        {
-            .BufferIndex = 0,
-            .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
-        };
-
-        commandBuffer->Begin(beginConfig);
+        CommandBufferPtr commandBuffer = BeginSingleTimeSubmitCommandBuffer();
 
         SImageLayoutTransition imageLayoutTransition =
         {
@@ -236,42 +120,7 @@ namespace psm
         mDevice->ImageLayoutTransition(commandBuffer, mDepthRenderTargetTexture, imageLayoutTransition);
 
         commandBuffer->End();
-
-        SFenceConfig fenceConfig =
-        {
-            .Signaled = false
-        };
-
-        FencePtr submitFence = mDevice->CreateFence(fenceConfig);
-
-        SSubmitConfig submitConfig =
-        {
-            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
-            .SubmitCount = 1,
-            .WaitStageFlags = EPipelineStageFlags::NONE,
-            .WaitSemaphoresCount = 0,
-            .pWaitSemaphores = nullptr,
-            .CommandBuffersCount = 1,
-            .pCommandBuffers = &commandBuffer,
-            .SignalSemaphoresCount = 0,
-            .pSignalSemaphores = nullptr,
-            .Fence = submitFence,
-        };
-
-        mDevice->Submit(submitConfig);
-
-        SFenceWaitConfig waitConfig =
-        {
-            .WaitAll = true,
-            .Timeout = static_cast<float>(100000000000)
-        };
-
-        while(!submitFence->Wait(waitConfig))
-        {
-            LogMessage(MessageSeverity::Warning, "Wait for fence");
-        }
-
-        mCommandPool->FreeCommandBuffers({ commandBuffer });
+        SubmitSingleTimeCommandBuffer(commandBuffer);
     }
 
     void Renderer::Deinit()
@@ -310,23 +159,6 @@ namespace psm
 
         mCommandBuffers[mCurrentFrame]->Begin(commandBufferBegin);
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //shadow map pass
-        /*SImageLayoutTransition shadowMapLayoutTransition =
-        {
-            .Format = EFormat::D32_SFLOAT,
-            .OldLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
-            .NewLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-            .SourceStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
-            .DestinationStage = EPipelineStageFlags::LATE_FRAGMENT_TESTS_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
-            .SourceMask = EAccessFlags::SHADER_READ_BIT,
-            .DestinationMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_READ_BIT,
-            .ImageAspectFlags = EImageAspect::DEPTH_BIT,
-            .MipLevel = 0,
-        };
-
-        mDevice->ImageLayoutTransition(mCommandBuffers[mCurrentFrame], mDirDepthShadowMaps[mCurrentFrame], shadowMapLayoutTransition);*/
-
         UClearValue shadowMapClearColor;
         shadowMapClearColor.DepthStencil = { 1.0f, 0 };
 
@@ -359,22 +191,6 @@ namespace psm
         OpaqueInstances::GetInstance()->RenderDepth(mCommandBuffers[mCurrentFrame]);
 
         mShadowMapRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);
-
-        //shadow maps layout transition
-        /*SImageLayoutTransition shadowMapLayoutTransitionReverse =
-        {
-            .Format = EFormat::D32_SFLOAT,
-            .OldLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-            .NewLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
-            .SourceStage = EPipelineStageFlags::LATE_FRAGMENT_TESTS_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
-            .DestinationStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
-            .SourceMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_READ_BIT,
-            .DestinationMask = EAccessFlags::SHADER_READ_BIT,
-            .ImageAspectFlags = EImageAspect::DEPTH_BIT,
-            .MipLevel = 0,
-        };
-        
-        mDevice->ImageLayoutTransition(mCommandBuffers[mCurrentFrame], mDirDepthShadowMaps[mCurrentFrame], shadowMapLayoutTransitionReverse);*/
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //default pass
@@ -653,6 +469,182 @@ namespace psm
         CreateSwapchain(mWindow);
         CreateDepthImage();
         CreateFramebuffers();
+    }
+
+    void Renderer::CreateRenderFrameCommandBuffers()
+    {
+        SCommandBufferConfig cmdBuffersConfig =
+        {
+            .Size = mSwapchain->GetImagesCount(),
+            .IsBufferLevelPrimary = true,
+        };
+
+        mCommandBuffers = mDevice->CreateCommandBuffers(mCommandPool, cmdBuffersConfig);
+    }
+
+    void Renderer::CreateCommandPool()
+    {
+        SCommandPoolConfig cmdPoolConfig =
+        {
+            .QueueFamilyIndex = mDevice->GetDeviceData().vkData.GraphicsQueueIndex,
+            .QueueType = EQueueType::GRAHPICS
+        };
+
+        mCommandPool = mDevice->CreateCommandPool(cmdPoolConfig);
+    }
+
+    void Renderer::CreateDefaultRenderPass()
+    {
+        SAttachmentDescription colorDescription =
+        {
+            .Flags = EAttachmentDescriptionFlags::NONE,
+            .Format = mSwapchain->GetSwapchainImageFormat(),
+            .Samples = ESamplesCount::COUNT_1,
+            .LoadOperation = EAttachmentLoadOp::LOAD_OP_CLEAR,
+            .StoreOperation = EAttachmentStoreOp::STORE_OP_STORE,
+            .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
+            .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
+            .InitialLayout = EImageLayout::UNDEFINED,
+            .FinalLayout = EImageLayout::PRESENT_SRC_KHR
+        };
+
+        SAttachmentDescription depthStencilDescription =
+        {
+            .Flags = EAttachmentDescriptionFlags::NONE,
+            .Format = mDepthStencilFormat,
+            .Samples = ESamplesCount::COUNT_1,
+            .LoadOperation = EAttachmentLoadOp::LOAD_OP_CLEAR,
+            .StoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
+            .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
+            .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
+            .InitialLayout = EImageLayout::UNDEFINED,
+            .FinalLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        };
+
+        SAttachmentReference colorAttachmentReference =
+        {
+            .Attachment = 0,
+            .Layout = EImageLayout::COLOR_ATTACHMENT_OPTIMAL
+        };
+
+        SAttachmentReference depthAttachmentReference =
+        {
+            .Attachment = 1,
+            .Layout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        };
+
+        SSubpassDescription subpassDescription =
+        {
+            .PipelineBindPoint = EPipelineBindPoint::GRAPHICS,
+            .InputAttachmentCount = 0,
+            .pInputAttachments = nullptr,
+            .ColorAttachmentCount = 1,
+            .pColorAttachments = &colorAttachmentReference,
+            .pResolveAttachments = nullptr,
+            .pDepthStencilAttachment = &depthAttachmentReference,
+            .PreserveAttachmentCount = 0,
+            .pPreserveAttachments = nullptr
+        };
+
+        SSubpassDependency dependency =
+        {
+            .SrcSubpass = VK_SUBPASS_EXTERNAL,
+            .DstSubpass = 0,
+            .SrcStageMask = EPipelineStageFlags::BOTTOM_OF_PIPE_BIT,
+            .DstStageMask = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
+            .SrcAccessMask = EAccessFlags::NONE,
+            .DstAccessMask = EAccessFlags::COLOR_ATTACHMENT_WRITE_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        };
+
+        SRenderPassConfig renderPassConfig =
+        {
+            .ColorAttachements = {colorDescription},
+            .DepthAttachment = depthStencilDescription,
+            .ResolveAttachment = {},
+
+            .ColorAttachmentReference = colorAttachmentReference,
+            .DepthStencilAttachmentReference = depthAttachmentReference,
+            .ResolveAttachemntReference = {},
+
+            .SubpassDescriptions = {subpassDescription},
+            .SubpassDependensies = {dependency}
+        };
+
+        mRenderPass = mDevice->CreateRenderPass(renderPassConfig);
+    }
+
+    void Renderer::CreateGlobalBuffer()
+    {
+        SBufferConfig bufferConfig =
+        {
+            .Size = sizeof(GlobalBuffer),
+            .Usage = EBufferUsage::USAGE_UNIFORM_BUFFER_BIT,
+            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
+
+        mGlobalBuffer = mDevice->CreateBuffer(bufferConfig);
+    }
+
+    CommandBufferPtr Renderer::BeginSingleTimeSubmitCommandBuffer()
+    {
+        SCommandBufferConfig commandBufferConfig =
+        {
+            .Size = 1,
+            .IsBufferLevelPrimary = true
+        };
+
+        std::vector<CommandBufferPtr> commandBuffers = mDevice->CreateCommandBuffers(mCommandPool, commandBufferConfig);
+        CommandBufferPtr commandBuffer = commandBuffers[0];
+
+        SCommandBufferBeginConfig beginConfig =
+        {
+            .BufferIndex = 0,
+            .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
+        };
+
+        commandBuffer->Begin(beginConfig);
+
+        return commandBuffer;
+    }
+
+    void Renderer::SubmitSingleTimeCommandBuffer(CommandBufferPtr commandBuffer)
+    {
+        //submits single time command buffer, waits fences to complete and resets it
+        SFenceConfig fenceConfig =
+        {
+            .Signaled = false
+        };
+
+        FencePtr submitFence = mDevice->CreateFence(fenceConfig);
+
+        SSubmitConfig submitConfig =
+        {
+            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .SubmitCount = 1,
+            .WaitStageFlags = EPipelineStageFlags::NONE,
+            .WaitSemaphoresCount = 0,
+            .pWaitSemaphores = nullptr,
+            .CommandBuffersCount = 1,
+            .pCommandBuffers = &commandBuffer,
+            .SignalSemaphoresCount = 0,
+            .pSignalSemaphores = nullptr,
+            .Fence = submitFence,
+        };
+
+        mDevice->Submit(submitConfig);
+
+        SFenceWaitConfig waitConfig =
+        {
+            .WaitAll = true,
+            .Timeout = static_cast<float>(100000000000)
+        };
+
+        while(!submitFence->Wait(waitConfig))
+        {
+            LogMessage(MessageSeverity::Warning, "Wait for fence");
+        }
+
+        mCommandPool->FreeCommandBuffers({ commandBuffer });
     }
 
     void Renderer::ResizeWindow(HWND hWnd)

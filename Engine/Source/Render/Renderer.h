@@ -37,19 +37,27 @@ namespace psm
         void Init(DevicePtr device, const PlatformConfig& config);
         void Deinit();
 
-        void CreateDepthImage();
         void Render(GlobalBuffer& buffer);
         void ResizeWindow(HWND hWnd);
-        void CreateSwapchain(HWND hWnd);
-        void CreateSwapchainSyncObjects();
-        void CreateFramebuffers();
-
-        void InitImGui(HWND hWnd);//needs to be initialized in another place
 
         ImagePtr LoadTextureIntoMemory(const RawTextureData& textureData, uint32_t mipLevels);//should be moved inside DevicePtr
     private:
+        void CreateDepthImage();
+        void CreateSwapchain(HWND hWnd);
+        void CreateSwapchainSyncObjects();
+        void CreateFramebuffers();
         void PrepareShadowMapRenderPass();
         void ResizeWindowInternal(HWND hWnd);
+        void CreateRenderFrameCommandBuffers();
+        void CreateCommandPool();
+        void CreateDefaultRenderPass();
+        void CreateGlobalBuffer();
+        //specific
+        CommandBufferPtr BeginSingleTimeSubmitCommandBuffer();
+        void SubmitSingleTimeCommandBuffer(CommandBufferPtr commandBuffer);
+
+        void InitImGui(HWND hWnd);//needs to be initialized in another place
+
     private:
 
         //old

@@ -382,7 +382,6 @@ namespace psm
         submitFence->Wait(waitConfig);
 
         commandPool->FreeCommandBuffers({ commandBuffer });
-        //WaitIdle();
 
         return image;
     }
