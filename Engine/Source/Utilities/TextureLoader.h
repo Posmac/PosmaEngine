@@ -46,6 +46,7 @@ namespace psm
         void CleanRawTextureData(void* data);
         void AddWhiteDefaultTexture(ImagePtr& whiteTexture);
         ImagePtr GetWhiteTexture() const;
+        void Deinit();
 
     private:
         ImagePtr mWhiteTexture;

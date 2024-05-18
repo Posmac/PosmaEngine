@@ -35,6 +35,24 @@ namespace psm
         InitSpotLightData(swapchainImages);
     }
 
+    void Shadows::Deinit()
+    {
+        mGPUShadowBuffer = nullptr;
+
+        //dir light depth image
+        mDirDepthShadowMaps.clear();;
+
+        //point light depth images
+        mPointLightsShadowMaps = {};
+
+        //spot light depth image
+        mSpotLightShadowMaps.clear();
+
+        //renderer related thing
+        mShadowFramebuffers.clear();
+        mShadowRenderPass = nullptr;
+    }
+
     void Shadows::InitShadowsBuffer()
     {
         uint64_t bufferSize = sizeof(mShadowsBuffer);

@@ -52,4 +52,9 @@ namespace psm
     {
         return mWhiteTexture;
     }
+
+    void TextureLoader::Deinit()
+    {
+        mWhiteTexture = nullptr;
+    }
 }

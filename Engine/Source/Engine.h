@@ -18,6 +18,6 @@ namespace psm
         static Engine* s_Instance;
     public:
         void Init(HWND hWnd, HINSTANCE hInstance);
-        void Dispose();
+        void Deinit();
     };
 }

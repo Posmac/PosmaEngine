@@ -125,7 +125,39 @@ namespace psm
 
     void Renderer::Deinit()
     {
+        isInit = false;
+        mWindowResizeQueue = {};
 
+        while(!mDevice->WaitIdle())
+        {
+            LogMessage(MessageSeverity::Warning, "Wait idle");
+        }
+
+        Shadows::Instance()->Deinit();
+        OpaqueInstances::GetInstance()->Deinit();
+
+        mGlobalBuffer = nullptr;
+        mSwapchain = nullptr;
+
+        /*for(auto& fb : mFramebuffers)
+            fb = nullptr;*/
+        mFramebuffers.clear();
+        mRenderPass = nullptr;
+
+        mCommandPool->FreeCommandBuffers(mCommandBuffers);
+        /*for(auto& cb : mCommandBuffers)
+            cb = nullptr;*/
+        mCommandBuffers.clear();
+
+        mCommandPool = nullptr;
+        mDepthRenderTargetTexture = nullptr;
+
+        mShadowMapFramebuffers.clear();
+        mDirDepthShadowMaps.clear();
+        mShadowMapRenderPass = nullptr;
+
+        mGui = nullptr;
+        mDevice = nullptr;
     }
 
     void Renderer::Render(GlobalBuffer& buffer)
@@ -587,6 +619,7 @@ namespace psm
 
     CommandBufferPtr Renderer::BeginSingleTimeSubmitCommandBuffer()
     {
+        //creates a new command buffer and begins it
         SCommandBufferConfig commandBufferConfig =
         {
             .Size = 1,

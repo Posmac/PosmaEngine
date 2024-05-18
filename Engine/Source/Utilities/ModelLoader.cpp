@@ -137,4 +137,9 @@ namespace psm
         mDevice = device;
         mCommandPool = commandPool;
     }
+
+    void ModelLoader::Deinit()
+    {
+        //empty for now
+    }
 }

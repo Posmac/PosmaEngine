@@ -45,8 +45,8 @@ namespace psm
 
     void Model::Deinit()
     {
-        /*vk::DestroyBuffer(vk::Device, m_VertexBuffer);
-        vk::FreeMemory(vk::Device, m_VertexBufferMemory);*/
+        mVertexBuffer = nullptr;
+        mIndexBuffer = nullptr;
     }
 
     void Model::Init(const DevicePtr& device, const CommandPoolPtr& commandPool)

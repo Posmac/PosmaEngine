@@ -56,8 +56,10 @@ namespace psm
         Renderer::Instance()->Init(RenderDevice, config);
     }
 
-    void Engine::Dispose()
+    void Engine::Deinit()
     {
+        ModelLoader::Instance()->Deinit();
+        TextureLoader::Instance()->Deinit();
         Renderer::Instance()->Deinit();
         ShutdownRHI();
     }

@@ -92,7 +92,7 @@ namespace psm
 
         //class related
     public:
-        
+
         void Init(DevicePtr device, const RenderPassPtr& renderPass, const RenderPassPtr& shadowRenderPass, SResourceExtent2D windowSize, SResourceExtent2D shadowMapSize);
         void Deinit();
 

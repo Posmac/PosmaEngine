@@ -74,7 +74,7 @@ namespace psm
         DeviceData mDeviceData;
 
         QueueFamilyIndices mQueues;
-        
+
         SwapchainPtr mSwapchain;
         SurfacePtr mVkSurface;
     };

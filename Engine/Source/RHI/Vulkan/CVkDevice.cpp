@@ -242,6 +242,7 @@ namespace psm
 
     CVkDevice::~CVkDevice()
     {
+        mVkSurface = nullptr;
         vkDestroyDevice(mDevice, nullptr);
     }
 

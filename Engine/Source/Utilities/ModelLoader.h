@@ -34,11 +34,13 @@ namespace psm
         //class specific
     public:
         void Init(DevicePtr device, CommandPoolPtr commandPool);
+        void Deinit();
         void LoadModel(const std::string& pathToModel, const std::string& modelName, Model* model, std::vector<MeshPbrMaterial>& modelMeshMaterials);
     private:
         void ProcessNode(aiNode* node, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
         void ProcessMesh(aiMesh* mesh, const aiScene* scene, Model* model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
     private:
+        //came from mDevice
         DevicePtr mDevice;
         CommandPoolPtr mCommandPool;
     };

@@ -53,6 +53,7 @@ namespace psm
         //class specific
     public:
         void Init(DevicePtr device, uint32_t swapchainImages);
+        void Deinit();
         void InitShadowsBuffer();
         void InitDirectionalLightData(uint32_t swapchainImages);
         void InitPointLightsData(uint32_t swapchainImages);

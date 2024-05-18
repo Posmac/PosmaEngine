@@ -104,7 +104,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         app.Update();
     }
 
-    psm::Engine::Instance()->Dispose();
+    psm::Engine::Instance()->Deinit();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
     CloseConsole();

@@ -46,8 +46,6 @@ namespace psm
 
         mDescriptorPool = mDeviceInternal->CreateDescriptorPool(descriptorPoolConfig);
 
-        
-
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
         //ImGui::StyleColorsLight();
@@ -131,6 +129,7 @@ namespace psm
 
     CVkImGui::~CVkImGui()
     {
+        mDescriptorPool = nullptr;
         ImGui_ImplVulkan_Shutdown();
     }
 

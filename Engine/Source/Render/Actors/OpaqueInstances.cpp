@@ -86,7 +86,31 @@ namespace psm
 
     void OpaqueInstances::Deinit()
     {
+        for(auto& model : m_Models)
+            model.first->Deinit();
+        m_Models.clear();
 
+        m_PerModels.clear();
+
+        mInstanceBuffer = nullptr;
+
+        mGlobalBufferSetLayout = nullptr;
+        mGlobalBufferSet = nullptr;
+        mModelDataSetLayout = nullptr;
+        mInstanceToWorldConstantBuffer = nullptr;
+        mMaterialSetLayout = nullptr;
+        mMaterialSet = nullptr;
+        mDepthPassSetLayout = nullptr;
+        mDepthPassSet = nullptr;
+        mDefaultPassDepthDataSetLayout = nullptr;
+        mDefaultPassDepthDataSet = nullptr;
+        mDepthPassPipeline = nullptr;
+        mDepthPassPipelineLayout = nullptr;
+        mDefaultPassPipeline = nullptr;
+        mDefaultPassPipelineLayout = nullptr;
+        mSampler = nullptr;
+
+        mDescriptorPool = nullptr;
     }
 
     void OpaqueInstances::Render(const CommandBufferPtr& commandBuffer)
