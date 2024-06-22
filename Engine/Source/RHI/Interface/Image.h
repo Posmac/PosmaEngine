@@ -4,12 +4,13 @@
 
 #include "RHI/RHICommon.h"
 #include "IObject.h"
+#include "IResource.h"
 
 #include "RHI/Enums/ImageFormats.h"
 
 namespace psm
 {
-    class IImage : public IObject
+    class IImage : public IObject, public IResource
     {
     public:
         IImage() = default;

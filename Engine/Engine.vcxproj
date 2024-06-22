@@ -156,6 +156,9 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Foundation\BitwiseEnum.h" />
+    <ClInclude Include="Source\Foundation\Name.h" />
+    <ClInclude Include="Source\Foundation\NameRegistry.h" />
     <ClInclude Include="Source\Materials\PbrMaterial.h" />
     <ClInclude Include="Source\RHI\Common.h" />
     <ClInclude Include="Source\RHI\Configs\Barriers.h" />
@@ -172,6 +175,7 @@
     <ClInclude Include="Source\RHI\Interface\DescriptorPool.h" />
     <ClInclude Include="Source\RHI\Interface\Framebuffer.h" />
     <ClInclude Include="Source\RHI\Interface\IObject.h" />
+    <ClInclude Include="Source\RHI\Interface\IResource.h" />
     <ClInclude Include="Source\RHI\Interface\Pipeline.h" />
     <ClInclude Include="Source\RHI\Interface\Semaphore.h" />
     <ClInclude Include="Source\RHI\Interface\Shaders.h" />
@@ -249,6 +253,8 @@
     <ClInclude Include="Tests\RHITest.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Foundation\Name.cpp" />
+    <ClCompile Include="Source\Foundation\NameRegistry.cpp" />
     <ClCompile Include="Source\RHI\Enums\Formats.cpp" />
     <ClCompile Include="Source\RHI\RHI.cpp" />
     <ClCompile Include="Source\RHI\RHICommon.cpp" />

@@ -253,6 +253,11 @@ namespace psm
         return mSize;
     }
 
+    uint32_t CVkBuffer::SubresourceCount() const
+    {
+        return 1;
+    }
+
     void* CVkBuffer::Raw()
     {
         return mVkBuffer;

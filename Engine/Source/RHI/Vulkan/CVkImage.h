@@ -26,7 +26,8 @@ namespace psm
         virtual uint32_t GetImageMips() const override;
         virtual uint32_t GetArrayLayers() const override;
         virtual uint32_t GetSampleCount() const override;
-        
+        virtual uint32_t SubresourceCount() const override;
+
         virtual void* Raw() override;
         virtual void* Raw() const override;
         virtual void* RawImageView() override;

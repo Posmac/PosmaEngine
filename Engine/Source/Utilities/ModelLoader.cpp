@@ -38,7 +38,7 @@ namespace psm
 
         mModels.insert({ fullPath, std::make_shared<Model>() });
 
-        std::shared_ptr<Model>& model = mModels[fullPath];
+        std::   shared_ptr<Model>& model = mModels[fullPath];
         model->Name = fullPath;
 
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)

@@ -19,6 +19,7 @@ namespace psm
         virtual void Flush(const SBufferFlushConfig& config) override;
         virtual void UpdateBuffer(const SUntypedBuffer& data) override;
         virtual uint64_t Size() override;
+        virtual uint32_t SubresourceCount() const override;
 
         virtual void* Raw() override;
         virtual void* Raw() const override;

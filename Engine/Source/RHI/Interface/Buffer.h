@@ -6,10 +6,11 @@
 #include "RHI/Interface/Types.h"
 #include "RHI/Memory/UntypedBuffer.h"
 #include "IObject.h"
+#include "IResource.h"
 
 namespace psm
 {
-    class IBuffer : public IObject
+    class IBuffer : public IObject, public IResource
     {
     public:
         IBuffer() = default;

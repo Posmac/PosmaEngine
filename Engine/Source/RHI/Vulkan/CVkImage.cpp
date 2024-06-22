@@ -122,6 +122,11 @@ namespace psm
         return static_cast<uint32_t>(mImageConfig.SamplesCount);
     }
 
+    uint32_t CVkImage::SubresourceCount() const
+    {
+        return 1;
+    }
+
     void* CVkImage::Raw()
     {
         return mImage;
