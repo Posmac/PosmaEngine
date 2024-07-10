@@ -12,6 +12,9 @@
 #include "glm/glm.hpp"
 #include "Utilities/TextureLoader.h"
 
+#include "Render/Graph/RenderPipelineNode.h"
+#include "Render/Graph/ResourceMediator.h"
+
 namespace psm
 {
     class OpaqueInstances
@@ -93,60 +96,47 @@ namespace psm
         //class related
     public:
 
-        void Init(DevicePtr device, const RenderPassPtr& renderPass, const RenderPassPtr& shadowRenderPass, SResourceExtent2D windowSize, SResourceExtent2D shadowMapSize);
+        void Init(DevicePtr device, graph::ResourceMediatorPtr& resourceMediator, DescriptorPoolPtr descriptorPool);
         void Deinit();
 
-        void Render(const CommandBufferPtr& commandBuffer);
-        void RenderDepth(const CommandBufferPtr& commandBuffer);
+        void Render(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode);
+        void RenderDepth(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode);
         void AddInstance(std::shared_ptr<Model> model, const OpaqModelMeshMaterials& materials, const OpaqModelMeshInstances& instances);
 
-        void UpdateDefaultDescriptors(const BufferPtr& globalBuffer, const BufferPtr& shadowMapBuffer, const ImagePtr& dirDepthShadowMap);
-        void UpdateDepthDescriptors(const BufferPtr& globalBuffer);
+        void UpdateDefaultDescriptors(uint32_t imageIndex);
+        void UpdateDepthDescriptors(uint32_t imageIndex);
 
         void UpdateInstanceBuffer();
         void UpdateMeshToModelData();
     private:
         void SetupDescriptors();
         void SetupMaterialDescriptor(DescriptorSetPtr& descriptorSet, const Material& material);
-
-        void CreateDepthPipeline(const RenderPassPtr& renderPass, SResourceExtent2D viewportSize);
-        void CreateDefaultPipeline(const RenderPassPtr& renderPass, SResourceExtent2D viewportSize);
+        void RegisterResources();
 
     private:
         std::unordered_map<std::shared_ptr<Model>, uint32_t> m_Models;
         std::vector<PerModel> m_PerModels;
 
         DevicePtr mDeviceInternal;
-        
-        BufferPtr mInstanceBuffer;
-        DescriptorPoolPtr mDescriptorPool;
+        graph::ResourceMediatorPtr mResourceMediator;
+        DescriptorPoolPtr mDescriptorPoolInternal;
 
-        //shader descriptor sets
-        DescriptorSetLayoutPtr mGlobalBufferSetLayout; //global buffer only (set 0)
-        DescriptorSetPtr mGlobalBufferSet;
+        BufferPtr mInstanceBuffer;
 
         DescriptorSetLayoutPtr mModelDataSetLayout; // model instance matrix (set 1)
         BufferPtr mInstanceToWorldConstantBuffer; //hold all instances of all models
+        
+        DescriptorSetLayoutPtr mGlobalBufferSetLayout;
+        DescriptorSetPtr mGlobalBufferSet;
 
-        DescriptorSetLayoutPtr mMaterialSetLayout; // material albedo (set 2)
+        DescriptorSetLayoutPtr mMaterialSetLayout;
         DescriptorSetPtr mMaterialSet;
 
-        DescriptorSetLayoutPtr mDepthPassSetLayout; // depth pass light projection matrices buffer(set 3)
+        DescriptorSetLayoutPtr mDepthPassSetLayout;
         DescriptorSetPtr mDepthPassSet;
 
-        DescriptorSetLayoutPtr mDefaultPassDepthDataSetLayout; // depth pass light projection matrices buffer(b0) and shadow map(b1) (set 4)
-        DescriptorSetPtr mDefaultPassDepthDataSet;
-
-        //shadow map pipeline
-        PipelinePtr mDepthPassPipeline;
-        PipelineLayoutPtr mDepthPassPipelineLayout;
-
-        //default pipeline
-        PipelinePtr mDefaultPassPipeline;
-        PipelineLayoutPtr mDefaultPassPipelineLayout;
-
-
-        SamplerPtr mSampler; //temporary
+        DescriptorSetLayoutPtr mDefaultSetLayout;
+        DescriptorSetPtr mDefaultSet;
     };
 
     bool operator==(const OpaqueInstances::Material& lhs, const OpaqueInstances::Material& rhs);

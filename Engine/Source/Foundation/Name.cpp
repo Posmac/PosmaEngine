@@ -43,7 +43,7 @@ namespace psm
 
         }
 
-        Name::Name(Name&& other) noexcept
+        Name::Name(Name&& other)
             : m_Id{ other.m_Id }
         {
 
@@ -55,7 +55,7 @@ namespace psm
             return *this;
         }
 
-        Name& Name::operator=(Name&& other) noexcept
+        Name& Name::operator=(Name&& other) 
         {
             m_Id = other.m_Id;
             return *this;

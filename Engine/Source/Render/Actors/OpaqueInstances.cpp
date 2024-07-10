@@ -10,6 +10,10 @@
 #include "RHI/Vulkan/CVkBuffer.h"
 #endif
 
+#include "Render/Graph/RenderPipelineNode.h"
+#include "Render/Graph/GraphResourceNames.h"
+#include "Render/Graph/ResourceMediator.h"
+
 namespace psm
 {
     OpaqueInstances* OpaqueInstances::s_Instance = nullptr;
@@ -24,64 +28,13 @@ namespace psm
         return s_Instance;
     }
 
-    void OpaqueInstances::Init(DevicePtr device,
-                               const RenderPassPtr& defaultRenderPass,
-                               const RenderPassPtr& shadowRenderPass,
-                               SResourceExtent2D windowSize,
-                               SResourceExtent2D shadowMapSize)
+    void OpaqueInstances::Init(DevicePtr device, graph::ResourceMediatorPtr& resourceMediator, DescriptorPoolPtr descriptorPool)
     {
         mDeviceInternal = device;
-
-        constexpr uint32_t maxUniformBuffers = 500;
-        constexpr uint32_t maxCombinedImageSamples = 500;
-        constexpr uint32_t maxDescriptorSets = 500;
-
-        //create descriptor pool for everything
-        std::vector<SDescriptorPoolSize> shaderDescriptors =
-        {
-            {
-                EDescriptorType::UNIFORM_BUFFER, //VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                maxUniformBuffers
-            },
-            {
-                EDescriptorType::COMBINED_IMAGE_SAMPLER, //VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                maxCombinedImageSamples
-            }
-        };
-
-        SDescriptorPoolConfig descriptorPoolConfig =
-        {
-            .DesciptorPoolSizes = shaderDescriptors,
-            .MaxDesciptorPools = maxDescriptorSets
-        };
-
-        mDescriptorPool = mDeviceInternal->CreateDescriptorPool(descriptorPoolConfig);
-
-        SSamplerConfig samplerConfig =
-        {
-            .MagFilter = EFilterMode::FILTER_LINEAR,
-            .MinFilter = EFilterMode::FILTER_LINEAR,
-            .UAddress = ESamplerAddressMode::SAMPLER_MODE_MIRRORED_REPEAT,
-            .VAddress = ESamplerAddressMode::SAMPLER_MODE_MIRRORED_REPEAT,
-            .WAddress = ESamplerAddressMode::SAMPLER_MODE_MIRRORED_REPEAT,
-            .BorderColor = EBorderColor::BORDER_COLOR_FLOAT_OPAQUE_BLACK,
-            .EnableComparision = false,
-            .CompareOp = ECompareOp::COMPARE_OP_ALWAYS,
-            .SamplerMode = ESamplerMipmapMode::SAMPLER_MIPMAP_MODE_LINEAR,
-            .EnableAniso = false,
-            .MaxAniso = 0.0f,
-            .MaxLod = 0.0,
-            .MinLod = 0.0,
-            .MipLodBias = 0.0,
-            .UnnormalizedCoords = false,
-        };
-
-        mSampler = mDeviceInternal->CreateSampler(samplerConfig);
-
+        mResourceMediator = resourceMediator;
+        mDescriptorPoolInternal = mDescriptorPoolInternal;
         SetupDescriptors();
-
-        CreateDefaultPipeline(defaultRenderPass, windowSize);
-        CreateDepthPipeline(shadowRenderPass, shadowMapSize);
+        RegisterResources();
     }
 
     void OpaqueInstances::Deinit()
@@ -92,33 +45,18 @@ namespace psm
 
         mInstanceBuffer = nullptr;
 
-        mGlobalBufferSetLayout = nullptr;
-        mGlobalBufferSet = nullptr;
         mModelDataSetLayout = nullptr;
         mInstanceToWorldConstantBuffer = nullptr;
-        mMaterialSetLayout = nullptr;
-        mMaterialSet = nullptr;
-        mDepthPassSetLayout = nullptr;
-        mDepthPassSet = nullptr;
-        mDefaultPassDepthDataSetLayout = nullptr;
-        mDefaultPassDepthDataSet = nullptr;
-        mDepthPassPipeline = nullptr;
-        mDepthPassPipelineLayout = nullptr;
-        mDefaultPassPipeline = nullptr;
-        mDefaultPassPipelineLayout = nullptr;
-        mSampler = nullptr;
-
-        mDescriptorPool = nullptr;
     }
 
-    void OpaqueInstances::Render(const CommandBufferPtr& commandBuffer)
+    void OpaqueInstances::Render(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode)
     {
         if(m_Models.size() == 0)
         {
             return;
         }
 
-        mDefaultPassPipeline->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
+        pipelineNode->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
 
         SVertexBufferBindConfig vertexBufferBind =
         {
@@ -145,8 +83,8 @@ namespace psm
                 {
                     uint32_t totalInstances = material.Instances.size();
 
-                    mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mDefaultPassPipelineLayout,
-                                                        { mGlobalBufferSet, perMesh.MeshToModelData, material.MaterialDescriptorSet, mDefaultPassDepthDataSet });
+                    mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(),
+                                                        { mGlobalBufferSet, perMesh.MeshToModelData, material.MaterialDescriptorSet, mDefaultSet });
 
                     MeshRange range = perModel.Model->Meshes[i].Range;
                     mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
@@ -156,14 +94,14 @@ namespace psm
         }
     }
 
-    void OpaqueInstances::RenderDepth(const CommandBufferPtr& commandBuffer)
+    void OpaqueInstances::RenderDepth(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode)
     {
         if(m_Models.size() == 0)
         {
             return;
         }
 
-        mDepthPassPipeline->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
+        pipelineNode->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
 
         SVertexBufferBindConfig vertexBufferBind =
         {
@@ -190,7 +128,7 @@ namespace psm
                 {
                     uint32_t totalInstances = material.Instances.size();
 
-                    mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, mDepthPassPipelineLayout,
+                    mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(), 
                                                         { mDepthPassSet, perMesh.MeshToModelData });
 
                     MeshRange range = perModel.Model->Meshes[i].Range;
@@ -235,7 +173,7 @@ namespace psm
 
                     SDescriptorSetAllocateConfig modelAlloc =
                     {
-                         .DescriptorPool = mDescriptorPool,
+                         .DescriptorPool = mDescriptorPoolInternal,
                          .DescriptorSetLayouts = {mModelDataSetLayout},
                          .MaxSets = 1,
                     };
@@ -272,159 +210,6 @@ namespace psm
         }
     }
 
-    void OpaqueInstances::CreateDefaultPipeline(const RenderPassPtr& renderPass, SResourceExtent2D extent)
-    {
-        constexpr uint32_t descriptorSetLayoutsSize = 4;
-        DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
-        {
-            mGlobalBufferSetLayout,
-            mModelDataSetLayout,
-            mMaterialSetLayout,
-            mDefaultPassDepthDataSetLayout
-        };
-
-        SPipelineLayoutConfig pipelingLayoutConfig =
-        {
-            .pLayouts = descriptorSetLayouts,
-            .LayoutsSize = descriptorSetLayoutsSize,
-            .pPushConstants = nullptr,
-            .PushConstantsSize = 0
-        };
-
-        mDefaultPassPipelineLayout = mDeviceInternal->CreatePipelineLayout(pipelingLayoutConfig);
-
-        //shader stages (describe all shader stages used in pipeline)
-
-        ShaderPtr vertexShader = mDeviceInternal->CreateShaderFromFilename("../Engine/Shaders/triangle.vert.txt", EShaderStageFlag::VERTEX_BIT);
-        ShaderPtr fragmentShader = mDeviceInternal->CreateShaderFromFilename("../Engine/Shaders/triangle.frag.txt", EShaderStageFlag::FRAGMENT_BIT);
-
-        constexpr size_t modulesSize = 2;
-        SShaderModuleConfig modules[modulesSize] =
-        {
-            {
-                .Shader = vertexShader,                 // shader module 
-                .Type = EShaderStageFlag::VERTEX_BIT,   // VkShaderStageFlag
-                .EntryPoint = "main"                        // entry point
-            },
-            {
-                .Shader = fragmentShader,               // shader module 
-                .Type = EShaderStageFlag::FRAGMENT_BIT, // VkShaderStageFlag
-                .EntryPoint = "main"                        // entry point
-            },
-        };
-
-        constexpr size_t perVertexAttribsSize = 7;
-        SVertexInputAttributeDescription vertexAttribDescr[perVertexAttribsSize] =
-        {
-            //vertex attribs input (per vertex input data)
-            {
-                .Location = 0,                              // location
-                .Binding = 0,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
-                .Offset = offsetof(Vertex, Position)      // offset
-            },
-            {
-                .Location = 1,                              // location
-                .Binding = 0,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
-                .Offset = offsetof(Vertex, Normal)        // offset
-            },
-            {
-                .Location = 2,                              // location
-                .Binding = 0,                              // binding
-                .Format = EFormat::R32G32_SFLOAT,        // format
-                .Offset = offsetof(Vertex, TexCoord)      // offset
-            },
-
-            //instance attribs input (per instance input data)
-            {
-                .Location = 3,                              // location
-                .Binding = 1,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
-                .Offset = 0               // offset
-            },
-            {
-                .Location = 4,                              // location
-                .Binding = 1,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
-                .Offset = sizeof(glm::vec4)              // offset
-            },
-            {
-                .Location = 5,                              // location
-                .Binding = 1,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,        // format
-                .Offset = sizeof(glm::vec4) * 2     // offset
-            },
-            {
-                .Location = 6,                              // location
-                .Binding = 1,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
-                .Offset = sizeof(glm::vec4) * 3     // offset
-            },
-        };
-
-        constexpr size_t bindingsSize = 2;
-        SVertexInputBindingDescription bindingDescriptions[bindingsSize] =
-        {
-            {
-                .Binding = 0,                          // binding
-                .Stride = sizeof(Vertex),             // stride
-                .InputRate = EVertexInputRate::VERTEX // input rate
-            },
-            {
-                .Binding = 1,                          // binding
-                .Stride = sizeof(glm::mat4),             // stride
-                .InputRate = EVertexInputRate::INSTANCE // input rate
-            },
-        };
-
-        SInputAssemblyConfig inputAssembly =
-        {
-            .Topology = EPrimitiveTopology::TRIANGLE_LIST,
-            .RestartPrimitives = false
-        };
-
-        constexpr size_t dynamicStatesCount = 2;
-        EDynamicState dynamicStates[dynamicStatesCount] =
-        {
-            EDynamicState::SCISSOR,
-            EDynamicState::VIEWPORT
-        };
-
-        SRasterizationConfig rasterization =
-        {
-            .DepthClampEnable = false,
-            .RasterizerDiscardEnable = false,
-            .CullMode = ECullMode::BACK_BIT,
-            .PolygonMode = EPolygonMode::FILL,
-            .FrontFace = EFrontFace::COUNTER_CLOCKWISE,
-            .DepthBiasEnable = false,
-            .DepthBiasConstantFactor = 0.0f,
-            .DepthBiasClamp = 0.0f,
-            .DepthBiasSlopeFactor = 0.0f,
-            .LineWidth = 1.0f,
-        };
-
-        SPipelineConfig pipelineConfig =
-        {
-            .RenderPass = renderPass,
-            .ViewPortExtent = extent,
-            .PipelineLayout = mDefaultPassPipelineLayout,
-            .pVertexInputAttributes = vertexAttribDescr,
-            .VertexInputAttributeCount = perVertexAttribsSize,
-            .pVertexInputBindings = bindingDescriptions,
-            .VertexInputBindingCount = bindingsSize,
-            .pShaderModules = modules,
-            .ShaderModulesCount = modulesSize,
-            .pDynamicStates = dynamicStates,
-            .DynamicStatesCount = dynamicStatesCount,
-            .InputAssembly = inputAssembly,
-            .Rasterization = rasterization,
-        };
-
-        mDefaultPassPipeline = mDeviceInternal->CreateRenderPipeline(pipelineConfig);
-    }
-
     void OpaqueInstances::SetupDescriptors()
     {
         //global buffer only (set 0)
@@ -448,7 +233,7 @@ namespace psm
 
         SDescriptorSetAllocateConfig globalAlloc =
         {
-             .DescriptorPool = mDescriptorPool,
+             .DescriptorPool = mDescriptorPoolInternal,
              .DescriptorSetLayouts = {mGlobalBufferSetLayout},
              .MaxSets = 1,
         };
@@ -514,7 +299,7 @@ namespace psm
 
         SDescriptorSetAllocateConfig depthAlloc =
         {
-             .DescriptorPool = mDescriptorPool,
+             .DescriptorPool = mDescriptorPoolInternal,
              .DescriptorSetLayouts = {mDepthPassSetLayout},
              .MaxSets = 1,
         };
@@ -544,33 +329,35 @@ namespace psm
             .LayoutsCount = static_cast<uint32_t>(depthInputInfo.size())
         };
 
-        mDefaultPassDepthDataSetLayout = mDeviceInternal->CreateDescriptorSetLayout(depthInputConfig);
+        mDefaultSetLayout = mDeviceInternal->CreateDescriptorSetLayout(depthInputConfig);
 
         SDescriptorSetAllocateConfig depthDataAlloc =
         {
-             .DescriptorPool = mDescriptorPool,
-             .DescriptorSetLayouts = {mDefaultPassDepthDataSetLayout},
+             .DescriptorPool = mDescriptorPoolInternal,
+             .DescriptorSetLayouts = {mDefaultSetLayout},
              .MaxSets = 1,
         };
 
-        mDefaultPassDepthDataSet = mDeviceInternal->AllocateDescriptorSets(depthDataAlloc);
+        mDefaultSet = mDeviceInternal->AllocateDescriptorSets(depthDataAlloc);
     }
 
     void OpaqueInstances::SetupMaterialDescriptor(DescriptorSetPtr& descriptorSet, const Material& material)
     {
         SDescriptorSetAllocateConfig allocateConfig =
         {
-            .DescriptorPool = mDescriptorPool,
+            .DescriptorPool = mDescriptorPoolInternal,
             .DescriptorSetLayouts = {mMaterialSetLayout},
             .MaxSets = 1
         };
 
         descriptorSet = mDeviceInternal->AllocateDescriptorSets(allocateConfig);
 
+        SamplerPtr& sampler = mResourceMediator->GetSamplerByName(graph::DEFAULT_SAMPLER);
+
         std::vector<SUpdateTextureConfig> texturesUpdateInfo =
         {
             {
-                .Sampler = mSampler,
+                .Sampler = sampler,
                 .Image = material.Albedo,
                 .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
                 .DstBinding = 0,
@@ -581,148 +368,21 @@ namespace psm
         mDeviceInternal->UpdateDescriptorSets(descriptorSet, texturesUpdateInfo, {});
     }
 
-    void OpaqueInstances::CreateDepthPipeline(const RenderPassPtr& renderPass, SResourceExtent2D viewportSize)
+    void OpaqueInstances::RegisterResources()
     {
-        constexpr uint32_t descriptorSetLayoutsSize = 2;
-        DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
-        {
-            mDepthPassSetLayout,
-            mModelDataSetLayout
-        };
+        mResourceMediator->RegisterDescriptorSetLayout(graph::MODEL_DATA_SET_LAYOUT, mModelDataSetLayout);
 
-        SPipelineLayoutConfig pipelineLayoutConfig =
-        {
-            .pLayouts = descriptorSetLayouts,
-            .LayoutsSize = descriptorSetLayoutsSize,
-            .pPushConstants = nullptr,
-            .PushConstantsSize = 0,
-        };
+        mResourceMediator->RegisterDescriptorSet(graph::GLOBAL_BUFFER_SET, mGlobalBufferSet);
+        mResourceMediator->RegisterDescriptorSetLayout(graph::GLOBAL_BUFFER_SET, mGlobalBufferSetLayout);
 
-        mDepthPassPipelineLayout = mDeviceInternal->CreatePipelineLayout(pipelineLayoutConfig);
+        mResourceMediator->RegisterDescriptorSet(graph::OPAQUE_MATERIAL_SET, mMaterialSet);
+        mResourceMediator->RegisterDescriptorSetLayout(graph::OPAQUE_MATERIAL_SET, mMaterialSetLayout);
 
-        ShaderPtr vertexShader = mDeviceInternal->CreateShaderFromFilename("../Engine/Shaders/shadow2D.vert.txt", EShaderStageFlag::VERTEX_BIT);
+        mResourceMediator->RegisterDescriptorSet(graph::DEPTH_PASS_SET, mDepthPassSet);
+        mResourceMediator->RegisterDescriptorSetLayout(graph::DEPTH_PASS_SET, mDepthPassSetLayout);
 
-        constexpr size_t modulesSize = 1;
-        SShaderModuleConfig modules[modulesSize] =
-        {
-            {
-                .Shader = vertexShader,                 // shader module 
-                .Type = EShaderStageFlag::VERTEX_BIT,   // VkShaderStageFlag
-                .EntryPoint = "main"                        // entry point
-            },
-        };
-
-        constexpr int vertexInputAttributesSize = 7;
-        SVertexInputAttributeDescription vertexInputAttributes[vertexInputAttributesSize] =
-        {
-            //vertex attribs input (per vertex input data)
-            {
-                .Location = 0,                              // location
-                .Binding = 0,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
-                .Offset = offsetof(Vertex, Position)      // offset
-            },
-            {
-                .Location = 1,                              // location
-                .Binding = 0,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
-                .Offset = offsetof(Vertex, Normal)        // offset
-            },
-            {
-                .Location = 2,                              // location
-                .Binding = 0,                              // binding
-                .Format = EFormat::R32G32_SFLOAT,        // format
-                .Offset = offsetof(Vertex, TexCoord)      // offset
-            },
-
-            //instance attribs input (per instance input data)
-            {
-                .Location = 3,                              // location
-                .Binding = 1,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
-                .Offset = 0               // offset
-            },
-            {
-                .Location = 4,                              // location
-                .Binding = 1,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
-                .Offset = sizeof(glm::vec4)              // offset
-            },
-            {
-                .Location = 5,                              // location
-                .Binding = 1,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,        // format
-                .Offset = sizeof(glm::vec4) * 2     // offset
-            },
-            {
-                .Location = 6,                              // location
-                .Binding = 1,                              // binding
-                .Format = EFormat::R32G32B32A32_SFLOAT,  // format
-                .Offset = sizeof(glm::vec4) * 3     // offset
-            },
-        };
-
-        constexpr size_t bindingsSize = 2;
-        SVertexInputBindingDescription bindingDescriptions[bindingsSize] =
-        {
-            {
-                .Binding = 0,                          // binding
-                .Stride = sizeof(Vertex),             // stride
-                .InputRate = EVertexInputRate::VERTEX // input rate
-            },
-            {
-                .Binding = 1,                          // binding
-                .Stride = sizeof(glm::mat4),             // stride
-                .InputRate = EVertexInputRate::INSTANCE // input rate
-            },
-        };
-
-        SInputAssemblyConfig inputAssembly =
-        {
-            .Topology = EPrimitiveTopology::TRIANGLE_LIST,
-            .RestartPrimitives = false
-        };
-
-        constexpr size_t dynamicStatesCount = 3;
-        EDynamicState dynamicStates[dynamicStatesCount] =
-        {
-            EDynamicState::SCISSOR,
-            EDynamicState::VIEWPORT,
-            EDynamicState::DEPTH_BIAS
-        };
-
-        SRasterizationConfig rasterization =
-        {
-            .DepthClampEnable = false,
-            .RasterizerDiscardEnable = false,
-            .CullMode = ECullMode::FRONT_BIT,
-            .PolygonMode = EPolygonMode::FILL,
-            .FrontFace = EFrontFace::COUNTER_CLOCKWISE,
-            .DepthBiasEnable = true,
-            .DepthBiasConstantFactor = 0.0f,
-            .DepthBiasClamp = 0.0f,
-            .DepthBiasSlopeFactor = 0.0f,
-            .LineWidth = 1.0f,
-        };
-
-        SPipelineConfig pipelineConfig =
-        {
-            .RenderPass = renderPass,
-            .ViewPortExtent = viewportSize,
-            .PipelineLayout = mDepthPassPipelineLayout,
-            .pVertexInputAttributes = vertexInputAttributes,
-            .VertexInputAttributeCount = vertexInputAttributesSize,
-            .pVertexInputBindings = bindingDescriptions,
-            .VertexInputBindingCount = bindingsSize,
-            .pShaderModules = modules,
-            .ShaderModulesCount = modulesSize,
-            .pDynamicStates = dynamicStates,
-            .DynamicStatesCount = dynamicStatesCount,
-            .InputAssembly = inputAssembly,
-            .Rasterization = rasterization,
-        };
-
-        mDepthPassPipeline = mDeviceInternal->CreateRenderPipeline(pipelineConfig);
+        mResourceMediator->RegisterDescriptorSet(graph::DEFAULT_PASS_SET, mDefaultSet);
+        mResourceMediator->RegisterDescriptorSetLayout(graph::DEFAULT_PASS_SET, mDefaultSetLayout);
     }
 
     void OpaqueInstances::UpdateInstanceBuffer()
@@ -876,8 +536,9 @@ namespace psm
         mInstanceToWorldConstantBuffer->Unmap();
     }
 
-    void OpaqueInstances::UpdateDefaultDescriptors(const BufferPtr& globalBuffer, const BufferPtr& shadowMapBuffer, const ImagePtr& dirDepthShadowMap)
+    void OpaqueInstances::UpdateDefaultDescriptors(uint32_t imageIndex)
     {
+        BufferPtr& globalBuffer = mResourceMediator->GetBufferByName(graph::GLOBAL_CBUFFER);
         std::vector<SUpdateBuffersConfig> buffersInfo =
         {
            {
@@ -891,6 +552,8 @@ namespace psm
 
         mDeviceInternal->UpdateDescriptorSets(mGlobalBufferSet, {}, buffersInfo);
 
+        foundation::Name shadowBufferRefName = graph::GetResourceIndexedName(graph::SHADOW_CBUFFER, imageIndex);
+        BufferPtr& shadowMapBuffer = mResourceMediator->GetBufferByName(shadowBufferRefName);
         std::vector<SUpdateBuffersConfig> shadowBuffersInfo =
         {
             {
@@ -902,27 +565,32 @@ namespace psm
            },
         };
 
+        SamplerPtr& sampler = mResourceMediator->GetSamplerByName(graph::DEFAULT_SAMPLER);
+        foundation::Name shadowImageRefName = graph::GetResourceIndexedName(graph::SHADOWMAP_RENDERTARGET_NAME, imageIndex);
+        ImagePtr& shadowMapImage = mResourceMediator->GetImageByName(shadowImageRefName);
         std::vector<SUpdateTextureConfig> textureUpdateInfo =
         {
             {
-                .Sampler = mSampler,
-                .Image = dirDepthShadowMap,
+                .Sampler = sampler,
+                .Image = shadowMapImage,
                 .ImageLayout = EImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL,
                 .DstBinding = 1,
                 .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
             }
         };
 
-        mDeviceInternal->UpdateDescriptorSets(mDefaultPassDepthDataSet, textureUpdateInfo, shadowBuffersInfo);
+        mDeviceInternal->UpdateDescriptorSets(mDefaultSet, textureUpdateInfo, shadowBuffersInfo);
     }
 
-    void OpaqueInstances::UpdateDepthDescriptors(const BufferPtr& lightSources)
+    void OpaqueInstances::UpdateDepthDescriptors(uint32_t imageIndex)
     {
+        foundation::Name shadowBufferRefName = graph::GetResourceIndexedName(graph::SHADOW_CBUFFER, imageIndex);
+        BufferPtr& shadowMapBuffer = mResourceMediator->GetBufferByName(shadowBufferRefName);
         SUpdateBuffersConfig buffers =
         {
-            .Buffer = lightSources,
+            .Buffer = shadowMapBuffer,
             .Offset = 0,
-            .Range = lightSources->Size(),
+            .Range = shadowMapBuffer->Size(),
             .DstBinding = 0,
             .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
         };

@@ -58,6 +58,7 @@ namespace psm
         virtual void ImageLayoutTransition(const CommandBufferPtr& commandBuffer, const ImagePtr& image, const SImageLayoutTransition& config) override;//TODO: Remove it, you have InsertImageMemoryBarrier
         virtual void SetViewport(const CommandBufferPtr& commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth) override;
         virtual void SetScissors(const CommandBufferPtr& commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent) override;
+        virtual void UpdateBuffer(const BufferPtr& buffer, void* data) override;
 
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) override;
 

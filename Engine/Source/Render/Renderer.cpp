@@ -20,6 +20,9 @@
 
 #include "imgui/imgui.h"
 
+#include "Graph/GraphResourceNames.h"
+#include "Graph/ResourceGeneralInfo.h"
+
 namespace psm
 {
     Renderer* Renderer::s_Instance = nullptr;
@@ -52,21 +55,11 @@ namespace psm
         CreateSwapchainSyncObjects();
         CreateCommandPool();
         CreateRenderFrameCommandBuffers();
-        CreateDepthImage();
-        CreateDefaultRenderPass();
-        CreateFramebuffers();
-        CreateGlobalBuffer();
+        CreateDefaultDescriptorPool();
+        CreateSampler();
+        RegisterRenderPasses();
 
-        //init shadow system
-        Shadows::Instance()->Init(mDevice, mSwapchain->GetImagesCount());
-        PrepareShadowMapRenderPass();
-
-        //init mesh systems
-        auto shadowParams = Shadows::Instance()->GetShadowParams();
-        auto shadowMapSize = shadowParams.DirectionalShadowTextureSize;
-        SResourceExtent3D swapchainSize = mSwapchain->GetSwapchainSize();
-
-        OpaqueInstances::GetInstance()->Init(mDevice, mRenderPass, mShadowMapRenderPass, { swapchainSize.width, swapchainSize.height }, { shadowMapSize.width, shadowMapSize.height });
+        OpaqueInstances::GetInstance()->Init(mDevice, mResourceMediator, mDescriptorPool);
         ModelLoader::Instance()->Init(mDevice, mCommandPool);
         TextureLoader::Instance()->Init(mDevice, mCommandPool);
 
@@ -75,53 +68,59 @@ namespace psm
         isInit = true;
     }
 
-    void Renderer::CreateDepthImage()
+    void Renderer::RegisterRenderPasses()
     {
-        auto desiredFormats = { EFormat::D32_SFLOAT, EFormat::D32_SFLOAT_S8_UINT, EFormat::D24_UNORM_S8_UINT };
+        //create resource mediator 
+        mResourceMediator = std::make_shared<graph::ResourceMediator>(mDevice);
+        mResourceStateManager = std::make_shared<graph::ResourceStateManager>(mDevice, mResourceMediator);
 
-        mDepthStencilFormat = mDevice->FindSupportedFormat(desiredFormats, EImageTiling::OPTIMAL, EFeatureFormat::DEPTH_STENCIL_ATTACHMENT_BIT);
-
-        SResourceExtent3D imageSize = mSwapchain->GetSwapchainSize();
-
-        SImageConfig imageConfig =
+        //create render passes
+        auto shadowsLambda = [this]()
         {
-            .ImageSize = imageSize,
-            .MipLevels = 1,
-            .ArrayLevels = 1,
-            .Type = EImageType::TYPE_2D,
-            .Format = mDepthStencilFormat,
-            .Tiling = EImageTiling::OPTIMAL,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .Usage = EImageUsageType::USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | EImageUsageType::USAGE_SAMPLED_BIT,
-            .SharingMode = ESharingMode::EXCLUSIVE,
-            .SamplesCount = ESamplesCount::COUNT_1,
-            .Flags = EImageCreateFlags::NONE,
-            .ViewFormat = mDepthStencilFormat,
-            .ViewType = EImageViewType::TYPE_2D,
-            .ViewAspect = EImageAspect::DEPTH_BIT
+            OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mSwapchain->GetImagesCount());
+            OpaqueInstances::GetInstance()->RenderDepth(mCommandBuffers[mCurrentFrame], mShadowMapPipeline);
         };
 
-        mDepthRenderTargetTexture = mDevice->CreateImage(imageConfig);
-
-        CommandBufferPtr commandBuffer = BeginSingleTimeSubmitCommandBuffer();
-
-        SImageLayoutTransition imageLayoutTransition =
+        auto defaultLambda = [this]()
         {
-            .Format = mDepthStencilFormat,
-            .OldLayout = EImageLayout::UNDEFINED,
-            .NewLayout = EImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL,
-            .SourceStage = EPipelineStageFlags::TOP_OF_PIPE_BIT,
-            .DestinationStage = EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
-            .SourceMask = EAccessFlags::NONE,
-            .DestinationMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_READ_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-            .ImageAspectFlags = EImageAspect::DEPTH_BIT,
-            .MipLevel = 0,
+            OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mSwapchain->GetImagesCount());
+            OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame], mDefaultRenderPipeline);
         };
 
-        mDevice->ImageLayoutTransition(commandBuffer, mDepthRenderTargetTexture, imageLayoutTransition);
+        mDefaultBackbufferPass = std::make_shared<graph::DefaultBackbufferRenderPassNode>(graph::DEFAULT_RENDERPASS,
+                                                                                          mDevice,
+                                                                                          mResourceMediator,
+                                                                                          mSwapchain,
+                                                                                          mSwapchain->GetSwapchainImageFormat());
 
-        commandBuffer->End();
-        SubmitSingleTimeCommandBuffer(commandBuffer);
+        mShadowMapRenderPass = std::make_shared<graph::ShadowMapRenderPassNode>(graph::SHADOWMAP_RENDERPASS, 
+                                                                                mResourceMediator,
+                                                                                mDevice,
+                                                                                graph::SHADOW_MAP_SIZE,
+                                                                                mSwapchain->GetImagesCount());
+
+        mDefaultBackbufferPass->AddRenderCallback(defaultLambda);
+        mShadowMapRenderPass->AddRenderCallback(shadowsLambda);
+
+        //add everything into graph
+        mRenderGraph.AddRenderPass(mShadowMapRenderPass); //add default backbuffer renderpass
+        mRenderGraph.AddRenderPass(mDefaultBackbufferPass);   //shadow map generation renderpass
+
+        //create all necessary resources and link them
+        mRenderGraph.GenerateResourceDependencies(mSwapchain->GetImagesCount());
+
+        //create render pipelines
+        mDefaultRenderPipeline = std::make_shared<graph::DefaultRenderPipelineNode>(graph::DEFAULT_GRAPHICS_PIPELINE,
+                                                                                    mDevice,
+                                                                                    mDefaultBackbufferPass->GetRenderPass(),
+                                                                                    mResourceMediator,
+                                                                                    mSwapchain->GetSwapchainSize());
+
+        mShadowMapPipeline = std::make_shared<graph::ShadowMapPipelineNode>(graph::SHADOWMAP_GRAPHICS_PIPELINE,
+                                                                            mDevice,
+                                                                            mShadowMapRenderPass->GetRenderPass(),
+                                                                            mResourceMediator,
+                                                                            graph::SHADOW_MAP_SIZE);
     }
 
     void Renderer::Deinit()
@@ -134,8 +133,7 @@ namespace psm
             LogMessage(MessageSeverity::Warning, "Wait idle");
         }
 
-        //XXX Maybe remove to engine later
-        Shadows::Instance()->Deinit();
+        //Shadows::Instance()->Deinit();
         OpaqueInstances::GetInstance()->Deinit();
         ModelLoader::Instance()->Deinit();
         TextureLoader::Instance()->Deinit();
@@ -143,22 +141,12 @@ namespace psm
         mGlobalBuffer = nullptr;
         mSwapchain = nullptr;
 
-        /*for(auto& fb : mFramebuffers)
-            fb = nullptr;*/
-        mFramebuffers.clear();
-        mRenderPass = nullptr;
-
         mCommandPool->FreeCommandBuffers(mCommandBuffers);
         /*for(auto& cb : mCommandBuffers)
             cb = nullptr;*/
         mCommandBuffers.clear();
 
         mCommandPool = nullptr;
-        mDepthRenderTargetTexture = nullptr;
-
-        mShadowMapFramebuffers.clear();
-        mDirDepthShadowMaps.clear();
-        mShadowMapRenderPass = nullptr;
 
         mGui = nullptr;
         mDevice = nullptr;
@@ -177,261 +165,24 @@ namespace psm
             return;
         }
 
-        //basic
-        uint32_t imageIndex;
-        SSwapchainAquireNextImageConfig nextImageConfig
+        uint32_t imageIndex = BeginRender();
+
+        mDevice->UpdateBuffer(mGlobalBuffer, &buffer);
+
+        for(auto& renderPass : mRenderGraph)
         {
-            .Timeout = UINT64_MAX,
-            .Semaphore = mImageAvailableSemaphores[mCurrentFrame]
-        };
+            renderPass->PreRender(mCommandBuffers[mCurrentFrame], imageIndex);
+            renderPass->Render();
+            renderPass->PostRender(mCommandBuffers[mCurrentFrame]);
+        }
 
-        mSwapchain->GetNextImage(nextImageConfig, &imageIndex);
-
-        SCommandBufferBeginConfig commandBufferBegin =
-        {
-            .BufferIndex = mCurrentFrame,
-            .Usage = ECommandBufferUsage::NONE,
-        };
-
-        mCommandBuffers[mCurrentFrame]->Begin(commandBufferBegin);
-
-        UClearValue shadowMapClearColor;
-        shadowMapClearColor.DepthStencil = { 1.0f, 0 };
-
-        auto shadowParams = Shadows::Instance()->GetShadowParams();
-        auto shadowMapSize = shadowParams.DirectionalShadowTextureSize;
-
-        SRenderPassBeginConfig shadowMapRenderPassBeginConfig =
-        {
-            .RenderPass = mShadowMapRenderPass,
-            .Framebuffer = mShadowMapFramebuffers[imageIndex],
-            .CommandBuffer = mCommandBuffers[mCurrentFrame],
-            .Offset = {0, 0},
-            .Extent = {shadowMapSize.width, shadowMapSize.height},
-            .ClearValuesCount = 1,
-            .pClearValues = &shadowMapClearColor,
-            .SubpassContents = ESubpassContents::INLINE
-        };
-
-        mShadowMapRenderPass->BeginRenderPass(shadowMapRenderPassBeginConfig);
-        mDevice->SetViewport(mCommandBuffers[mCurrentFrame], 0, 0, static_cast<float>(shadowMapSize.width), static_cast<float>(shadowMapSize.height), 0.0f, 1.0f);
-        mDevice->SetScissors(mCommandBuffers[mCurrentFrame], { 0,0 }, { shadowMapSize.width, shadowMapSize.height });
-        mDevice->SetDepthBias(mCommandBuffers[mCurrentFrame], shadowParams.DepthBias, 0.0f, shadowParams.DepthSlope);
-
-        //update some matrix buffers
-
-        Shadows::Instance()->Update();
-        auto& shadowMapBuffer = Shadows::Instance()->GetGPUBuffer();
-        ////
-        OpaqueInstances::GetInstance()->UpdateDepthDescriptors(shadowMapBuffer);
-        OpaqueInstances::GetInstance()->RenderDepth(mCommandBuffers[mCurrentFrame]);
-
-        mShadowMapRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //default pass
-        std::array<UClearValue, 2> clearColor{};
-        clearColor[0].Color = { {0.2f, 0.2f, 0.2f, 1.0f} };
-        clearColor[1].DepthStencil = { 1.0f, 0 };
-
-        SRenderPassBeginConfig defaultRenderPassBeginConfig =
-        {
-            .RenderPass = mRenderPass,
-            .Framebuffer = mFramebuffers[imageIndex],
-            .CommandBuffer = mCommandBuffers[mCurrentFrame],
-            .Offset = {0, 0},
-            .Extent = {mSwapchain->GetSwapchainSize().width, mSwapchain->GetSwapchainSize().height},
-            .ClearValuesCount = clearColor.size(),
-            .pClearValues = clearColor.data(),
-            .SubpassContents = ESubpassContents::INLINE,
-        };
-
-        mRenderPass->BeginRenderPass(defaultRenderPassBeginConfig);
-        mDevice->SetViewport(mCommandBuffers[mCurrentFrame], 0.0f, 0.0f, static_cast<float>(mSwapchain->GetSwapchainSize().width), static_cast<float>(mSwapchain->GetSwapchainSize().width), 0.0f, 1.0f);
-        mDevice->SetScissors(mCommandBuffers[mCurrentFrame], { 0, 0 }, { mSwapchain->GetSwapchainSize().width, mSwapchain->GetSwapchainSize().height });
-
-        void* pData = nullptr;
-
-        SBufferMapConfig map =
-        {
-            .Size = sizeof(GlobalBuffer),
-            .Offset = 0,
-            .pData = &pData,
-            .Flags = 0
-        };
-
-        mGlobalBuffer->Map(map);
-        assert(pData != nullptr);
-        memcpy(pData, &buffer, sizeof(GlobalBuffer));
-        mGlobalBuffer->Unmap();
-
-        OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mGlobalBuffer, shadowMapBuffer, mDirDepthShadowMaps[mCurrentFrame]);
-        OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame]);
-
-        mGui->PrepareNewFrame();
+        /*mGui->PrepareNewFrame();
         {
             Shadows::Instance()->DrawShadowParams();
         }
-        mGui->Render(mCommandBuffers[mCurrentFrame]);
+        mGui->Render(mCommandBuffers[mCurrentFrame]);*/
 
-        //continue
-        mRenderPass->EndRenderPass(mCommandBuffers[mCurrentFrame]);
-
-        mCommandBuffers[mCurrentFrame]->End();
-
-        SSubmitConfig submitConfig =
-        {
-            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
-            .SubmitCount = 1,
-            .WaitStageFlags = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT,
-            .WaitSemaphoresCount = 1,
-            .pWaitSemaphores = &mImageAvailableSemaphores[mCurrentFrame],
-            .CommandBuffersCount = 1,
-            .pCommandBuffers = &mCommandBuffers[mCurrentFrame],
-            .SignalSemaphoresCount = 1,
-            .pSignalSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
-            .Fence = mFlightFences[mCurrentFrame],
-        };
-
-        mDevice->Submit(submitConfig);
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        SPresentConfig presentConfig =
-        {
-            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
-            .WaitSemaphoresCount = 1,
-            .pWaitSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
-            .ImageIndex = imageIndex
-        };
-
-        mDevice->Present(presentConfig);
-
-        SFenceWaitConfig fenceWait =
-        {
-            .WaitAll = true,
-            .Timeout = FLT_MAX,
-        };
-
-        while(!mFlightFences[mCurrentFrame]->Wait(fenceWait))
-        {
-            LogMessage(MessageSeverity::Info, "Waiting for fence");
-        };
-
-        mFlightFences[mCurrentFrame]->Reset();
-
-        mCommandBuffers[mCurrentFrame]->Reset();
-
-        mCurrentFrame = (mCurrentFrame + 1) % mSwapchain->GetImagesCount();
-        mTotalFrames++;
-    }
-
-    void Renderer::PrepareShadowMapRenderPass()
-    {
-        SAttachmentDescription depthAttachmentDescr =
-        {
-            .Flags = EAttachmentDescriptionFlags::NONE,
-            .Format = EFormat::D32_SFLOAT,
-            .Samples = ESamplesCount::COUNT_1,
-            .LoadOperation = EAttachmentLoadOp::LOAD_OP_CLEAR,
-            .StoreOperation = EAttachmentStoreOp::STORE_OP_STORE,
-            .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
-            .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .FinalLayout = EImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-        };
-
-        SAttachmentReference depthReference =
-        {
-            .Attachment = 0,
-            .Layout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-        };
-
-        SSubpassDescription subpassDescr =
-        {
-            .PipelineBindPoint = EPipelineBindPoint::GRAPHICS,
-            .InputAttachmentCount = 0,
-            .pInputAttachments = nullptr,
-            .ColorAttachmentCount = 0,
-            .pColorAttachments = nullptr,
-            .pResolveAttachments = 0,
-            .pDepthStencilAttachment = &depthReference,
-            .PreserveAttachmentCount = 0,
-            .pPreserveAttachments = nullptr,
-        };
-
-        std::vector<SSubpassDependency> subpassDependency =
-        {
-            {
-                .SrcSubpass = VK_SUBPASS_EXTERNAL,
-                .DstSubpass = 0,
-                .SrcStageMask = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
-                .DstStageMask = EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
-                .SrcAccessMask = EAccessFlags::SHADER_READ_BIT,
-                .DstAccessMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-                .DependencyFlags = EDependencyFlags::BY_REGION_BIT,
-            },
-            {
-                .SrcSubpass = 0,
-                .DstSubpass = VK_SUBPASS_EXTERNAL,
-                .SrcStageMask = EPipelineStageFlags::LATE_FRAGMENT_TESTS_BIT,
-                .DstStageMask = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
-                .SrcAccessMask = EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-                .DstAccessMask = EAccessFlags::SHADER_READ_BIT,
-                .DependencyFlags = EDependencyFlags::BY_REGION_BIT,
-            }
-        };
-
-        SRenderPassConfig renderPassConfig =
-        {
-            .ColorAttachements = {},
-            .DepthAttachment = depthAttachmentDescr,
-            .ResolveAttachment = {},
-            .ColorAttachmentReference = {},
-            .DepthStencilAttachmentReference = depthReference,
-            .ResolveAttachemntReference = {},
-            .SubpassDescriptions = {subpassDescr},
-            .SubpassDependensies = subpassDependency,
-        };
-
-        mShadowMapRenderPass = mDevice->CreateRenderPass(renderPassConfig);
-
-        auto shadowParams = Shadows::Instance()->GetShadowParams();
-        auto shadowMapSize = shadowParams.DirectionalShadowTextureSize;
-
-        mShadowMapFramebuffers.resize(mSwapchain->GetImagesCount());
-        mDirDepthShadowMaps.resize(mSwapchain->GetImagesCount());
-        for(int i = 0; i < mShadowMapFramebuffers.size(); i++)
-        {
-            SImageConfig imageConfig =
-            {
-                .ImageSize = {shadowMapSize.width,shadowMapSize.height, 1},
-                .MipLevels = 1,
-                .ArrayLevels = 1,
-                .Type = EImageType::TYPE_2D,
-                .Format = EFormat::D32_SFLOAT,
-                .Tiling = EImageTiling::OPTIMAL,
-                .InitialLayout = EImageLayout::UNDEFINED,
-                .Usage = EImageUsageType::USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | EImageUsageType::USAGE_SAMPLED_BIT,
-                .SharingMode = ESharingMode::EXCLUSIVE,
-                .SamplesCount = ESamplesCount::COUNT_1,
-                .Flags = EImageCreateFlags::NONE,
-                .ViewFormat = EFormat::D32_SFLOAT,
-                .ViewType = EImageViewType::TYPE_2D,
-                .ViewAspect = EImageAspect::DEPTH_BIT
-            };
-
-            mDirDepthShadowMaps[i] = mDevice->CreateImage(imageConfig);
-
-            SFramebufferConfig framebufferConfig =
-            {
-                .Attachments = {mDirDepthShadowMaps[i]->RawImageView()},
-                .Size = {shadowMapSize.width, shadowMapSize.height},
-                .RenderPass = mShadowMapRenderPass,
-            };
-
-            mShadowMapFramebuffers[i] = mDevice->CreateFramebuffer(framebufferConfig);
-        }
+        EndRender(imageIndex);
     }
 
     void Renderer::ResizeWindowInternal(HWND hWnd)
@@ -449,8 +200,8 @@ namespace psm
         //mRenderFinishedSemaphores.clear();
         //mFlightFences.clear();
 
-        mFramebuffers.clear();
-        mDepthRenderTargetTexture = nullptr;
+        //mFramebuffers.clear();
+        //mDepthRenderTargetTexture = nullptr;
 
         mWindow = hWnd;
         psm::PlatformConfig platformConfig =
@@ -465,8 +216,8 @@ namespace psm
         mDevice->GetSurface() = nullptr;
         mDevice->CreateSurface(platformConfig);
         CreateSwapchain(mWindow);
-        CreateDepthImage();
-        CreateFramebuffers();
+        //CreateDepthImage();
+        //CreateFramebuffers();
     }
 
     void Renderer::CreateRenderFrameCommandBuffers()
@@ -491,86 +242,6 @@ namespace psm
         mCommandPool = mDevice->CreateCommandPool(cmdPoolConfig);
     }
 
-    void Renderer::CreateDefaultRenderPass()
-    {
-        SAttachmentDescription colorDescription =
-        {
-            .Flags = EAttachmentDescriptionFlags::NONE,
-            .Format = mSwapchain->GetSwapchainImageFormat(),
-            .Samples = ESamplesCount::COUNT_1,
-            .LoadOperation = EAttachmentLoadOp::LOAD_OP_CLEAR,
-            .StoreOperation = EAttachmentStoreOp::STORE_OP_STORE,
-            .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
-            .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .FinalLayout = EImageLayout::PRESENT_SRC_KHR
-        };
-
-        SAttachmentDescription depthStencilDescription =
-        {
-            .Flags = EAttachmentDescriptionFlags::NONE,
-            .Format = mDepthStencilFormat,
-            .Samples = ESamplesCount::COUNT_1,
-            .LoadOperation = EAttachmentLoadOp::LOAD_OP_CLEAR,
-            .StoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
-            .StencilLoadOperation = EAttachmentLoadOp::LOAD_OP_DONT_CARE,
-            .StencilStoreOperation = EAttachmentStoreOp::STORE_OP_DONT_CARE,
-            .InitialLayout = EImageLayout::UNDEFINED,
-            .FinalLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-        };
-
-        SAttachmentReference colorAttachmentReference =
-        {
-            .Attachment = 0,
-            .Layout = EImageLayout::COLOR_ATTACHMENT_OPTIMAL
-        };
-
-        SAttachmentReference depthAttachmentReference =
-        {
-            .Attachment = 1,
-            .Layout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-        };
-
-        SSubpassDescription subpassDescription =
-        {
-            .PipelineBindPoint = EPipelineBindPoint::GRAPHICS,
-            .InputAttachmentCount = 0,
-            .pInputAttachments = nullptr,
-            .ColorAttachmentCount = 1,
-            .pColorAttachments = &colorAttachmentReference,
-            .pResolveAttachments = nullptr,
-            .pDepthStencilAttachment = &depthAttachmentReference,
-            .PreserveAttachmentCount = 0,
-            .pPreserveAttachments = nullptr
-        };
-
-        SSubpassDependency dependency =
-        {
-            .SrcSubpass = VK_SUBPASS_EXTERNAL,
-            .DstSubpass = 0,
-            .SrcStageMask = EPipelineStageFlags::BOTTOM_OF_PIPE_BIT,
-            .DstStageMask = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT | EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
-            .SrcAccessMask = EAccessFlags::NONE,
-            .DstAccessMask = EAccessFlags::COLOR_ATTACHMENT_WRITE_BIT | EAccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        };
-
-        SRenderPassConfig renderPassConfig =
-        {
-            .ColorAttachements = {colorDescription},
-            .DepthAttachment = depthStencilDescription,
-            .ResolveAttachment = {},
-
-            .ColorAttachmentReference = colorAttachmentReference,
-            .DepthStencilAttachmentReference = depthAttachmentReference,
-            .ResolveAttachemntReference = {},
-
-            .SubpassDescriptions = {subpassDescription},
-            .SubpassDependensies = {dependency}
-        };
-
-        mRenderPass = mDevice->CreateRenderPass(renderPassConfig);
-    }
-
     void Renderer::CreateGlobalBuffer()
     {
         SBufferConfig bufferConfig =
@@ -581,6 +252,34 @@ namespace psm
         };
 
         mGlobalBuffer = mDevice->CreateBuffer(bufferConfig);
+
+        mResourceMediator->RegisterBufferResource(graph::GLOBAL_CBUFFER, mGlobalBuffer);
+    }
+
+    void Renderer::CreateSampler()
+    {
+        SSamplerConfig samplerConfig =
+        {
+            .MagFilter = EFilterMode::FILTER_LINEAR,
+            .MinFilter = EFilterMode::FILTER_LINEAR,
+            .UAddress = ESamplerAddressMode::SAMPLER_MODE_MIRRORED_REPEAT,
+            .VAddress = ESamplerAddressMode::SAMPLER_MODE_MIRRORED_REPEAT,
+            .WAddress = ESamplerAddressMode::SAMPLER_MODE_MIRRORED_REPEAT,
+            .BorderColor = EBorderColor::BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+            .EnableComparision = false,
+            .CompareOp = ECompareOp::COMPARE_OP_ALWAYS,
+            .SamplerMode = ESamplerMipmapMode::SAMPLER_MIPMAP_MODE_LINEAR,
+            .EnableAniso = false,
+            .MaxAniso = 0.0f,
+            .MaxLod = 0.0,
+            .MinLod = 0.0,
+            .MipLodBias = 0.0,
+            .UnnormalizedCoords = false,
+        };
+
+        mSampler = mDevice->CreateSampler(samplerConfig);
+
+        mResourceMediator->RegisterSampler(graph::DEFAULT_SAMPLER, mSampler);
     }
 
     CommandBufferPtr Renderer::BeginSingleTimeSubmitCommandBuffer()
@@ -651,6 +350,80 @@ namespace psm
         mWindowResizeQueue.push(hWnd);
     }
 
+    uint32_t Renderer::BeginRender()
+    {
+        uint32_t imageIndex;
+        SSwapchainAquireNextImageConfig nextImageConfig
+        {
+            .Timeout = UINT64_MAX,
+            .Semaphore = mImageAvailableSemaphores[mCurrentFrame]
+        };
+
+        mSwapchain->GetNextImage(nextImageConfig, &imageIndex);
+
+        //begin command buffer
+        SCommandBufferBeginConfig commandBufferBegin =
+        {
+            .BufferIndex = mCurrentFrame,
+            .Usage = ECommandBufferUsage::NONE,
+        };
+
+        mCommandBuffers[mCurrentFrame]->Begin(commandBufferBegin);
+
+        return imageIndex;
+    }
+
+    void Renderer::EndRender(uint32_t imageIndex)
+    {
+        mCommandBuffers[mCurrentFrame]->End();
+
+        SSubmitConfig submitConfig =
+        {
+            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
+            .SubmitCount = 1,
+            .WaitStageFlags = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT,
+            .WaitSemaphoresCount = 1,
+            .pWaitSemaphores = &mImageAvailableSemaphores[mCurrentFrame],
+            .CommandBuffersCount = 1,
+            .pCommandBuffers = &mCommandBuffers[mCurrentFrame],
+            .SignalSemaphoresCount = 1,
+            .pSignalSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
+            .Fence = mFlightFences[mCurrentFrame],
+        };
+
+        mDevice->Submit(submitConfig);
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        SPresentConfig presentConfig =
+        {
+            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
+            .WaitSemaphoresCount = 1,
+            .pWaitSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
+            .ImageIndex = imageIndex
+        };
+
+        mDevice->Present(presentConfig);
+
+        SFenceWaitConfig fenceWait =
+        {
+            .WaitAll = true,
+            .Timeout = FLT_MAX,
+        };
+
+        while(!mFlightFences[mCurrentFrame]->Wait(fenceWait))
+        {
+            LogMessage(MessageSeverity::Info, "Waiting for fence");
+        };
+
+        mFlightFences[mCurrentFrame]->Reset();
+
+        mCommandBuffers[mCurrentFrame]->Reset();
+
+        mCurrentFrame = (mCurrentFrame + 1) % mSwapchain->GetImagesCount();
+        mTotalFrames++;
+    }
+
     void Renderer::CreateSwapchain(HWND hWnd)
     {
         SSwapchainConfig swapchainConfig =
@@ -676,27 +449,37 @@ namespace psm
         }
     }
 
-    void Renderer::CreateFramebuffers()
-    {
-        uint32_t frameBufferAttachmentCount = mSwapchain->GetImagesCount();
-        auto swapchainSize = mSwapchain->GetSwapchainSize();
-        mFramebuffers.resize(frameBufferAttachmentCount);
-
-        for(int i = 0; i < frameBufferAttachmentCount; i++)
-        {
-            SFramebufferConfig framebufferConfig =
-            {
-                .Attachments = { mSwapchain->ImageAtIndex(i), mDepthRenderTargetTexture->RawImageView() },
-                .Size = { swapchainSize.width, swapchainSize.height },
-                .RenderPass = mRenderPass
-            };
-
-            mFramebuffers[i] = mDevice->CreateFramebuffer(framebufferConfig);
-        };
-    }
-
     void Renderer::InitImGui(HWND hWnd)
     {
-        mGui = mDevice->CreateGui(mRenderPass, mCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
+        //create default imgui render pass with different render target!!
+        //mGui = mDevice->CreateGui(mRenderPass, mCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
+    }
+
+    void Renderer::CreateDefaultDescriptorPool()
+    {
+        constexpr uint32_t maxUniformBuffers = 500;
+        constexpr uint32_t maxCombinedImageSamples = 500;
+        constexpr uint32_t maxDescriptorSets = 500;
+
+        //create descriptor pool for everything
+        std::vector<SDescriptorPoolSize> shaderDescriptors =
+        {
+            {
+                EDescriptorType::UNIFORM_BUFFER, //VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                maxUniformBuffers
+            },
+            {
+                EDescriptorType::COMBINED_IMAGE_SAMPLER, //VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                maxCombinedImageSamples
+            }
+        };
+
+        SDescriptorPoolConfig descriptorPoolConfig =
+        {
+            .DesciptorPoolSizes = shaderDescriptors,
+            .MaxDesciptorPools = maxDescriptorSets
+        };
+
+        mDescriptorPool = mDevice->CreateDescriptorPool(descriptorPoolConfig);
     }
 }

@@ -749,6 +749,24 @@ namespace psm
         vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
     }
 
+    void CVkDevice::UpdateBuffer(const BufferPtr& buffer, void* data)
+    {
+        void* pData = nullptr;
+
+        SBufferMapConfig map =
+        {
+            .Size = buffer->Size(),
+            .Offset = 0,
+            .pData = &pData,
+            .Flags = 0
+        };
+
+        buffer->Map(map);
+        assert(pData != nullptr);
+        memcpy(pData, data, buffer->Size());
+        buffer->Unmap();
+    }
+
     void CVkDevice::UpdateDescriptorSets(const DescriptorSetPtr& descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers)
     {
         std::vector<VkWriteDescriptorSet> writeDescriptors(updateTextures.size() + updateBuffers.size());

@@ -156,10 +156,21 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Foundation\BitwiseEnum.h" />
     <ClInclude Include="Source\Foundation\Name.h" />
     <ClInclude Include="Source\Foundation\NameRegistry.h" />
     <ClInclude Include="Source\Materials\PbrMaterial.h" />
+    <ClInclude Include="Source\Render\Graph\GraphResourceNames.h" />
+    <ClInclude Include="Source\Render\Graph\RenderPipelineNode.h" />
+    <ClInclude Include="Source\Render\Graph\ResourceAliases.h" />
+    <ClInclude Include="Source\Render\Graph\ResourceGeneralInfo.h" />
+    <ClInclude Include="Source\Render\Graph\ResourceMediator.h" />
+    <ClInclude Include="Source\Render\Graph\ResourceStateManager.h" />
+    <ClInclude Include="Source\Render\Passes\DefaultBackbufferRenderPass.h" />
+    <ClInclude Include="Source\Render\Graph\RenderPassNode.h" />
+    <ClInclude Include="Source\Render\Passes\ShadowMapRenderPass.h" />
+    <ClInclude Include="Source\Render\Graph\RenderGraph.h" />
+    <ClInclude Include="Source\Render\Pipelines\DefaultRenderPipelineNode.h" />
+    <ClInclude Include="Source\Render\Pipelines\ShadowMapPipelineNode.h" />
     <ClInclude Include="Source\RHI\Common.h" />
     <ClInclude Include="Source\RHI\Configs\Barriers.h" />
     <ClInclude Include="Source\RHI\Configs\CommandBuffers.h" />
@@ -233,7 +244,7 @@
     <ClInclude Include="Source\Render\Camera\Camera.h" />
     <ClInclude Include="Source\Render\Actors\OpaqueInstances.h" />
     <ClInclude Include="Source\Render\Renderer.h" />
-    <ClInclude Include="Source\Render\Shadows.h" />
+    <ClInclude Include="Source\Render\ShadowsGenerator.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkImGui.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkSampler.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkSwapchain.h" />
@@ -255,6 +266,15 @@
   <ItemGroup>
     <ClCompile Include="Source\Foundation\Name.cpp" />
     <ClCompile Include="Source\Foundation\NameRegistry.cpp" />
+    <ClCompile Include="Source\Render\Graph\RenderPassNode.cpp" />
+    <ClCompile Include="Source\Render\Graph\RenderGraph.cpp" />
+    <ClCompile Include="Source\Render\Graph\RenderPipelineNode.cpp" />
+    <ClCompile Include="Source\Render\Graph\ResourceMediator.cpp" />
+    <ClCompile Include="Source\Render\Graph\ResourceStateManager.cpp" />
+    <ClCompile Include="Source\Render\Passes\DefaultBackbufferRenderPass.cpp" />
+    <ClCompile Include="Source\Render\Passes\ShadowMapRenderPass.cpp" />
+    <ClCompile Include="Source\Render\Pipelines\DefaultRenderPipelineNode.cpp" />
+    <ClCompile Include="Source\Render\Pipelines\ShadowMapPipelineNode.cpp" />
     <ClCompile Include="Source\RHI\Enums\Formats.cpp" />
     <ClCompile Include="Source\RHI\RHI.cpp" />
     <ClCompile Include="Source\RHI\RHICommon.cpp" />
@@ -291,7 +311,7 @@
     <ClCompile Include="Source\Render\Actors\OpaqueInstances.cpp" />
     <ClCompile Include="Source\Render\GlobalBuffer.h" />
     <ClCompile Include="Source\Render\Renderer.cpp" />
-    <ClCompile Include="Source\Render\Shadows.cpp" />
+    <ClCompile Include="Source\Render\ShadowsGenerator.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkImage.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkSampler.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkSwapchain.cpp" />

@@ -16,6 +16,11 @@ namespace psm
             return s_Instance;
         }
 
+        NameRegistry::NameRegistry()
+        {
+
+        }
+
         uint32_t NameRegistry::ToId(const std::string& string)
         {
             auto found = mNameToId.find(string);

@@ -74,6 +74,7 @@ namespace psm
         virtual void ImageLayoutTransition(const CommandBufferPtr& commandBuffer, const ImagePtr& image, const SImageLayoutTransition& config) = 0;
         virtual void SetViewport(const CommandBufferPtr& commandBuffer, float viewPortX, float viewPortY, float viewPortWidth, float viewPortHeight, float viewPortMinDepth, float viewPortMaxDepth) = 0;
         virtual void SetScissors(const CommandBufferPtr& commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent) = 0;
+        virtual void UpdateBuffer(const BufferPtr& buffer, void* data) = 0;
 
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) = 0;
 

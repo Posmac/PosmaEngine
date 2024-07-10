@@ -19,10 +19,10 @@ namespace psm
             ~Name();
 
             Name(const Name& other);
-            Name(Name&& other) noexcept;
+            Name(Name&& other);
 
             Name& operator=(const Name& other);
-            Name& operator=(Name&& other) noexcept;
+            Name& operator=(Name&& other);
 
             bool operator==(const Name& other) const;
             bool operator<(const Name& other) const;

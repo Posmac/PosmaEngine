@@ -10,7 +10,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
-constexpr int MAX_POINT_LIGHT_SOURCES = 16;
+#include "Passes/ShadowMapRenderPass.h"
 
 namespace psm
 {
@@ -32,34 +32,23 @@ namespace psm
         glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
     };
 
-    class Shadows
+    class ShadowsGenerator
     {
     public:
-        struct ShadowsBuffer
-        {
-            glm::mat4 DirectionalLightViewProjectionMatrix;
-            glm::mat4 SpotViewProjectionMatrix;
-            std::array<glm::mat4, MAX_POINT_LIGHT_SOURCES> PointLightViewProjectionMatrices;
-        };
-
         //singleton realization
     public:
-        Shadows(Shadows&) = delete;
-        void operator=(const Shadows&) = delete;
-        static Shadows* Instance();
+        ShadowsGenerator(ShadowsGenerator&) = delete;
+        void operator=(const ShadowsGenerator&) = delete;
+        static ShadowsGenerator* Instance();
     private:
-        Shadows() {};
-        static Shadows* s_Instance;
+        ShadowsGenerator() {};
+        static ShadowsGenerator* s_Instance;
         //class specific
     public:
         void Init(DevicePtr device, uint32_t swapchainImages);
-        void Deinit();
-        void InitShadowsBuffer();
         void InitDirectionalLightData(uint32_t swapchainImages);
         void InitPointLightsData(uint32_t swapchainImages);
         void InitSpotLightData(uint32_t swapchainImages);
-        ShadowsBuffer& GetBufferData();
-        BufferPtr& GetGPUBuffer();
         void Update();
         void DrawShadowParams();
 
@@ -68,26 +57,27 @@ namespace psm
     private:
 
         DevicePtr mDeviceInternal;
-
-        ShadowsBuffer mShadowsBuffer;
-        BufferPtr mGPUShadowBuffer;
-        EFormat mDepthFormat;
-
-        //dir light depth image
-        std::vector<ImagePtr> mDirDepthShadowMaps;
-
-        //point light depth images
-        std::array<std::vector<ImagePtr>, MAX_POINT_LIGHT_SOURCES> mPointLightsShadowMaps;
-
-        //spot light depth image
-        std::vector<ImagePtr> mSpotLightShadowMaps;
-
-        //renderer related thing
-        RenderPassPtr mShadowRenderPass;
-        std::vector<FramebufferPtr> mShadowFramebuffers;
-
-        //
         DirectionalShadowsData mDirectionalLightData;
         ShadowsParams mShadowParams;
+
+        //ShadowsBuffer mShadowsBuffer;
+        //BufferPtr mGPUShadowBuffer;
+        //EFormat mDepthFormat;
+
+        //dir light depth image
+        //std::vector<ImagePtr> mDirDepthShadowMaps;
+
+        //point light depth images
+        //std::array<std::vector<ImagePtr>, MAX_POINT_LIGHT_SOURCES> mPointLightsShadowMaps;
+
+        //spot light depth image
+        //std::vector<ImagePtr> mSpotLightShadowMaps;
+
+        //renderer related thing
+        //RenderPassPtr mShadowRenderPass;
+        //std::vector<FramebufferPtr> mShadowFramebuffers;
+
+        //
+        
     };
 }
