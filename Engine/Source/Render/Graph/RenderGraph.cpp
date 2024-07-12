@@ -24,7 +24,7 @@ namespace psm
         void RenderGraph::AddRenderPass(RenderPassNodePtr& renderPass)
         {
             auto it = mRenderPassNodesMeta.find(renderPass->GetName());
-            if(it == mRenderPassNodesMeta.end())
+            if(it != mRenderPassNodesMeta.end())
             {
                 LogMessage(MessageSeverity::Warning, "RenderPass with name: " + renderPass->GetName().ToString() + " already exists!");
                 return;

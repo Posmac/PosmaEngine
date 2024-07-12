@@ -9,20 +9,10 @@ namespace psm
 {
     namespace graph
     {
-        struct NameHashFunction
-        {
-            size_t operator()(const foundation::Name& name) const
-            {
-                size_t rowHash = std::hash<int>()(name.ToId());
-                size_t colHash = std::hash<std::string>()(name.ToString()) << 1;
-                return rowHash ^ colHash;
-            }
-        };
-
-        using BufferHash = std::unordered_map<foundation::Name, BufferPtr, NameHashFunction>;
-        using ImageHash = std::unordered_map<foundation::Name, ImagePtr, NameHashFunction>;
-        using SamplerHash = std::unordered_map<foundation::Name, SamplerPtr, NameHashFunction>;
-        using DescriptorSetLayoutHash = std::unordered_map<foundation::Name, DescriptorSetLayoutPtr, NameHashFunction>;
-        using DescriptorSetHash = std::unordered_map<foundation::Name, DescriptorSetPtr, NameHashFunction>;
+        using BufferHash = std::unordered_map<foundation::Name, BufferPtr, foundation::NameHashFunction>;
+        using ImageHash = std::unordered_map<foundation::Name, ImagePtr, foundation::NameHashFunction>;
+        using SamplerHash = std::unordered_map<foundation::Name, SamplerPtr, foundation::NameHashFunction>;
+        using DescriptorSetLayoutHash = std::unordered_map<foundation::Name, DescriptorSetLayoutPtr, foundation::NameHashFunction>;
+        using DescriptorSetHash = std::unordered_map<foundation::Name, DescriptorSetPtr, foundation::NameHashFunction>;
     }
 }

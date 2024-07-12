@@ -767,6 +767,69 @@ namespace psm
         buffer->Unmap();
     }
 
+    CommandBufferPtr CVkDevice::BeginSingleTimeSubmitCommandBuffer(CommandPoolPtr& cmdPool)
+    {
+        //creates a new command buffer and begins it
+        SCommandBufferConfig commandBufferConfig =
+        {
+            .Size = 1,
+            .IsBufferLevelPrimary = true
+        };
+
+        std::vector<CommandBufferPtr> commandBuffers = CreateCommandBuffers(cmdPool, commandBufferConfig);
+        CommandBufferPtr commandBuffer = commandBuffers[0];
+
+        SCommandBufferBeginConfig beginConfig =
+        {
+            .BufferIndex = 0,
+            .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
+        };
+
+        commandBuffer->Begin(beginConfig);
+
+        return commandBuffer;
+    }
+
+    void CVkDevice::SubmitSingleTimeCommandBuffer(CommandPoolPtr& cmdPool, CommandBufferPtr commandBuffer)
+    {
+        //submits single time command buffer, waits fences to complete and resets it
+        SFenceConfig fenceConfig =
+        {
+            .Signaled = false
+        };
+
+        FencePtr submitFence = CreateFence(fenceConfig);
+
+        SSubmitConfig submitConfig =
+        {
+            .Queue = GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .SubmitCount = 1,
+            .WaitStageFlags = EPipelineStageFlags::NONE,
+            .WaitSemaphoresCount = 0,
+            .pWaitSemaphores = nullptr,
+            .CommandBuffersCount = 1,
+            .pCommandBuffers = &commandBuffer,
+            .SignalSemaphoresCount = 0,
+            .pSignalSemaphores = nullptr,
+            .Fence = submitFence,
+        };
+
+        Submit(submitConfig);
+
+        SFenceWaitConfig waitConfig =
+        {
+            .WaitAll = true,
+            .Timeout = static_cast<float>(100000000000)
+        };
+
+        while(!submitFence->Wait(waitConfig))
+        {
+            LogMessage(MessageSeverity::Warning, "Wait for fence");
+        }
+
+        cmdPool->FreeCommandBuffers({ commandBuffer });
+    }
+
     void CVkDevice::UpdateDescriptorSets(const DescriptorSetPtr& descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers)
     {
         std::vector<VkWriteDescriptorSet> writeDescriptors(updateTextures.size() + updateBuffers.size());

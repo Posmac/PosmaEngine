@@ -11,7 +11,10 @@ namespace psm
         ResourceMediator::ResourceMediator(const DevicePtr& device)
             : mDeviceInternal(device)
         {
-
+            mAllImages = {};
+            mAllBuffers = {};
+            mAllDescriptors = {};
+            mAllDescriptorLayouts = {};
         }
 
         void ResourceMediator::RegisterImageResource(const foundation::Name& name, const ImagePtr& image)
@@ -90,7 +93,7 @@ namespace psm
         {
             auto find = mAllBuffers.find(name);
 
-            if(find != mAllBuffers.end())
+            if(find == mAllBuffers.end())
             {
                 LogMessage(MessageSeverity::Error, "Buffer resource didn`t found");
             }
@@ -102,7 +105,7 @@ namespace psm
         {
             auto find = mAllSamplers.find(name);
 
-            if(find != mAllSamplers.end())
+            if(find == mAllSamplers.end())
             {
                 LogMessage(MessageSeverity::Error, "Sampler resource didn`t found");
             }
@@ -114,7 +117,7 @@ namespace psm
         {
             auto find = mAllDescriptorLayouts.find(name);
 
-            if(find != mAllDescriptorLayouts.end())
+            if(find == mAllDescriptorLayouts.end())
             {
                 LogMessage(MessageSeverity::Error, "Descriptor set layout didn`t found");
             }
@@ -126,7 +129,7 @@ namespace psm
         {
             auto find = mAllDescriptors.find(name);
 
-            if(find != mAllDescriptors.end())
+            if(find == mAllDescriptors.end())
             {
                 LogMessage(MessageSeverity::Error, "Descriptor set didn`t found");
             }

@@ -17,7 +17,7 @@ namespace psm
             DefaultBackbufferRenderPassNode(const foundation::Name& name,
                                             const DevicePtr& device,
                                             const ResourceMediatorPtr& resourceMediator,
-                                            const SwapchainPtr& swapchain,
+                                            const SwapchainPtr swapchain,
                                             EFormat swapchainImagesFormat);
             virtual void PreRender(CommandBufferPtr& commandBuffer, uint32_t index) override;
             virtual void PostRender(CommandBufferPtr& commandBuffer) override;
@@ -27,7 +27,7 @@ namespace psm
         private:
             void CreateRenderPass(EFormat swapchainImagesFormat);
             void CreateDepthStencilRenderTarget(const SwapchainPtr& swapchain);
-            void CreateFramebuffers(const SwapchainPtr& swapchain);
+            void CreateFramebuffers(const SwapchainPtr swapchain);
         private:
             ImagePtr mDepthStencilRenderTarget;
             EFormat mDepthStencilFormat;

@@ -56,10 +56,15 @@ namespace psm
         CreateCommandPool();
         CreateRenderFrameCommandBuffers();
         CreateDefaultDescriptorPool();
-        CreateSampler();
-        RegisterRenderPasses();
 
+        CreateResourceManagers();
+        CreateGlobalBuffer();
         OpaqueInstances::GetInstance()->Init(mDevice, mResourceMediator, mDescriptorPool);
+        ShadowsGenerator::Instance()->Init(mDevice, mResourceMediator);
+
+        RegisterRenderPasses();
+        CreateSampler();
+
         ModelLoader::Instance()->Init(mDevice, mCommandPool);
         TextureLoader::Instance()->Init(mDevice, mCommandPool);
 
@@ -70,20 +75,17 @@ namespace psm
 
     void Renderer::RegisterRenderPasses()
     {
-        //create resource mediator 
-        mResourceMediator = std::make_shared<graph::ResourceMediator>(mDevice);
-        mResourceStateManager = std::make_shared<graph::ResourceStateManager>(mDevice, mResourceMediator);
-
         //create render passes
         auto shadowsLambda = [this]()
         {
-            OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mSwapchain->GetImagesCount());
+            ShadowsGenerator::Instance()->Update();
+            OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mCurrentImageIndex);
             OpaqueInstances::GetInstance()->RenderDepth(mCommandBuffers[mCurrentFrame], mShadowMapPipeline);
         };
 
         auto defaultLambda = [this]()
         {
-            OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mSwapchain->GetImagesCount());
+            OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentImageIndex);
             OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame], mDefaultRenderPipeline);
         };
 
@@ -154,24 +156,24 @@ namespace psm
 
     void Renderer::Render(GlobalBuffer& buffer)
     {
-        if(mWindowResizeQueue.size() > 0)
+        /*if(mWindowResizeQueue.size() > 0)
         {
             ResizeWindowInternal(mWindowResizeQueue.front());
             mWindowResizeQueue.pop();
-        }
+        }*/
 
         if(!isInit)
         {
             return;
         }
 
-        uint32_t imageIndex = BeginRender();
+        mCurrentImageIndex = BeginRender();
 
         mDevice->UpdateBuffer(mGlobalBuffer, &buffer);
 
         for(auto& renderPass : mRenderGraph)
         {
-            renderPass->PreRender(mCommandBuffers[mCurrentFrame], imageIndex);
+            renderPass->PreRender(mCommandBuffers[mCurrentFrame], mCurrentImageIndex);
             renderPass->Render();
             renderPass->PostRender(mCommandBuffers[mCurrentFrame]);
         }
@@ -182,7 +184,7 @@ namespace psm
         }
         mGui->Render(mCommandBuffers[mCurrentFrame]);*/
 
-        EndRender(imageIndex);
+        EndRender(mCurrentImageIndex);
     }
 
     void Renderer::ResizeWindowInternal(HWND hWnd)
@@ -282,67 +284,11 @@ namespace psm
         mResourceMediator->RegisterSampler(graph::DEFAULT_SAMPLER, mSampler);
     }
 
-    CommandBufferPtr Renderer::BeginSingleTimeSubmitCommandBuffer()
+    void Renderer::CreateResourceManagers()
     {
-        //creates a new command buffer and begins it
-        SCommandBufferConfig commandBufferConfig =
-        {
-            .Size = 1,
-            .IsBufferLevelPrimary = true
-        };
-
-        std::vector<CommandBufferPtr> commandBuffers = mDevice->CreateCommandBuffers(mCommandPool, commandBufferConfig);
-        CommandBufferPtr commandBuffer = commandBuffers[0];
-
-        SCommandBufferBeginConfig beginConfig =
-        {
-            .BufferIndex = 0,
-            .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
-        };
-
-        commandBuffer->Begin(beginConfig);
-
-        return commandBuffer;
-    }
-
-    void Renderer::SubmitSingleTimeCommandBuffer(CommandBufferPtr commandBuffer)
-    {
-        //submits single time command buffer, waits fences to complete and resets it
-        SFenceConfig fenceConfig =
-        {
-            .Signaled = false
-        };
-
-        FencePtr submitFence = mDevice->CreateFence(fenceConfig);
-
-        SSubmitConfig submitConfig =
-        {
-            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
-            .SubmitCount = 1,
-            .WaitStageFlags = EPipelineStageFlags::NONE,
-            .WaitSemaphoresCount = 0,
-            .pWaitSemaphores = nullptr,
-            .CommandBuffersCount = 1,
-            .pCommandBuffers = &commandBuffer,
-            .SignalSemaphoresCount = 0,
-            .pSignalSemaphores = nullptr,
-            .Fence = submitFence,
-        };
-
-        mDevice->Submit(submitConfig);
-
-        SFenceWaitConfig waitConfig =
-        {
-            .WaitAll = true,
-            .Timeout = static_cast<float>(100000000000)
-        };
-
-        while(!submitFence->Wait(waitConfig))
-        {
-            LogMessage(MessageSeverity::Warning, "Wait for fence");
-        }
-
-        mCommandPool->FreeCommandBuffers({ commandBuffer });
+        //create resource mediator 
+        mResourceMediator = std::make_shared<graph::ResourceMediator>(mDevice);
+        mResourceStateManager = std::make_shared<graph::ResourceStateManager>(mDevice, mResourceMediator);
     }
 
     void Renderer::ResizeWindow(HWND hWnd)

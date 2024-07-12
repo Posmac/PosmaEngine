@@ -60,6 +60,9 @@ namespace psm
         virtual void SetScissors(const CommandBufferPtr& commandBuffer, SResourceOffset2D scissorsOffet, SResourceExtent2D scissorsExtent) override;
         virtual void UpdateBuffer(const BufferPtr& buffer, void* data) override;
 
+        virtual CommandBufferPtr BeginSingleTimeSubmitCommandBuffer(CommandPoolPtr& cmdPool) override;
+        virtual void SubmitSingleTimeCommandBuffer(CommandPoolPtr& cmdPool, CommandBufferPtr commandBuffer) override;
+
         virtual EFormat FindSupportedFormat(const std::vector<EFormat>& desiredFormats, const EImageTiling tiling, const EFeatureFormat feature) override;
 
         virtual DeviceData GetDeviceData() override;

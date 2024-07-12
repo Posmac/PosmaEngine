@@ -63,9 +63,8 @@ namespace psm
         void CreateCommandPool();
         void CreateGlobalBuffer();
         void CreateSampler();
-        //specific
-        CommandBufferPtr BeginSingleTimeSubmitCommandBuffer();
-        void SubmitSingleTimeCommandBuffer(CommandBufferPtr commandBuffer);
+        void CreateResourceManagers();
+        
 
         void InitImGui(HWND hWnd);//needs to be initialized in another place
         void CreateDefaultDescriptorPool();
@@ -93,6 +92,7 @@ namespace psm
         std::vector<FencePtr> mFlightFences;
 
         bool isInit;
+        uint32_t mCurrentImageIndex;
         uint32_t mCurrentFrame;
         uint64_t mTotalFrames;
 

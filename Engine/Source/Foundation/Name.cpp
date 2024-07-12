@@ -61,16 +61,6 @@ namespace psm
             return *this;
         }
 
-        bool Name::operator==(const Name& other) const
-        {
-            return false;
-        }
-
-        bool Name::operator<(const Name& other) const
-        {
-            return false;
-        }
-
         Name::ID Name::ToId() const
         {
             assert(m_Id != NameRegistry::INVALID);

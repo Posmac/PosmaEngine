@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <cstdint>
 
@@ -24,9 +25,6 @@ namespace psm
             Name& operator=(const Name& other);
             Name& operator=(Name&& other);
 
-            bool operator==(const Name& other) const;
-            bool operator<(const Name& other) const;
-
             const std::string& ToString() const;
             ID ToId() const;
 
@@ -34,6 +32,24 @@ namespace psm
 
         private:
             ID m_Id;
+        };
+
+        inline bool operator==(const Name& lhs, const Name& rhs)
+        {
+            return lhs.ToId() == rhs.ToId();
+        }
+
+        inline bool operator<(const Name& lhs, const Name& rhs)
+        {
+            return lhs.ToId() < rhs.ToId();
+        }
+
+        struct NameHashFunction
+        {
+            std::size_t operator()(const Name& name) const
+            {
+                return std::hash<Name::ID>()(name.ToId());
+            }
         };
     }
 }

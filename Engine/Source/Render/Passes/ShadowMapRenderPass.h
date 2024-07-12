@@ -45,7 +45,6 @@ namespace psm
         private:
             std::vector<ImagePtr> mRenderTargets;
 
-
             ShadowMapCbuffer mShadowsBuffer;
             BufferPtr mGPUShadowBuffer;
             EFormat mDepthFormat;

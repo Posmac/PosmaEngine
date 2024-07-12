@@ -9,7 +9,7 @@ namespace psm
         DefaultBackbufferRenderPassNode::DefaultBackbufferRenderPassNode(const foundation::Name& name,
                                                                          const DevicePtr& device,
                                                                          const ResourceMediatorPtr& resourceMediator,
-                                                                         const SwapchainPtr& swapchain,
+                                                                         const SwapchainPtr swapchain,
                                                                          EFormat swapchainImagesFormat)
             : RenderPassNode(name, resourceMediator)
         {
@@ -152,7 +152,15 @@ namespace psm
 
             mDepthStencilRenderTarget = mDeviceInternal->CreateImage(imageConfig);
 
-            /*CommandBufferPtr commandBuffer = BeginSingleTimeSubmitCommandBuffer();
+            SCommandPoolConfig cmdPoolConfig =
+            {
+                .QueueFamilyIndex = mDeviceInternal->GetDeviceData().vkData.GraphicsQueueIndex,
+                .QueueType = EQueueType::GRAHPICS
+            };
+
+            auto cmdPool = mDeviceInternal->CreateCommandPool(cmdPoolConfig);
+
+            CommandBufferPtr commandBuffer = mDeviceInternal->BeginSingleTimeSubmitCommandBuffer(cmdPool);
 
             SImageLayoutTransition imageLayoutTransition =
             {
@@ -167,13 +175,13 @@ namespace psm
                 .MipLevel = 0,
             };
 
-            mDevice->ImageLayoutTransition(commandBuffer, mDepthRenderTargetTexture, imageLayoutTransition);
+            mDeviceInternal->ImageLayoutTransition(commandBuffer, mDepthStencilRenderTarget, imageLayoutTransition);
 
             commandBuffer->End();
-            SubmitSingleTimeCommandBuffer(commandBuffer);*/
+            mDeviceInternal->SubmitSingleTimeCommandBuffer(cmdPool, commandBuffer);
         }
 
-        void DefaultBackbufferRenderPassNode::CreateFramebuffers(const SwapchainPtr& swapchain)
+        void DefaultBackbufferRenderPassNode::CreateFramebuffers(const SwapchainPtr swapchain)
         {
             uint32_t frameBufferAttachmentCount = swapchain->GetImagesCount();
             auto swapchainSize = swapchain->GetSwapchainSize();

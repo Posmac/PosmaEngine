@@ -11,17 +11,10 @@
 #include "glm/gtc/matrix_transform.hpp"
 
 #include "Passes/ShadowMapRenderPass.h"
+#include "Graph/ResourceMediator.h"
 
 namespace psm
 {
-    struct ShadowsParams
-    {
-        SResourceExtent3D DirectionalShadowTextureSize;
-
-        float DepthBias = 0.25f;
-        float DepthSlope = 0.25f;
-    };
-
     struct DirectionalShadowsData
     {
         float Range = 25.0f;
@@ -45,39 +38,17 @@ namespace psm
         static ShadowsGenerator* s_Instance;
         //class specific
     public:
-        void Init(DevicePtr device, uint32_t swapchainImages);
-        void InitDirectionalLightData(uint32_t swapchainImages);
-        void InitPointLightsData(uint32_t swapchainImages);
-        void InitSpotLightData(uint32_t swapchainImages);
+        void Init(DevicePtr device, graph::ResourceMediatorPtr resourceMediator);
+        void InitDirectionalLightData();
+        void InitPointLightsData();
+        void InitSpotLightData();
         void Update();
         void DrawShadowParams();
 
-        ShadowsParams& GetShadowParams();
-
     private:
-
         DevicePtr mDeviceInternal;
+        graph::ResourceMediatorPtr mResourceMediatorInternal;
+
         DirectionalShadowsData mDirectionalLightData;
-        ShadowsParams mShadowParams;
-
-        //ShadowsBuffer mShadowsBuffer;
-        //BufferPtr mGPUShadowBuffer;
-        //EFormat mDepthFormat;
-
-        //dir light depth image
-        //std::vector<ImagePtr> mDirDepthShadowMaps;
-
-        //point light depth images
-        //std::array<std::vector<ImagePtr>, MAX_POINT_LIGHT_SOURCES> mPointLightsShadowMaps;
-
-        //spot light depth image
-        //std::vector<ImagePtr> mSpotLightShadowMaps;
-
-        //renderer related thing
-        //RenderPassPtr mShadowRenderPass;
-        //std::vector<FramebufferPtr> mShadowFramebuffers;
-
-        //
-        
     };
 }

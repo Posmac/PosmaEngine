@@ -17,6 +17,7 @@ namespace psm
             mFramebuffersSize = framebufferSize;
             CreateRenderPass(device);
             CreateFramebuffers(device, framebufferSize, framebuffersCount);
+            CreateBuffer();
         }
 
         void ShadowMapRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)

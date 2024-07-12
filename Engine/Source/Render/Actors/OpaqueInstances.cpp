@@ -32,7 +32,7 @@ namespace psm
     {
         mDeviceInternal = device;
         mResourceMediator = resourceMediator;
-        mDescriptorPoolInternal = mDescriptorPoolInternal;
+        mDescriptorPoolInternal = descriptorPool;
         SetupDescriptors();
         RegisterResources();
     }
@@ -552,8 +552,7 @@ namespace psm
 
         mDeviceInternal->UpdateDescriptorSets(mGlobalBufferSet, {}, buffersInfo);
 
-        foundation::Name shadowBufferRefName = graph::GetResourceIndexedName(graph::SHADOW_CBUFFER, imageIndex);
-        BufferPtr& shadowMapBuffer = mResourceMediator->GetBufferByName(shadowBufferRefName);
+        BufferPtr& shadowMapBuffer = mResourceMediator->GetBufferByName(graph::SHADOW_CBUFFER);
         std::vector<SUpdateBuffersConfig> shadowBuffersInfo =
         {
             {
@@ -584,8 +583,7 @@ namespace psm
 
     void OpaqueInstances::UpdateDepthDescriptors(uint32_t imageIndex)
     {
-        foundation::Name shadowBufferRefName = graph::GetResourceIndexedName(graph::SHADOW_CBUFFER, imageIndex);
-        BufferPtr& shadowMapBuffer = mResourceMediator->GetBufferByName(shadowBufferRefName);
+        BufferPtr& shadowMapBuffer = mResourceMediator->GetBufferByName(graph::SHADOW_CBUFFER);
         SUpdateBuffersConfig buffers =
         {
             .Buffer = shadowMapBuffer,
