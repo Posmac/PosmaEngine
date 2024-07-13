@@ -52,5 +52,10 @@ namespace psm
         {
             return mRenderPass;
         }
+
+        void RenderPassNode::RecreateFramebuffers(const SwapchainPtr swapchain)
+        {
+
+        }
     }
 }

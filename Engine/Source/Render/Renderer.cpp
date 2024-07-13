@@ -189,11 +189,11 @@ namespace psm
 
     void Renderer::Render(GlobalBuffer& buffer)
     {
-        /*if(mWindowResizeQueue.size() > 0)
+        if(mWindowResizeQueue.size() > 0)
         {
             ResizeWindowInternal(mWindowResizeQueue.front());
             mWindowResizeQueue.pop();
-        }*/
+        }
 
         if(!isInit)
         {
@@ -226,12 +226,6 @@ namespace psm
         }
 
         mSwapchain = nullptr;
-        //mImageAvailableSemaphores.clear();
-        //mRenderFinishedSemaphores.clear();
-        //mFlightFences.clear();
-
-        //mFramebuffers.clear();
-        //mDepthRenderTargetTexture = nullptr;
 
         mWindow = hWnd;
         psm::PlatformConfig platformConfig =
@@ -243,10 +237,9 @@ namespace psm
             }
         };
 
-        mDevice->GetSurface() = nullptr;
         mDevice->CreateSurface(platformConfig);
         CreateSwapchain(mWindow);
-
+        mDefaultBackbufferPass->RecreateFramebuffers(mSwapchain);
     }
 
     void Renderer::CreateRenderFrameCommandBuffers()

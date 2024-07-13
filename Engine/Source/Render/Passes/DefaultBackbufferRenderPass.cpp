@@ -190,13 +190,15 @@ namespace psm
             mDeviceInternal->ImageLayoutTransition(commandBuffer, mDepthStencilRenderTarget, imageLayoutTransition);
 
             commandBuffer->End();
+
             mDeviceInternal->SubmitSingleTimeCommandBuffer(cmdPool, commandBuffer);
         }
 
         void DefaultBackbufferRenderPassNode::CreateFramebuffers(const SwapchainPtr swapchain)
         {
+            mFramebuffersSize = swapchain->GetSwapchainSize();
+
             uint32_t frameBufferAttachmentCount = swapchain->GetImagesCount();
-            auto swapchainSize = swapchain->GetSwapchainSize();
             mFramebuffers.resize(frameBufferAttachmentCount);
 
             for(int i = 0; i < frameBufferAttachmentCount; i++)
@@ -204,7 +206,7 @@ namespace psm
                 SFramebufferConfig framebufferConfig =
                 {
                     .Attachments = { swapchain->ImageAtIndex(i), mDepthStencilRenderTarget->RawImageView() },
-                    .Size = { swapchainSize.width, swapchainSize.height },
+                    .Size = { mFramebuffersSize.width, mFramebuffersSize.height },
                     .RenderPass = mRenderPass
                 };
 
@@ -230,6 +232,23 @@ namespace psm
         void DefaultBackbufferRenderPassNode::CollectReferences()
         {
             mResourceMediator->RegisterImageResource(DEPTHSTECIL_RENDERTARGET_NAME, mDepthStencilRenderTarget);
+        }
+
+        void DefaultBackbufferRenderPassNode::RecreateFramebuffers(const SwapchainPtr swapchain)
+        {
+            uint32_t mFramebuffersCount = mFramebuffers.size();
+
+            mDepthStencilRenderTarget = nullptr;
+
+            for(auto& fb : mFramebuffers)
+                fb = nullptr;
+            mFramebuffers.clear();
+
+            CreateDepthStencilRenderTarget(swapchain);
+            CreateFramebuffers(swapchain);
+
+            ImagePtr& depthStencilImage = mResourceMediator->GetImageByName(DEPTHSTECIL_RENDERTARGET_NAME);
+            depthStencilImage = mDepthStencilRenderTarget;
         }
     }
 }

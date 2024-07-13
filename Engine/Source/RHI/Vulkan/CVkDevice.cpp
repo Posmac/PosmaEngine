@@ -261,7 +261,9 @@ namespace psm
 
     SurfacePtr CVkDevice::CreateSurface(const PlatformConfig& config)
     {
-        return std::make_shared<CVkSurface>(config);
+        mVkSurface = nullptr;
+        mVkSurface = std::make_shared<CVkSurface>(config);
+        return mVkSurface;
     }
 
     ImagePtr CVkDevice::CreateImage(const SImageConfig& config)

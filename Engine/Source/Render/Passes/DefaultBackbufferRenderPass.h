@@ -25,6 +25,7 @@ namespace psm
             virtual void PostRender(CommandBufferPtr& commandBuffer) override;
             virtual void AddResourceReferences(uint32_t framesCount) override;
             virtual void CollectReferences() override;
+            virtual void RecreateFramebuffers(const SwapchainPtr swapchain) override;
 
         private:
             void CreateRenderPass(EFormat swapchainImagesFormat);

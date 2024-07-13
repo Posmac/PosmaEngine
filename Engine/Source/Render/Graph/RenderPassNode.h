@@ -33,6 +33,7 @@ namespace psm
             virtual void AddRenderCallback(const std::function<void()>& callback);
             virtual void AddPreRenderCallback(const std::function<void()>& callback);
             virtual RenderPassPtr& GetRenderPass();
+            virtual void RecreateFramebuffers(const SwapchainPtr swapchain);
         protected:
             foundation::Name mName;
             DevicePtr mDeviceInternal;
