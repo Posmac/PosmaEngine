@@ -103,7 +103,7 @@ namespace psm
         std::queue<HWND> mWindowResizeQueue;
 
         //graph
-        graph::RenderGraph mRenderGraph;
+        graph::RenderGraphPtr mRenderGraph;
         graph::ResourceMediatorPtr mResourceMediator;
         graph::ResourceStateManagerPtr mResourceStateManager;
         //renderpasses

@@ -220,6 +220,8 @@ namespace psm
 
     void CVkSwapchain::DestroySwapchain(VkDevice device, VkSwapchainKHR swapchain)
     {
+        LogMessage(psm::MessageSeverity::Info, "CVkSwapchain destructor");
+
         for(auto& imageView : mSwapchainImageViews)
         {
             vkDestroyImageView(mDeviceInternal, imageView, nullptr);

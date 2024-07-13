@@ -17,6 +17,33 @@ namespace psm
             mAllDescriptorLayouts = {};
         }
 
+        ResourceMediator::~ResourceMediator()
+        {
+            LogMessage(MessageSeverity::Info, "ResourceMediator destructor");
+
+            mDeviceInternal = nullptr;
+
+            for(auto& item : mAllImages)
+                item.second = nullptr;
+            mAllImages.clear();
+
+            for(auto& item : mAllBuffers)
+                item.second = nullptr;
+            mAllBuffers.clear();
+
+            for(auto& item : mAllSamplers)
+                item.second = nullptr;
+            mAllSamplers.clear();
+
+            for(auto& item : mAllDescriptorLayouts)
+                item.second = nullptr;
+            mAllDescriptorLayouts.clear();
+
+            for(auto& item : mAllDescriptors)
+                item.second = nullptr;
+            mAllDescriptors.clear();
+        }
+
         void ResourceMediator::RegisterImageResource(const foundation::Name& name, const ImagePtr& image)
         {
             auto find = mAllImages.find(name);

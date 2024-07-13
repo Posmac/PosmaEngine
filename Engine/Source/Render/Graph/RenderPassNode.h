@@ -22,6 +22,7 @@ namespace psm
         {
         public:
             RenderPassNode(const foundation::Name& name, const ResourceMediatorPtr& resourceMediator);
+            virtual ~RenderPassNode();
             foundation::Name GetName() const;
 
             virtual void PreRender(CommandBufferPtr& commandBuffer, uint32_t index);

@@ -59,6 +59,7 @@ namespace psm
     void Engine::Deinit()
     {
         Renderer::Instance()->Deinit();
+        RenderDevice = nullptr;
         ShutdownRHI();
     }
 }

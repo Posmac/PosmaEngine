@@ -58,7 +58,7 @@ namespace psm
 
     CVkDescriptorSet::~CVkDescriptorSet()
     {
-        vkFreeDescriptorSets(mDeviceInternal, mPool, 1, &mSet);
+        //vkFreeDescriptorSets(mDeviceInternal, mPool, 1, &mSet);
     }
 
     void* CVkDescriptorSet::Raw()

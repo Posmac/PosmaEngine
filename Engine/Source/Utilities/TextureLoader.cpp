@@ -109,6 +109,11 @@ namespace psm
 
     void TextureLoader::Deinit()
     {
+        LogMessage(psm::MessageSeverity::Info, "TextureLoader destructor");
+
+        mDeviceInternal = nullptr;
+        mCommandPoolInternal = nullptr;
+
         mWhiteTexture = nullptr;
         mImages.clear();
     }

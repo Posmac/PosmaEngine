@@ -242,7 +242,10 @@ namespace psm
 
     CVkDevice::~CVkDevice()
     {
+        LogMessage(psm::MessageSeverity::Info, "Device destructor");
         mVkSurface = nullptr;
+        //mSwapchain = nullptr;
+        RenderDevice = nullptr;
         vkDestroyDevice(mDevice, nullptr);
     }
 
@@ -433,8 +436,7 @@ namespace psm
 
     SwapchainPtr CVkDevice::CreateSwapchain(const SSwapchainConfig& config)
     {
-        mSwapchain = std::make_shared<CVkSwapchain>(RenderDevice, config);
-        return mSwapchain;
+        return std::make_shared<CVkSwapchain>(RenderDevice, config);;
     }
 
     PipelineLayoutPtr CVkDevice::CreatePipelineLayout(const SPipelineLayoutConfig& config)
@@ -618,7 +620,7 @@ namespace psm
 
     void CVkDevice::Present(const SPresentConfig& config)
     {
-        mSwapchain->Present(config);
+        //mSwapchain->Present(config);
     }
 
     bool CVkDevice::WaitIdle()

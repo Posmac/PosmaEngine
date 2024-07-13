@@ -129,6 +129,9 @@ namespace psm
 
     CVkImGui::~CVkImGui()
     {
+        LogMessage(psm::MessageSeverity::Info, "CVkImGui destructor");
+
+        mDeviceInternal = nullptr;
         mDescriptorPool = nullptr;
         ImGui_ImplVulkan_Shutdown();
     }

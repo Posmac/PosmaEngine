@@ -10,6 +10,14 @@ namespace psm
 
         }
 
+        RenderPipelineNode::~RenderPipelineNode()
+        {
+            LogMessage(MessageSeverity::Info, "RenderPipelineNode destructor");
+
+            mPipelineLayout = nullptr;
+            mPipeline = nullptr;
+        }
+
         void RenderPipelineNode::Bind(const CommandBufferPtr& commandBuffer, EPipelineBindPoint bindPoint)
         {
             mPipeline->Bind(commandBuffer, bindPoint);

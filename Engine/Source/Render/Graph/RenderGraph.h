@@ -21,7 +21,7 @@ namespace psm
         public:
             RenderGraph();
             RenderGraph(const ResourceMediatorPtr& mediator);
-            ~RenderGraph();
+            virtual ~RenderGraph();
 
             void AddRenderPass(RenderPassNodePtr& renderPass);
             void GenerateResourceDependencies(uint32_t framesCount);
@@ -38,5 +38,7 @@ namespace psm
             std::set<foundation::Name> mRenderPassNodesMeta;
             std::vector<RenderPassNodePtr> mRenderPassNodes;
         };
+
+        using RenderGraphPtr = std::shared_ptr<RenderGraph>;
     }
 }

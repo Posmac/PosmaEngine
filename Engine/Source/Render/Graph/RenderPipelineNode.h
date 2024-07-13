@@ -15,6 +15,7 @@ namespace psm
         {
         public:
             RenderPipelineNode(const foundation::Name& name);
+            virtual ~RenderPipelineNode();
             void Bind(const CommandBufferPtr& commandBuffer, EPipelineBindPoint bindPoint);
             PipelineLayoutPtr& GetPipelineLayout();
         protected:

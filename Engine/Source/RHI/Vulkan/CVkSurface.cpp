@@ -22,6 +22,11 @@ namespace psm
         VK_CHECK_RESULT(result);
     }
 
+    CVkSurface::~CVkSurface()
+    {
+        DestroySurface();
+    }
+
     void* CVkSurface::Raw()
     {
         return mSurface;
@@ -34,6 +39,7 @@ namespace psm
 
     void CVkSurface::DestroySurface()
     {
+        LogMessage(psm::MessageSeverity::Info, "CVkSurface destructor");
         vkDestroySurfaceKHR(Instance, mSurface, nullptr);
     }
 

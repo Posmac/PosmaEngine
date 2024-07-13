@@ -16,7 +16,7 @@ namespace psm
                                   const RenderPassPtr& renderPass,
                                   const ResourceMediatorPtr& resourceMediator,
                                   const SResourceExtent3D viewportSize);
-        private:
+            virtual ~ShadowMapPipelineNode();
         };
 
         using ShadowMapPipelineNodePtr = std::shared_ptr<ShadowMapPipelineNode>;

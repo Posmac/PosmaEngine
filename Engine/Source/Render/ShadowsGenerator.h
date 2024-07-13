@@ -44,6 +44,7 @@ namespace psm
         void InitSpotLightData();
         void Update();
         void DrawShadowParams();
+        void Deinit();
 
     public:
         float DepthBias = 1;

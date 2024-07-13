@@ -19,6 +19,7 @@ namespace psm
 
     CVkFence::~CVkFence()
     {
+        LogMessage(psm::MessageSeverity::Info, "CVkFence destructor");
         vkDestroyFence(mDeviceInternal, mFence, nullptr);
     }
 

@@ -109,4 +109,10 @@ namespace psm
 
         ImGui::End();
     }
+
+    void ShadowsGenerator::Deinit()
+    {
+        mDeviceInternal = nullptr;
+        mResourceMediatorInternal = nullptr;
+    }
 }

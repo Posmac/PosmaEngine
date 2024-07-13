@@ -122,11 +122,12 @@ namespace psm
         mShadowMapRenderPass->AddPreRenderCallback(preshadowsLambda);
 
         //add everything into graph
-        mRenderGraph.AddRenderPass(mShadowMapRenderPass); //add default backbuffer renderpass
-        mRenderGraph.AddRenderPass(mDefaultBackbufferPass);   //shadow map generation renderpass
+        mRenderGraph = std::make_shared<graph::RenderGraph>();
+        mRenderGraph->AddRenderPass(mShadowMapRenderPass); //add default backbuffer renderpass
+        mRenderGraph->AddRenderPass(mDefaultBackbufferPass);   //shadow map generation renderpass
 
         //create all necessary resources and link them
-        mRenderGraph.GenerateResourceDependencies(mSwapchain->GetImagesCount());
+        mRenderGraph->GenerateResourceDependencies(mSwapchain->GetImagesCount());
 
         //create render pipelines
         mDefaultRenderPipeline = std::make_shared<graph::DefaultRenderPipelineNode>(graph::DEFAULT_GRAPHICS_PIPELINE,
@@ -152,13 +153,28 @@ namespace psm
             LogMessage(MessageSeverity::Warning, "Wait idle");
         }
 
-        //Shadows::Instance()->Deinit();
+        ShadowsGenerator::Instance()->Deinit();
         OpaqueInstances::GetInstance()->Deinit();
         ModelLoader::Instance()->Deinit();
         TextureLoader::Instance()->Deinit();
 
+        mRenderGraph = nullptr;
+        mResourceMediator = nullptr;
+        mResourceStateManager = nullptr;
+        mDefaultBackbufferPass = nullptr;
+        mDefaultRenderPipeline = nullptr;
+        mShadowMapPipeline = nullptr;
+        mShadowMapRenderPass = nullptr;
+
+        mImageAvailableSemaphores.clear();;
+        mRenderFinishedSemaphores.clear();
+        mFlightFences.clear();
+
         mGlobalBuffer = nullptr;
         mSwapchain = nullptr;
+
+        mSampler = nullptr;
+        mDescriptorPool = nullptr;
 
         mCommandPool->FreeCommandBuffers(mCommandBuffers);
         /*for(auto& cb : mCommandBuffers)
@@ -189,7 +205,7 @@ namespace psm
         mDevice->UpdateBuffer(mGlobalBuffer, &buffer);
         ShadowsGenerator::Instance()->Update();
 
-        for(auto& renderPass : mRenderGraph)
+        for(auto& renderPass : *mRenderGraph)
         {
             renderPass->PreRender(mCommandBuffers[mCurrentFrame], mCurrentImageIndex);
             renderPass->Render();
@@ -230,8 +246,7 @@ namespace psm
         mDevice->GetSurface() = nullptr;
         mDevice->CreateSurface(platformConfig);
         CreateSwapchain(mWindow);
-        //CreateDepthImage();
-        //CreateFramebuffers();
+
     }
 
     void Renderer::CreateRenderFrameCommandBuffers()
@@ -361,7 +376,8 @@ namespace psm
             .ImageIndex = imageIndex
         };
 
-        mDevice->Present(presentConfig);
+        //mDevice->Present(presentConfig);
+        mSwapchain->Present(presentConfig);
 
         SFenceWaitConfig fenceWait =
         {

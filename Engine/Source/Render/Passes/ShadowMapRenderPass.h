@@ -31,6 +31,7 @@ namespace psm
                                     const DevicePtr& device,
                                     SResourceExtent3D framebufferSize,
                                     uint32_t framebuffersCount);
+            virtual ~ShadowMapRenderPassNode();
             virtual void PreRender(CommandBufferPtr& commandBuffer, uint32_t index) override;
             virtual void PostRender(CommandBufferPtr& commandBuffer) override;
             virtual void AddResourceReferences(uint32_t framesCount) override;

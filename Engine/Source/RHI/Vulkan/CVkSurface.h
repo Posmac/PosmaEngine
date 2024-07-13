@@ -27,7 +27,7 @@ namespace psm
 
     public:
         CVkSurface(const PlatformConfig& config);
-        virtual ~CVkSurface() = default;
+        virtual ~CVkSurface();
 
         virtual void* Raw() override;
         virtual void* Raw() const override;

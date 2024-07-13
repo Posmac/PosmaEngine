@@ -18,7 +18,13 @@ namespace psm
 
         RenderGraph::~RenderGraph()
         {
+            LogMessage(MessageSeverity::Info, "RenderGraph destructor");
 
+            mResourceMediator = nullptr;
+            for(auto& rp : mRenderPassNodes)
+                rp = nullptr;
+
+            mRenderPassNodes.clear();
         }
 
         void RenderGraph::AddRenderPass(RenderPassNodePtr& renderPass)

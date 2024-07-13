@@ -79,7 +79,7 @@ namespace psm
 
         QueueFamilyIndices mQueues;
 
-        SwapchainPtr mSwapchain;
+        //SwapchainPtr mSwapchain;
         SurfacePtr mVkSurface;
     };
 

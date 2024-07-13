@@ -47,6 +47,22 @@ namespace psm
 
         mModelDataSetLayout = nullptr;
         mInstanceToWorldConstantBuffer = nullptr;
+
+        mDeviceInternal = nullptr;
+        mResourceMediator = nullptr;
+        mDescriptorPoolInternal = nullptr;
+
+        mGlobalBufferSetLayout = nullptr;
+        mGlobalBufferSet = nullptr;
+
+        mMaterialSetLayout = nullptr;
+        mMaterialSet = nullptr;
+
+        mDepthPassSetLayout = nullptr;
+        mDepthPassSet = nullptr;
+
+        mDefaultSetLayout = nullptr;
+        mDefaultSet = nullptr;
     }
 
     void OpaqueInstances::Render(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode)

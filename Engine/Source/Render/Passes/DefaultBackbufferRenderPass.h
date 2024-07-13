@@ -19,6 +19,8 @@ namespace psm
                                             const ResourceMediatorPtr& resourceMediator,
                                             const SwapchainPtr swapchain,
                                             EFormat swapchainImagesFormat);
+            virtual ~DefaultBackbufferRenderPassNode();
+
             virtual void PreRender(CommandBufferPtr& commandBuffer, uint32_t index) override;
             virtual void PostRender(CommandBufferPtr& commandBuffer) override;
             virtual void AddResourceReferences(uint32_t framesCount) override;

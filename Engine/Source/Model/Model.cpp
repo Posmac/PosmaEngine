@@ -24,6 +24,8 @@ namespace psm
 
     Model::~Model()
     {
+        LogMessage(psm::MessageSeverity::Info, "Model destructor");
+
         mVertexBuffer = nullptr;
         mIndexBuffer = nullptr;
     }

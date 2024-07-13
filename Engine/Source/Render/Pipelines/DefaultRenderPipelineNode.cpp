@@ -168,5 +168,10 @@ namespace psm
 
             mPipeline = device->CreateRenderPipeline(pipelineConfig);
         }
+
+        DefaultRenderPipelineNode::~DefaultRenderPipelineNode()
+        {
+            LogMessage(MessageSeverity::Info, "DefaultRenderPipelineNode destructor");
+        }
     }
 }

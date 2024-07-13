@@ -22,6 +22,17 @@ namespace psm
             CreateBuffer();
         }
 
+        ShadowMapRenderPassNode::~ShadowMapRenderPassNode()
+        {
+            LogMessage(MessageSeverity::Info, "ShadowMapRenderPassNode destructor");
+
+            for(auto& img : mRenderTargets)
+                img = nullptr;
+            mRenderTargets.clear();
+
+            mGPUShadowBuffer = nullptr;
+        }
+
         void ShadowMapRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
         {
             RenderPassNode::PreRender(commandBuffer, index);

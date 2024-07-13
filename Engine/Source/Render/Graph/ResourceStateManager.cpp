@@ -1,6 +1,7 @@
 #include "ResourceStateManager.h"
 
 #include "RHI/Vulkan/CVkDevice.h"
+#include "RHI/Vulkan/CVkImage.h"
 
 namespace psm
 {
@@ -10,6 +11,15 @@ namespace psm
             : mMediator(mediator), mDeviceInternal(device)
         {
 
+        }
+
+        ResourceStateManager::~ResourceStateManager()
+        {
+            LogMessage(MessageSeverity::Info, "ResourceStateManager destructor");
+            mDeviceInternal = nullptr;
+            mMediator = nullptr;
+
+            mImageStates.clear();
         }
 
         void ResourceStateManager::TransitionImageLayout(const CommandBufferPtr& commandBuffer, 

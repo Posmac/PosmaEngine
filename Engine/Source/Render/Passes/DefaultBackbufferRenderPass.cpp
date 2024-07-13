@@ -20,6 +20,16 @@ namespace psm
             CreateFramebuffers(swapchain);
         }
 
+        DefaultBackbufferRenderPassNode::~DefaultBackbufferRenderPassNode()
+        {
+            LogMessage(MessageSeverity::Info, "DefaultBackbufferRenderPassNode destructor");
+
+            mDepthStencilRenderTarget = nullptr;
+            for(auto& img : mShadowMapRefs)
+                img = nullptr;
+            mShadowMapRefs.clear();
+        }
+
         void DefaultBackbufferRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
         {
             RenderPassNode::PreRender(commandBuffer, index);

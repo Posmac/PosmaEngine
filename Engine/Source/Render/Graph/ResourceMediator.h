@@ -16,6 +16,7 @@ namespace psm
         public:
 
             ResourceMediator(const DevicePtr& device);
+            virtual ~ResourceMediator();
 
             void RegisterImageResource(const foundation::Name& name, const ImagePtr& image);
             void RegisterBufferResource(const foundation::Name& name, const BufferPtr& buffer);

@@ -8,6 +8,21 @@ namespace psm
             : mName(name), mResourceMediator(resourceMediator)
         {}
 
+        RenderPassNode::~RenderPassNode()
+        {
+            LogMessage(MessageSeverity::Info, "RenderPassNode destructor");
+
+            mDeviceInternal = nullptr;
+            mResourceMediator = nullptr;
+            mRenderPass = nullptr;
+            for(auto& fb : mFramebuffers)
+                fb = nullptr;
+            mFramebuffers.clear();
+
+            mRenderCallback = nullptr;
+            mPreRenderCallback = nullptr;
+        }
+
         foundation::Name RenderPassNode::GetName() const
         {
             return mName;

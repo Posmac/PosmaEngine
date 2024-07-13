@@ -156,6 +156,11 @@ namespace psm
 
             mPipeline = device->CreateRenderPipeline(pipelineConfig);
         }
+
+        ShadowMapPipelineNode::~ShadowMapPipelineNode()
+        {
+            LogMessage(MessageSeverity::Info, "ShadowMapPipelineNode destructor");
+        }
     }
 }
 

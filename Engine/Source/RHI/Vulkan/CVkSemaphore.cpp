@@ -19,6 +19,7 @@ namespace psm
 
     CVkSemaphore::~CVkSemaphore()
     {
+        LogMessage(psm::MessageSeverity::Info, "CVkSemaphore destructor");
         vkDestroySemaphore(mDeviceInternal, mSemaphore, nullptr);
     }
 

@@ -25,6 +25,7 @@ psm::Application app;
 
 constexpr uint32_t Width = 1280;
 constexpr uint32_t Height = 720;
+bool isAppRuning = true;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
@@ -85,7 +86,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     psm::Engine::Instance()->Init(hWnd, hInstance);
     app.Init(Width, Height);
 
-    bool isAppRuning = true;
     while(isAppRuning)
     {
         MSG message;
@@ -101,7 +101,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             DispatchMessage(&message);
         }
 
-        app.Update();
+        if(isAppRuning)
+            app.Update();
     }
 
     psm::Engine::Instance()->Deinit();
@@ -140,6 +141,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         case WM_CLOSE:
             DestroyWindow(hWnd);
+            isAppRuning = false;
             break;
         case WM_DESTROY:
             PostQuitMessage(0);

@@ -16,6 +16,7 @@ namespace psm
                                       const RenderPassPtr& renderPass,
                                       const ResourceMediatorPtr& resourceMediator,
                                       const SResourceExtent3D viewportSize);
+            virtual ~DefaultRenderPipelineNode();
         };
 
         using DefaultRenderPipelineNodePtr = std::shared_ptr<DefaultRenderPipelineNode>;

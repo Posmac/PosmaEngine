@@ -39,6 +39,7 @@ namespace psm
 
         public:
             ResourceStateManager(const DevicePtr& device, const ResourceMediatorPtr& mediator);
+            virtual ~ResourceStateManager();
 
             void TransitionImageLayout(const CommandBufferPtr& commandBuffer,
                                        const SImageTransitionData& data);

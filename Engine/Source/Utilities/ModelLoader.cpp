@@ -147,6 +147,10 @@ namespace psm
 
     void ModelLoader::Deinit()
     {
+        LogMessage(psm::MessageSeverity::Info, "ModelLoader destructor");
+
+        mDevice = nullptr;
+        mCommandPool = nullptr;
         mModels.clear();
     }
 }
