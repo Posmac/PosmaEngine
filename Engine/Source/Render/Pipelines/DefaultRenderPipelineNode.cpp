@@ -164,6 +164,7 @@ namespace psm
                 .DynamicStatesCount = dynamicStatesCount,
                 .InputAssembly = inputAssembly,
                 .Rasterization = rasterization,
+                .DepthStencilCompareOp = ECompareOp::COMPARE_OP_GREATER,
             };
 
             mPipeline = device->CreateRenderPipeline(pipelineConfig);

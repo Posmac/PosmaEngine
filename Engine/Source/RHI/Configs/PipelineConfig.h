@@ -8,6 +8,7 @@
 #include "RHI/Enums/PipelineFormats.h"
 #include "RHI/Enums/RenderPassFormats.h"
 #include "RHI/Configs/ShadersConfig.h"
+#include "RHI/Configs/SamplerConfig.h"
 
 namespace psm
 {
@@ -40,5 +41,6 @@ namespace psm
         uint32_t DynamicStatesCount;
         SInputAssemblyConfig InputAssembly;
         SRasterizationConfig Rasterization;
+        ECompareOp DepthStencilCompareOp;
     };
 }

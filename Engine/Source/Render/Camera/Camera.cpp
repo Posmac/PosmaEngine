@@ -21,7 +21,8 @@ namespace psm
                    const glm::vec4& startingPosition,
                    const glm::quat& startingRotation)
     {
-        m_ProjectionMatrix = glm::perspective(glm::radians(fieldOfViewDeg), aspect, nearPlane, farPlane);
+        //m_ProjectionMatrix = glm::perspective(glm::radians(fieldOfViewDeg), aspect, nearPlane, farPlane);
+        m_ProjectionMatrix = glm::perspective(glm::radians(fieldOfViewDeg), aspect, farPlane, nearPlane);
         m_ProjectionMatrix[1][1] *= -1;//KOCTb|L' EBU4II
         m_InvProjectionMatrix = glm::inverse(m_ProjectionMatrix);
 
@@ -134,7 +135,8 @@ namespace psm
                                 float nearPlane,
                                 float farPlane )
     {
-        m_ProjectionMatrix = glm::perspective(glm::radians(fieldOfViewDeg), aspect, nearPlane, farPlane);
+        //m_ProjectionMatrix = glm::perspective(glm::radians(fieldOfViewDeg), aspect, nearPlane, farPlane);
+        m_ProjectionMatrix = glm::perspective(glm::radians(fieldOfViewDeg), aspect, farPlane, nearPlane);
         m_ProjectionMatrix[1][1] *= -1;//KOCTb|L' EBU4II
 
         m_InvProjectionMatrix = glm::inverse(m_ProjectionMatrix);

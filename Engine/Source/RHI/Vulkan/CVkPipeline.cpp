@@ -153,7 +153,7 @@ namespace psm
         depthInfo.flags = 0;
         depthInfo.depthTestEnable = VK_TRUE;
         depthInfo.depthWriteEnable = VK_TRUE;
-        depthInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+        depthInfo.depthCompareOp = ToVulkan(config.DepthStencilCompareOp);
         depthInfo.depthBoundsTestEnable = VK_FALSE;
         depthInfo.minDepthBounds = 0.0f; // Optional    
         depthInfo.maxDepthBounds = 1.0f; // Optional
