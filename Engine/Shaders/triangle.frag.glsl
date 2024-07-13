@@ -23,7 +23,7 @@ float ShadowCalculation(vec2 texCoords, float currentDepth)
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
     float closestDepth = texture(DirectionalShadowMap, texCoords).r; 
     // check whether current frag pos is in shadow
-    float shadow = currentDepth <= closestDepth  ? 1.0 : 0.0;
+    float shadow = currentDepth >= closestDepth  ? 1.0 : 0.0;
 
     return shadow;
 }

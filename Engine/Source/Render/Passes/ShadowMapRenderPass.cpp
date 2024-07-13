@@ -38,7 +38,7 @@ namespace psm
             RenderPassNode::PreRender(commandBuffer, index);
 
             UClearValue shadowMapClearColor;
-            shadowMapClearColor.DepthStencil = { 1.0f, 0 };
+            shadowMapClearColor.DepthStencil = { 0.0f, 0 };
 
             SRenderPassBeginConfig shadowMapRenderPassBeginConfig =
             {

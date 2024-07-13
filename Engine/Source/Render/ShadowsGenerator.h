@@ -47,8 +47,8 @@ namespace psm
         void Deinit();
 
     public:
-        float DepthBias = 1;
-        float DepthSlope = 1;
+        float DepthBias = -1;
+        float DepthSlope = -1;
     private:
         DevicePtr mDeviceInternal;
         graph::ResourceMediatorPtr mResourceMediatorInternal;

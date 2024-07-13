@@ -72,7 +72,7 @@ namespace psm
     {
         glm::mat4 lightView = glm::lookAt(mDirectionalLightData.Position, mDirectionalLightData.LookAt, mDirectionalLightData.Up);
         float range = mDirectionalLightData.Range;
-        glm::mat4 lightProjection = glm::orthoZO(-range, range, -range, range, mDirectionalLightData.NearPlane, mDirectionalLightData.FarPlane);
+        glm::mat4 lightProjection = glm::orthoZO(-range, range, -range, range, mDirectionalLightData.FarPlane, mDirectionalLightData.NearPlane);
 
         glm::mat4 viewproj = lightProjection * lightView;
 
