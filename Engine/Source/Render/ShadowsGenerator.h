@@ -45,10 +45,13 @@ namespace psm
         void Update();
         void DrawShadowParams();
 
+    public:
+        float DepthBias = 1;
+        float DepthSlope = 1;
     private:
         DevicePtr mDeviceInternal;
         graph::ResourceMediatorPtr mResourceMediatorInternal;
-
+        
         DirectionalShadowsData mDirectionalLightData;
     };
 }

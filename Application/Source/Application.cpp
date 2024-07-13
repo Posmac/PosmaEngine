@@ -76,15 +76,6 @@ namespace psm
             instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
             opaqModelMeshInstances[3] = { instanceMatrix };
 
-            /*for(unsigned i = 0; i < helmetsCount; i++)
-            {
-                instanceMatrix = glm::mat4(1.0);
-                instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0,0,0));
-                instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
-
-                opaqModelMeshInstances[i] = { instanceMatrix };
-            }*/
-
             OpaqueInstances::OpaqModelMeshMaterials opaqModelMeshMaterials(damagedHelmetMeshMaterials.size());
             for(int i = 0; i < damagedHelmetMeshMaterials.size(); i++)
             {

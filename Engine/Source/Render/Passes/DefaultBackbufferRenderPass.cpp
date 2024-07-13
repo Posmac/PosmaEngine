@@ -22,6 +22,8 @@ namespace psm
 
         void DefaultBackbufferRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
         {
+            RenderPassNode::PreRender(commandBuffer, index);
+
             std::array<UClearValue, 2> clearColor{};
             clearColor[0].Color = { {0.2f, 0.2f, 0.2f, 1.0f} };
             clearColor[1].DepthStencil = { 1.0f, 0 };

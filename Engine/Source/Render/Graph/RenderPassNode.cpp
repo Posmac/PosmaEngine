@@ -13,6 +13,11 @@ namespace psm
             return mName;
         }
 
+        void RenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
+        {
+            mPreRenderCallback();
+        }
+
         void RenderPassNode::Render()
         {
             mRenderCallback();
@@ -21,6 +26,11 @@ namespace psm
         void RenderPassNode::AddRenderCallback(const std::function<void()>& callback)
         {
             mRenderCallback = callback;
+        }
+
+        void RenderPassNode::AddPreRenderCallback(const std::function<void()>& callback)
+        {
+            mPreRenderCallback = callback;
         }
 
         RenderPassPtr& RenderPassNode::GetRenderPass()

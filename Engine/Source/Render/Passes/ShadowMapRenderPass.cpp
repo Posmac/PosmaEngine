@@ -2,6 +2,8 @@
 
 #include "Render/Graph/GraphResourceNames.h"
 
+#include "Render/ShadowsGenerator.h"
+
 namespace psm
 {
     namespace graph
@@ -22,6 +24,8 @@ namespace psm
 
         void ShadowMapRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
         {
+            RenderPassNode::PreRender(commandBuffer, index);
+
             UClearValue shadowMapClearColor;
             shadowMapClearColor.DepthStencil = { 1.0f, 0 };
 
@@ -41,7 +45,7 @@ namespace psm
 
             mDeviceInternal->SetViewport(commandBuffer, 0, 0, static_cast<float>(mFramebuffersSize.width), static_cast<float>(mFramebuffersSize.height), 0.0f, 1.0f);
             mDeviceInternal->SetScissors(commandBuffer, { 0,0 }, { mFramebuffersSize.width, mFramebuffersSize.height });
-            mDeviceInternal->SetDepthBias(commandBuffer, -1.0, 0.0f, 1.0f);
+            mDeviceInternal->SetDepthBias(commandBuffer, ShadowsGenerator::Instance()->DepthBias, 0.0f, ShadowsGenerator::Instance()->DepthSlope);
         }
 
         void ShadowMapRenderPassNode::CreateRenderPass(const DevicePtr& device)
@@ -167,8 +171,6 @@ namespace psm
             };
 
             mGPUShadowBuffer = mDeviceInternal->CreateBuffer(bufferConfig);
-
-            mResourceMediator->RegisterBufferResource(SHADOW_CBUFFER, mGPUShadowBuffer);
         }
 
         void ShadowMapRenderPassNode::PostRender(CommandBufferPtr& commandBuffer)
@@ -188,6 +190,7 @@ namespace psm
                 foundation::Name refName = GetResourceIndexedName(SHADOWMAP_RENDERTARGET_NAME, i);
                 mResourceMediator->RegisterImageResource(refName, mRenderTargets[i]);
             }
+            mResourceMediator->RegisterBufferResource(SHADOW_CBUFFER, mGPUShadowBuffer);
         }
     }
 }

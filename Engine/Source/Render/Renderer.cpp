@@ -75,10 +75,19 @@ namespace psm
 
     void Renderer::RegisterRenderPasses()
     {
+        auto preshadowsLambda = [this]()
+        {
+            //OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mCurrentImageIndex);
+        };
+
+        auto predefaultLambda = [this]()
+        {
+            //OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentImageIndex);
+        };
+
         //create render passes
         auto shadowsLambda = [this]()
         {
-            ShadowsGenerator::Instance()->Update();
             OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mCurrentImageIndex);
             OpaqueInstances::GetInstance()->RenderDepth(mCommandBuffers[mCurrentFrame], mShadowMapPipeline);
         };
@@ -87,6 +96,12 @@ namespace psm
         {
             OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentImageIndex);
             OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame], mDefaultRenderPipeline);
+
+            mGui->PrepareNewFrame();
+            {
+                ShadowsGenerator::Instance()->DrawShadowParams();
+            }
+            mGui->Render(mCommandBuffers[mCurrentFrame]);
         };
 
         mDefaultBackbufferPass = std::make_shared<graph::DefaultBackbufferRenderPassNode>(graph::DEFAULT_RENDERPASS,
@@ -103,6 +118,8 @@ namespace psm
 
         mDefaultBackbufferPass->AddRenderCallback(defaultLambda);
         mShadowMapRenderPass->AddRenderCallback(shadowsLambda);
+        mDefaultBackbufferPass->AddPreRenderCallback(predefaultLambda);
+        mShadowMapRenderPass->AddPreRenderCallback(preshadowsLambda);
 
         //add everything into graph
         mRenderGraph.AddRenderPass(mShadowMapRenderPass); //add default backbuffer renderpass
@@ -166,10 +183,11 @@ namespace psm
         {
             return;
         }
-
+    
         mCurrentImageIndex = BeginRender();
 
         mDevice->UpdateBuffer(mGlobalBuffer, &buffer);
+        ShadowsGenerator::Instance()->Update();
 
         for(auto& renderPass : mRenderGraph)
         {
@@ -177,12 +195,6 @@ namespace psm
             renderPass->Render();
             renderPass->PostRender(mCommandBuffers[mCurrentFrame]);
         }
-
-        /*mGui->PrepareNewFrame();
-        {
-            Shadows::Instance()->DrawShadowParams();
-        }
-        mGui->Render(mCommandBuffers[mCurrentFrame]);*/
 
         EndRender(mCurrentImageIndex);
     }
@@ -398,7 +410,7 @@ namespace psm
     void Renderer::InitImGui(HWND hWnd)
     {
         //create default imgui render pass with different render target!!
-        //mGui = mDevice->CreateGui(mRenderPass, mCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
+        mGui = mDevice->CreateGui(mDefaultBackbufferPass->GetRenderPass(), mCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
     }
 
     void Renderer::CreateDefaultDescriptorPool()
