@@ -21,6 +21,8 @@ namespace psm
 
         TextureLoader::Instance()->AddWhiteDefaultTexture("../Engine/Textures/DefaultMagentaTexture.png");
 
+        TextureLoader::Instance()->LoadDDSTexture("D:/Education/DLK/engine/Engine/Models/Knight/Cape_BaseColor.dds");
+
         {//add sponze instance(1)
 
             /*std::vector<MeshPbrMaterial> sponzaModelMeshMaterials;

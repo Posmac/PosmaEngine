@@ -50,6 +50,7 @@ namespace psm
         ImagePtr GetWhiteTexture() const;
         void AddWhiteDefaultTexture(const std::string& path);
         void Deinit();
+        void LoadDDSTexture(const std::string& path);
     private:
         DevicePtr mDeviceInternal;
         CommandPoolPtr mCommandPoolInternal;

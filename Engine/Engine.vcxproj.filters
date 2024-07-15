@@ -333,6 +333,12 @@
     <ClInclude Include="Source\Render\Graph\ResourceGeneralInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="External\DDS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="External\dxgiformat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine.cpp">

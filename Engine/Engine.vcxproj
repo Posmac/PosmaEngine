@@ -156,6 +156,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="External\dxgiformat.h" />
+    <ClInclude Include="External\DDS.h" />
     <ClInclude Include="Source\Foundation\Name.h" />
     <ClInclude Include="Source\Foundation\NameRegistry.h" />
     <ClInclude Include="Source\Materials\PbrMaterial.h" />
