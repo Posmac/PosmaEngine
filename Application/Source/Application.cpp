@@ -21,7 +21,7 @@ namespace psm
 
         TextureLoader::Instance()->AddWhiteDefaultTexture("../Engine/Textures/DefaultMagentaTexture.png");
 
-        TextureLoader::Instance()->LoadDDSTexture("D:/Education/DLK/engine/Engine/Models/Knight/Cape_BaseColor.dds");
+        ImagePtr ddsTexture = TextureLoader::Instance()->LoadDDSTexture("D:/Education/DLK/engine/Engine/Models/Knight/Cape_BaseColor.dds");
 
         {//add sponze instance(1)
 
@@ -52,6 +52,7 @@ namespace psm
 
             std::vector<MeshPbrMaterial> damagedHelmetMeshMaterials;
             std::shared_ptr<Model>  damagedHelmetModel = ModelLoader::Instance()->LoadModel("../Engine/Models/DamagedHelmet/glTF/", "DamagedHelmet.gltf", damagedHelmetMeshMaterials);
+            damagedHelmetMeshMaterials[0].Albedo = ddsTexture;
 
             constexpr unsigned helmetsCount = 4;
 

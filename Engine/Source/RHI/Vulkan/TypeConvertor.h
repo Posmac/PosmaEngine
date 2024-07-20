@@ -777,6 +777,38 @@ namespace psm
                 return VK_FORMAT_D24_UNORM_S8_UINT;
             case EFormat::D32_SFLOAT_S8_UINT:
                 return VK_FORMAT_D32_SFLOAT_S8_UINT;
+            case EFormat::BC1_RGB_UNORM_BLOCK:
+                return VK_FORMAT_BC1_RGB_UNORM_BLOCK;
+            case EFormat::BC1_RGB_SRGB_BLOCK:
+                return VK_FORMAT_BC1_RGB_SRGB_BLOCK;
+            case EFormat::BC1_RGBA_UNORM_BLOCK:
+                return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+            case EFormat::BC1_RGBA_SRGB_BLOCK:
+                return VK_FORMAT_BC1_RGBA_SRGB_BLOCK;
+            case EFormat::BC2_UNORM_BLOCK:
+                return VK_FORMAT_BC2_UNORM_BLOCK;
+            case EFormat::BC2_SRGB_BLOCK:
+                return VK_FORMAT_BC2_SRGB_BLOCK;
+            case EFormat::BC3_UNORM_BLOCK:
+                return VK_FORMAT_BC3_UNORM_BLOCK;
+            case EFormat::BC3_SRGB_BLOCK:
+                return VK_FORMAT_BC3_SRGB_BLOCK;
+            case EFormat::BC4_UNORM_BLOCK:
+                return VK_FORMAT_BC4_UNORM_BLOCK;
+            case EFormat::BC4_SNORM_BLOCK:
+                return VK_FORMAT_BC4_SNORM_BLOCK;
+            case EFormat::BC5_UNORM_BLOCK:
+                return VK_FORMAT_BC5_UNORM_BLOCK;
+            case EFormat::BC5_SNORM_BLOCK:
+                return VK_FORMAT_BC5_SNORM_BLOCK;
+            case EFormat::BC6H_UFLOAT_BLOCK:
+                return VK_FORMAT_BC6H_UFLOAT_BLOCK;
+            case EFormat::BC6H_SFLOAT_BLOCK:
+                return VK_FORMAT_BC6H_SFLOAT_BLOCK;
+            case EFormat::BC7_UNORM_BLOCK:
+                return VK_FORMAT_BC7_UNORM_BLOCK;
+            case EFormat::BC7_SRGB_BLOCK:
+                return VK_FORMAT_BC7_SRGB_BLOCK;
             default:
                 return VK_FORMAT_UNDEFINED;
         }

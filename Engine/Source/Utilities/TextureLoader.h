@@ -8,6 +8,8 @@
 #include "RHI/RHICommon.h"
 #include "RHI/Interface/Types.h"
 
+#include "RHI/Enums/ImageFormats.h"
+
 #include "stb_image.h"
 
 namespace psm
@@ -26,6 +28,7 @@ namespace psm
 
         struct RawTextureData
         {
+            RawTextureData();
             explicit RawTextureData(const std::string& path, RGB_Type type);
             ~RawTextureData();
 
@@ -35,6 +38,24 @@ namespace psm
             RGB_Type Type;
             stbi_uc* Data;
         };
+
+        struct RawDdsData
+        {
+            int Width;
+            int Height;
+            EFormat Format;
+            void* Mip0Data;
+            void* Mip1Data;
+            int BlockSize;
+            int MipsCount;
+            bool IsCubemap;
+            bool IsCompressed;
+            int RowPitch;
+            int BitsPerPixel;
+            int Depth;
+            int PitchOrLinearSize;
+        };
+
         //singleton realization
     public:
         TextureLoader(TextureLoader&) = delete;
@@ -50,7 +71,7 @@ namespace psm
         ImagePtr GetWhiteTexture() const;
         void AddWhiteDefaultTexture(const std::string& path);
         void Deinit();
-        void LoadDDSTexture(const std::string& path);
+        ImagePtr LoadDDSTexture(const std::string& path);
     private:
         DevicePtr mDeviceInternal;
         CommandPoolPtr mCommandPoolInternal;
