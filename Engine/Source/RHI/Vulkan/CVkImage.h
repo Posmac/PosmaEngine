@@ -35,6 +35,7 @@ namespace psm
 
     private:
         uint32_t FindMemoryType(VkPhysicalDevice gpu, uint32_t typeFilter, VkMemoryPropertyFlags props);
+        void GenerateMipMaps(void* pMipMapsData);
 
     private:
         VkDevice mDeviceInternal;

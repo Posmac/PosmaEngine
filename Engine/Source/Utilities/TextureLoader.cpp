@@ -343,6 +343,11 @@ namespace psm
         else
             rawDdsData.RowPitch = (rawDdsData.Width * rawDdsData.BitsPerPixel + 7) / 8;
 
+        if(rawDdsData.MipsCount > 1)
+        {
+            rawDdsData.Mip1Data = rawDdsData.Mip0Data + rawDdsData.PitchOrLinearSize;
+        }
+
         //create RHI image
         SImageConfig imageConfig =
         {
@@ -362,7 +367,7 @@ namespace psm
             .ViewAspect = EImageAspect::COLOR_BIT
         };
 
-        SUntypedBuffer textureBuffer(rawDdsData.PitchOrLinearSize, rawDdsData.Mip0Data);
+        SUntypedBuffer textureBuffer = SUntypedBuffer(rawDdsData.PitchOrLinearSize, rawDdsData.Mip0Data);
 
         SImageToBufferCopyConfig layoutTransition =
         {

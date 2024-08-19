@@ -52,7 +52,7 @@ namespace psm
 
             std::vector<MeshPbrMaterial> damagedHelmetMeshMaterials;
             std::shared_ptr<Model>  damagedHelmetModel = ModelLoader::Instance()->LoadModel("../Engine/Models/DamagedHelmet/glTF/", "DamagedHelmet.gltf", damagedHelmetMeshMaterials);
-            damagedHelmetMeshMaterials[0].Albedo = ddsTexture;
+            //damagedHelmetMeshMaterials[0].Albedo = ddsTexture;
 
             constexpr unsigned helmetsCount = 4;
 

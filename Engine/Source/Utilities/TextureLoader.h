@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <memory>
 #include <unordered_map>
+#include <Windows.h>
 
 #include "RHI/RHICommon.h"
 #include "RHI/Interface/Types.h"
@@ -44,8 +45,8 @@ namespace psm
             int Width;
             int Height;
             EFormat Format;
-            void* Mip0Data;
-            void* Mip1Data;
+            BYTE* Mip0Data;
+            BYTE* Mip1Data;
             int BlockSize;
             int MipsCount;
             bool IsCubemap;

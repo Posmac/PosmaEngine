@@ -335,8 +335,7 @@ namespace psm
 
         if(config.MipLevels > 1)
         {
-            /* GenerateMipMaps(physicalDevice, commandBuffer, *dstImage,
-                  VK_FORMAT_R8G8B8A8_SRGB, size.width, size.height, mipLevels);*/
+             //GenerateMipMaps(physicalDevice, commandBuffer, *dstImage, VK_FORMAT_R8G8B8A8_SRGB, size.width, size.height, mipLevels);
         }
 
         SImageLayoutTransition layoutTransition =

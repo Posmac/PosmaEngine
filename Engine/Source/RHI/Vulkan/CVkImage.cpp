@@ -161,5 +161,121 @@ namespace psm
             }
         }
     }
+
+    //void CVkImage::GenerateMipMaps(void* pMipMapsData)
+    //{
+    //    /*VkFormatProperties formatProperties;
+    //    vkGetPhysicalDeviceFormatProperties(physicalDevice, imageFormat, &formatProperties);
+
+    //    if(!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
+    //    {
+    //        throw std::runtime_error("texture image format does not support linear blitting!");
+    //    }*/
+
+    //    int32_t mipWidth = mImageConfig.ImageSize.width;
+    //    int32_t mipHeight = mImageConfig.ImageSize.height;
+
+    //    for(uint32_t i = 1; i < mipLevels; i++)
+    //    {
+    //        VkImageMemoryBarrier dstBaseBarrier{};
+    //        dstBaseBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    //        dstBaseBarrier.image = image;
+    //        dstBaseBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    //        dstBaseBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    //        dstBaseBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    //        dstBaseBarrier.subresourceRange.baseArrayLayer = 0;
+    //        dstBaseBarrier.subresourceRange.layerCount = 1;
+    //        dstBaseBarrier.subresourceRange.levelCount = 1;
+    //        dstBaseBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    //        dstBaseBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    //        dstBaseBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    //        dstBaseBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    //        dstBaseBarrier.subresourceRange.baseMipLevel = i;
+
+    //        vkCmdPipelineBarrier(commandBuffer,
+    //            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+    //            0, nullptr,
+    //            0, nullptr,
+    //            1, &dstBaseBarrier);
+
+    //        VkImageMemoryBarrier sourceMipBarrier{};
+    //        sourceMipBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    //        sourceMipBarrier.image = image;
+    //        sourceMipBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    //        sourceMipBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    //        sourceMipBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    //        sourceMipBarrier.subresourceRange.baseArrayLayer = 0;
+    //        sourceMipBarrier.subresourceRange.layerCount = 1;
+    //        sourceMipBarrier.subresourceRange.levelCount = 1;
+    //        sourceMipBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    //        sourceMipBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    //        sourceMipBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    //        sourceMipBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    //        sourceMipBarrier.subresourceRange.baseMipLevel = i - 1;
+
+    //        vkCmdPipelineBarrier(commandBuffer,
+    //            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+    //            0, nullptr,
+    //            0, nullptr,
+    //            1, &sourceMipBarrier);
+
+    //        VkImageBlit blit{};
+    //        blit.srcOffsets[0] = { 0, 0, 0 };
+    //        blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+    //        blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    //        blit.srcSubresource.mipLevel = i - 1;
+    //        blit.srcSubresource.baseArrayLayer = 0;
+    //        blit.srcSubresource.layerCount = 1;
+    //        blit.dstOffsets[0] = { 0, 0, 0 };
+    //        blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+    //        blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    //        blit.dstSubresource.mipLevel = i;
+    //        blit.dstSubresource.baseArrayLayer = 0;
+    //        blit.dstSubresource.layerCount = 1;
+
+    //        vkCmdBlitImage(commandBuffer,
+    //            image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    //            image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    //            1, &blit,
+    //            VK_FILTER_LINEAR);
+
+    //        //after blit restore state
+    //        /*imageMemoryBarrier(cmd, image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+    //                           VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    //                           i, 1);*/
+
+    //        dstBaseBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    //        dstBaseBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    //        dstBaseBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    //        dstBaseBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    //        vkCmdPipelineBarrier(commandBuffer,
+    //            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+    //            0, nullptr,
+    //            0, nullptr,
+    //            1, &dstBaseBarrier);
+
+
+    //        /*imageMemoryBarrier(cmd, image, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+    //          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    //          i - 1, 1);*/
+
+    //        sourceMipBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    //        sourceMipBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    //        sourceMipBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    //        sourceMipBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    //        vkCmdPipelineBarrier(commandBuffer,
+    //            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+    //            0, nullptr,
+    //            0, nullptr,
+    //            1, &sourceMipBarrier);
+
+    //        if(mipWidth > 1)
+    //            mipWidth /= 2;
+    //        if(mipHeight > 1)
+    //            mipHeight /= 2;
+    //    }
+    //}
 }
 
