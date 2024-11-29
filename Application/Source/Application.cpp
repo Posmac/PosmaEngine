@@ -21,7 +21,7 @@ namespace psm
 
         TextureLoader::Instance()->AddWhiteDefaultTexture("../Engine/Textures/DefaultMagentaTexture.png");
 
-        ImagePtr ddsTexture = TextureLoader::Instance()->LoadDDSTexture("D:/Education/DLK/engine/Engine/Models/Knight/Cape_BaseColor.dds");
+        ImagePtr ddsTexture = TextureLoader::Instance()->LoadDDSTexture("../Engine/Models/Knight/Cape_BaseColor.dds");
 
         {//add sponze instance(1)
 

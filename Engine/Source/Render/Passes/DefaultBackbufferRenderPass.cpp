@@ -178,7 +178,7 @@ namespace psm
             {
                 .Format = mDepthStencilFormat,
                 .OldLayout = EImageLayout::UNDEFINED,
-                .NewLayout = EImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL,
+                .NewLayout = EImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,//EImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL,
                 .SourceStage = EPipelineStageFlags::TOP_OF_PIPE_BIT,
                 .DestinationStage = EPipelineStageFlags::EARLY_FRAGMENT_TESTS_BIT,
                 .SourceMask = EAccessFlags::NONE,
