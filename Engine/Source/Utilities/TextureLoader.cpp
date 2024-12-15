@@ -77,7 +77,7 @@ namespace psm
 
         if(textureData.Data == nullptr)
         {
-            LogMessage(MessageSeverity::Error, "Raw texture data pointer is null");
+            LogMessage(MessageSeverity::Error, "Raw texture data pointer is null" + path);
         }
 
         SImageConfig imageConfig =

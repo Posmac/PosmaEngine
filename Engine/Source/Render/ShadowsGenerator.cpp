@@ -97,13 +97,13 @@ namespace psm
         ImGui::Begin("Hello, world!");
         ImGui::Text("Shadow maps render params");
 
-        ImGui::SliderFloat("range", &mDirectionalLightData.Range, -100.0f, 100.0f);
-        ImGui::SliderFloat("nearPlane", &mDirectionalLightData.NearPlane, -500.0f, 500.0f);
-        ImGui::SliderFloat("farPlane", &mDirectionalLightData.FarPlane, -500.0f, 500.0f);
+        ImGui::SliderFloat("range", &mDirectionalLightData.Range, -1000.0f, 1000.0f);
+        ImGui::SliderFloat("nearPlane", &mDirectionalLightData.NearPlane, -5000.0f, 5000.0f);
+        ImGui::SliderFloat("farPlane", &mDirectionalLightData.FarPlane, -5000.0f, 5000.0f);
         ImGui::SliderFloat("depthBias", &DepthBias, -10.0f, 10.0f);
         ImGui::SliderFloat("depthSlope", &DepthSlope, -10.0f, 10.0f);
 
-        ImGui::SliderFloat3("position", &mDirectionalLightData.Position[0], -100, 100);
+        ImGui::SliderFloat3("position", &mDirectionalLightData.Position[0], -1000, 1000);
         ImGui::SliderFloat3("lookAt", &mDirectionalLightData.LookAt[0], -10, 10);
         ImGui::SliderFloat3("up", &mDirectionalLightData.Up[0], -1, 1);
 
