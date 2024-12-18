@@ -8,46 +8,6 @@
 
 namespace psm
 {
-    void listTextures(const aiScene* scene)
-    {
-        std::vector<std::string> textures;
-
-        // Iterate over all materials in the scene
-        for(unsigned int i = 0; i < scene->mNumMaterials; ++i)
-        {
-            aiMaterial* material = scene->mMaterials[i];
-
-            // Iterate over all texture types for each material
-            for(unsigned int t = 0; t < AI_TEXTURE_TYPE_MAX; ++t)
-            {
-                unsigned int textureCount = material->GetTextureCount(static_cast<aiTextureType>(t));
-
-                for(unsigned int j = 0; j < textureCount; ++j)
-                {
-                    aiString texturePath; // To store the texture file path
-                    material->GetTexture(static_cast<aiTextureType>(t), j, &texturePath);
-
-                    // Store the texture path or do any other operation
-                    textures.push_back(texturePath.C_Str() + std::to_string(t));
-                }
-            }
-        }
-
-        // Print out all the textures found
-        if(textures.empty())
-        {
-            std::cout << "No textures found in the model." << std::endl;
-        }
-        else
-        {
-            std::cout << "Textures found in the model:" << std::endl;
-            for(const auto& texture : textures)
-            {
-                std::cout << texture << std::endl;
-            }
-        }
-    }
-
     ModelLoader* ModelLoader::s_Instance = nullptr;
 
     ModelLoader* ModelLoader::Instance()
@@ -60,7 +20,7 @@ namespace psm
         return s_Instance;
     }
         
-    std::shared_ptr<Model>& ModelLoader::LoadModel(const std::string& pathToModel, const std::string& modelName, std::vector<MeshPbrMaterial>& modelMeshMaterials)
+    std::shared_ptr<Model>& ModelLoader::LoadModel(const std::string& pathToModel, const std::string& modelName, std::vector<MeshPbrMaterial>& modelMeshMaterials, bool flipUv /*= false*/)
     {
         std::string fullPath = pathToModel + modelName;
 
@@ -74,7 +34,12 @@ namespace psm
         //importer.SetPropertyInteger(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, aiComponent_TANGENTS_AND_BITANGENTS);
         //importer.SetPropertyInteger(AI_CONFIG_PP_PTV_NORMALIZE, true);
 
-        const aiScene* scene = importer.ReadFile(fullPath, aiProcess_PreTransformVertices);
+        unsigned int flags = aiProcess_PreTransformVertices | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices;
+
+        if(flipUv)
+            flags |= aiProcess_FlipUVs;
+
+        const aiScene* scene = importer.ReadFile(fullPath, flags);
 
         //listTextures(scene);
 

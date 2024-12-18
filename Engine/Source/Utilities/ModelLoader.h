@@ -36,7 +36,7 @@ namespace psm
     public:
         void Init(DevicePtr device, CommandPoolPtr commandPool);
         void Deinit();
-        std::shared_ptr<Model>& LoadModel(const std::string& pathToModel, const std::string& modelName, std::vector<MeshPbrMaterial>& modelMeshMaterials);
+        std::shared_ptr<Model>& LoadModel(const std::string& pathToModel, const std::string& modelName, std::vector<MeshPbrMaterial>& modelMeshMaterials, bool flipUv = false);
     private:
         void ProcessNode(aiNode* node, const aiScene* scene, std::shared_ptr<Model>& model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
         void ProcessMesh(aiMesh* mesh, const aiScene* scene, std::shared_ptr<Model>& model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials);
