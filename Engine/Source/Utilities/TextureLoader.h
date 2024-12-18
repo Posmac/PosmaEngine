@@ -43,6 +43,7 @@ namespace psm
 
         struct RawDdsData
         {
+            ~RawDdsData();
             int Width;
             int Height;
             EFormat Format;
@@ -70,10 +71,10 @@ namespace psm
     public:
         void Init(DevicePtr device, CommandPoolPtr mCommandPool);
         ImagePtr LoadTexture(const std::string& path);
+        ImagePtr LoadDDSTexture(const std::string& path);
         ImagePtr GetWhiteTexture() const;
         void AddWhiteDefaultTexture(const std::string& path);
         void Deinit();
-        ImagePtr LoadDDSTexture(const std::string& path);
         void LoadAllTextures();
     private:
         DevicePtr mDeviceInternal;
@@ -83,7 +84,6 @@ namespace psm
         std::unordered_map<std::string, ImagePtr> mImages;
 
         //used only in void LoadAllTextures();
-
         struct ImageOffset
         {
             uint64_t Offset;
@@ -94,6 +94,5 @@ namespace psm
         std::unordered_map<std::string, RawTextureData> mStbiImages;
         std::unordered_map<std::string, RawDdsData> mDdsImages;
         std::unordered_map<std::string, ImageOffset> mImageOffsets;
-        uint64_t mTexturesSize;
     };
 }

@@ -105,9 +105,38 @@ namespace psm
 
         //stagingBuffer->Unmap();
 
-        //prepare staging buffers
+        //prepare staging buffers (for non dds image format)
         std::vector<BufferPtr> stagingBuffers;
         for(auto& image : mStbiImages)
+        {
+            ImageOffset& offset = mImageOffsets[image.first];
+            SBufferConfig stagingBufferConfig =
+            {
+                .Size = offset.Size,
+                .Usage = EBufferUsage::USAGE_TRANSFER_SRC_BIT,
+                .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+            };
+
+            BufferPtr stagingBuffer = mDeviceInternal->CreateBuffer(stagingBufferConfig);
+
+            void* pData;
+            SBufferMapConfig mapping =
+            {
+                .Size = offset.Size,
+                .Offset = 0,
+                .pData = &pData,
+                .Flags = 0,
+            };
+
+            stagingBuffer->Map(mapping);
+            memcpy(pData, offset.Data, offset.Size);
+            stagingBuffer->Unmap();
+
+            stagingBuffers.push_back(stagingBuffer);
+        }
+ 
+        //prepare staging buffers (for dds image format)
+        for(auto& image : mDdsImages)
         {
             ImageOffset& offset = mImageOffsets[image.first];
             SBufferConfig stagingBufferConfig =
@@ -138,26 +167,19 @@ namespace psm
         //begin command buffer
         auto commandBuffer = mDeviceInternal->BeginSingleTimeSubmitCommandBuffer(mCommandPoolInternal);
 
-        //write data to each image
+        //write data to each image (other than DDS format images)
         int currentIndex = 0;
+
         for(auto& stbiImage : mStbiImages)
         {
             ImageOffset& offset = mImageOffsets[stbiImage.first];
-
-            SImageToBufferCopyConfig layoutTransition =
-            {
-                .FormatBeforeTransition = EFormat::R8G8B8A8_SRGB,
-                .LayoutBeforeTransition = EImageLayout::UNDEFINED,
-                .FormatAfterTransition = EFormat::R8G8B8A8_SRGB,
-                .LayoutAfterTransition = EImageLayout::SHADER_READ_ONLY_OPTIMAL
-            };
 
             ImagePtr image = mImages[stbiImage.first];
 
             SImageLayoutTransition beforeLayout =
             {
-                .Format = layoutTransition.FormatBeforeTransition,
-                .OldLayout = layoutTransition.LayoutBeforeTransition,
+                .Format = image->GetImageFormat(),
+                .OldLayout = EImageLayout::UNDEFINED,
                 .NewLayout = EImageLayout::TRANSFER_DST_OPTIMAL,
                 .SourceStage = EPipelineStageFlags::TOP_OF_PIPE_BIT,
                 .DestinationStage = EPipelineStageFlags::TRANSFER_BIT,
@@ -178,9 +200,56 @@ namespace psm
 
             SImageLayoutTransition afterLayout =
             {
-                .Format = layoutTransition.FormatAfterTransition,
+                .Format = image->GetImageFormat(),
                 .OldLayout = EImageLayout::TRANSFER_DST_OPTIMAL, //or can be undefined
-                .NewLayout = layoutTransition.LayoutAfterTransition,
+                .NewLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .SourceStage = EPipelineStageFlags::TRANSFER_BIT,
+                .DestinationStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
+                .SourceMask = EAccessFlags::TRANSFER_WRITE_BIT,
+                .DestinationMask = EAccessFlags::SHADER_READ_BIT,
+                .ImageAspectFlags = EImageAspect::COLOR_BIT,
+                .MipLevel = 0,
+            };
+
+            mDeviceInternal->ImageLayoutTransition(commandBuffer, image, afterLayout);
+
+            currentIndex++;
+        }
+
+        //write data to each image (dds format images)
+        for(auto& ddsImage : mDdsImages)
+        {
+            ImageOffset& offset = mImageOffsets[ddsImage.first];
+
+            ImagePtr image = mImages[ddsImage.first];
+
+            SImageLayoutTransition beforeLayout =
+            {
+                .Format = image->GetImageFormat(),
+                .OldLayout = EImageLayout::UNDEFINED,
+                .NewLayout = EImageLayout::TRANSFER_DST_OPTIMAL,
+                .SourceStage = EPipelineStageFlags::TOP_OF_PIPE_BIT,
+                .DestinationStage = EPipelineStageFlags::TRANSFER_BIT,
+                .SourceMask = EAccessFlags::NONE,
+                .DestinationMask = EAccessFlags::TRANSFER_WRITE_BIT,
+                .ImageAspectFlags = EImageAspect::COLOR_BIT,
+                .MipLevel = 0,
+            };
+
+            mDeviceInternal->ImageLayoutTransition(commandBuffer, image, beforeLayout);
+
+            mDeviceInternal->CopyBufferToImage(commandBuffer, stagingBuffers[currentIndex], image, image->GetImageSize(), EImageAspect::COLOR_BIT, EImageLayout::TRANSFER_DST_OPTIMAL);
+
+            if(image->GetImageMips() > 1)
+            {
+                //GenerateMipMaps(physicalDevice, commandBuffer, *dstImage, VK_FORMAT_R8G8B8A8_SRGB, size.width, size.height, mipLevels);
+            }
+
+            SImageLayoutTransition afterLayout =
+            {
+                .Format = image->GetImageFormat(),
+                .OldLayout = EImageLayout::TRANSFER_DST_OPTIMAL, //or can be undefined
+                .NewLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
                 .SourceStage = EPipelineStageFlags::TRANSFER_BIT,
                 .DestinationStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
                 .SourceMask = EAccessFlags::TRANSFER_WRITE_BIT,
@@ -199,6 +268,7 @@ namespace psm
         mDeviceInternal->SubmitSingleTimeCommandBuffer(mCommandPoolInternal, commandBuffer);
 
         mStbiImages.clear();
+        mDdsImages.clear();
     }
 
     void TextureLoader::Init(DevicePtr device, CommandPoolPtr mCommandPool)
@@ -248,9 +318,8 @@ namespace psm
         ImagePtr emptyImage = mDeviceInternal->CreateImage(imageConfig);
         mImages.insert({ path, emptyImage });
 
-        ImageOffset offset = { mTexturesSize, textureData.Width * textureData.Height * textureData.Type, textureData.Data };
+        ImageOffset offset = { 0, textureData.Width * textureData.Height * textureData.Type, textureData.Data };
         mImageOffsets.insert({ path, offset });
-        mTexturesSize += textureData.Width * textureData.Height * textureData.Type;
 
         return emptyImage;
     }
@@ -273,6 +342,11 @@ namespace psm
             return mImages[path];
         }
 
+        if(mDdsImages.count(path) != 0)
+        {
+            return mImages[path];
+        }
+        
         std::ifstream fstream(path, std::ios::binary | std::ios::ate);
         std::streamsize size = fstream.tellg();
         fstream.seekg(0, std::ios::beg);
@@ -303,7 +377,9 @@ namespace psm
         DirectX::DDS_PIXELFORMAT pixelFormat = imageData->ddspf;
         DirectX::DDS_HEADER_DXT10* dx10Header = reinterpret_cast<DirectX::DDS_HEADER_DXT10*>(imageData + 1);
         BYTE* rawImageData = nullptr;
-        RawDdsData rawDdsData{};
+
+        mDdsImages.insert({});
+        RawDdsData& rawDdsData = mDdsImages[path];
 
         if(imageData->size != 124)
         {
@@ -484,7 +560,9 @@ namespace psm
         if(rawImageData == nullptr)
             DebugBreak();
 
-        rawDdsData.Mip0Data = rawImageData;
+        rawDdsData.Mip0Data = (BYTE*)malloc(rawDdsData.PitchOrLinearSize);
+        memcpy(rawDdsData.Mip0Data, rawImageData, rawDdsData.PitchOrLinearSize);
+        //rawDdsData.Mip0Data = rawImageData;
 
         if(rawDdsData.IsCompressed)
             rawDdsData.RowPitch = max(1, ((rawDdsData.Width + 3) / 4)) * rawDdsData.BlockSize;
@@ -493,7 +571,8 @@ namespace psm
 
         if(rawDdsData.MipsCount > 1)
         {
-            rawDdsData.Mip1Data = rawDdsData.Mip0Data + rawDdsData.PitchOrLinearSize;
+            //leave it nullptr for now, until we will process mip 1-11 levels
+            //rawDdsData.Mip1Data = rawDdsData.Mip0Data + rawDdsData.PitchOrLinearSize;
         }
 
         //create RHI image
@@ -515,20 +594,21 @@ namespace psm
             .ViewAspect = EImageAspect::COLOR_BIT
         };
 
-        SUntypedBuffer textureBuffer = SUntypedBuffer(rawDdsData.PitchOrLinearSize, rawDdsData.Mip0Data);
+        ImagePtr emptyImage = mDeviceInternal->CreateImage(imageConfig);
 
-        SImageToBufferCopyConfig layoutTransition =
+        mImages.insert({ path, emptyImage });
+
+        ImageOffset offset = { 0, rawDdsData.PitchOrLinearSize, rawDdsData.Mip0Data};
+        mImageOffsets.insert({ path, offset });
+
+        return emptyImage;
+    }
+
+    TextureLoader::RawDdsData::~RawDdsData()
+    {
+        if(Mip0Data != nullptr)
         {
-            .FormatBeforeTransition = rawDdsData.Format,
-            .LayoutBeforeTransition = EImageLayout::UNDEFINED,
-            .FormatAfterTransition = rawDdsData.Format,
-            .LayoutAfterTransition = EImageLayout::SHADER_READ_ONLY_OPTIMAL
-        };
-
-        ImagePtr image = mDeviceInternal->CreateImageWithData(mCommandPoolInternal, imageConfig, textureBuffer, layoutTransition);
-
-        mImages.insert({ path, image });
-
-        return image;
+            free(Mip0Data);
+        }
     }
 }

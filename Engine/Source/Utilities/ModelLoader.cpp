@@ -124,7 +124,7 @@ namespace psm
 
     void ModelLoader::ProcessMesh(aiMesh* aiMesh, const aiScene* scene, std::shared_ptr<Model>& model, const std::string& pathToModel, std::vector<MeshPbrMaterial>& modelMeshMaterials)
     {
-        LogMessage(MessageSeverity::Info, aiMesh->mName.C_Str());
+        //LogMessage(MessageSeverity::Info, aiMesh->mName.C_Str());
 
         //std::unordered_map<Vertex, uint32_t> uniqueVertices{};
         unsigned meshIndex = model->Meshes.size() - 1;
@@ -205,7 +205,7 @@ namespace psm
 
                     size_t ddsFormatPosition = stlPath.find("dds");
 
-                    LogMessage(MessageSeverity::Info, "Loading texture");
+                    //LogMessage(MessageSeverity::Info, "Loading texture");
 
                     //for now we support only dds, png and jpg
                     if(ddsFormatPosition != std::string::npos)
