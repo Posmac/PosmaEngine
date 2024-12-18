@@ -19,13 +19,15 @@ namespace psm
         m_Camera = Camera(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 1000.0f);
         m_CameraDefaultMoveSpeed = 50.0f;
         m_CameraDefaultRotateSpeed = 300.0f;
+        m_CameraStartingPosition = glm::vec4(0, 30, 80, 1);
+        m_Camera.SetWorldPosition(m_CameraStartingPosition);
+        m_Camera.RecalculateFromWorld();
 
         m_isMouseLBPressed = false;
 
         m_Resolution = { width, height };
 
         TextureLoader::Instance()->AddWhiteDefaultTexture("../Engine/Textures/DefaultMagentaTexture.png");
-        //ImagePtr ddsTexture = TextureLoader::Instance()->LoadDDSTexture("../Engine/Models/Knight/Cape_BaseColor.dds");
 
         {//add sponze instance(1)
 
@@ -36,6 +38,7 @@ namespace psm
 
             instanceMatrix = glm::mat4(1.0);
             instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0, 0, 0));
+            instanceMatrix = glm::rotate(instanceMatrix, glm::radians(90.0f), glm::vec3(0, 1, 0));
             instanceMatrix = glm::scale(instanceMatrix, glm::vec3(10, 10, 10));
 
             OpaqueInstances::Instance instance = { instanceMatrix };
@@ -51,6 +54,12 @@ namespace psm
             OpaqueInstances::GetInstance()->AddInstance(sponzaModel, opaqModelMeshMaterials, opaqModelMeshInstances);
         }
 
+        constexpr int startingYPos = 5;
+        constexpr int yPosStep = 10;
+
+        int startingXPos = 5;
+        glm::vec3 scale = glm::vec3(3);
+
         {//add damaged helmet (10)
 
             std::vector<MeshPbrMaterial> damagedHelmetMeshMaterials;
@@ -60,25 +69,30 @@ namespace psm
 
             OpaqueInstances::OpaqModelMeshInstances opaqModelMeshInstances(helmetsCount);
 
+            startingXPos = 5;
+            int curYPos = startingYPos;
             glm::mat4 instanceMatrix = glm::mat4(1.0);
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0, 0, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             opaqModelMeshInstances[0] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0, 5, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             opaqModelMeshInstances[1] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0, 10, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             opaqModelMeshInstances[2] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(0, 15, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             opaqModelMeshInstances[3] = { instanceMatrix };
 
             OpaqueInstances::OpaqModelMeshMaterials opaqModelMeshMaterials(damagedHelmetMeshMaterials.size());
@@ -99,25 +113,30 @@ namespace psm
 
             OpaqueInstances::OpaqModelMeshInstances opaqModelMeshInstances(knightsCount);
 
+            startingXPos = 10;
+            int curYPos = startingYPos;
             glm::mat4 instanceMatrix = glm::mat4(1.0);
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(5, 0, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             opaqModelMeshInstances[0] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(5, 5, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             opaqModelMeshInstances[1] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(5, 10, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             opaqModelMeshInstances[2] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(5, 15, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             opaqModelMeshInstances[3] = { instanceMatrix };
 
             OpaqueInstances::OpaqModelMeshMaterials opaqModelMeshMaterials(knightsMaterials.size());
@@ -129,7 +148,6 @@ namespace psm
             OpaqueInstances::GetInstance()->AddInstance(knightModel, opaqModelMeshMaterials, opaqModelMeshInstances);
         }
 
-        
         {//add horses
 
             std::vector<MeshPbrMaterial> materials;
@@ -139,25 +157,30 @@ namespace psm
 
             OpaqueInstances::OpaqModelMeshInstances instances(modelsCount);
 
+            startingXPos = -5;
+            int curYPos = startingYPos;
             glm::mat4 instanceMatrix = glm::mat4(1.0);
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(10, 0, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             instances[0] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(10, 5, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             instances[1] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(10, 10, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             instances[2] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(10, 15, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             instances[3] = { instanceMatrix };
 
             OpaqueInstances::OpaqModelMeshMaterials opaqModelMeshMaterials(materials.size());
@@ -178,25 +201,30 @@ namespace psm
 
             OpaqueInstances::OpaqModelMeshInstances instances(modelsCount);
 
+            startingXPos = -10;
+            int curYPos = startingYPos;
             glm::mat4 instanceMatrix = glm::mat4(1.0);
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(-5, 0, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             instances[0] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(-5, 5, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             instances[1] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(-5, 10, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             instances[2] = { instanceMatrix };
 
+            curYPos += yPosStep;
             instanceMatrix = glm::mat4(1.0);
-            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(-5, 15, 0));
-            instanceMatrix = glm::scale(instanceMatrix, glm::vec3(1, 1, 1));
+            instanceMatrix = glm::translate(instanceMatrix, glm::vec3(startingXPos, curYPos, 0));
+            instanceMatrix = glm::scale(instanceMatrix, scale);
             instances[3] = { instanceMatrix };
 
             OpaqueInstances::OpaqModelMeshMaterials opaqModelMeshMaterials(materials.size());
@@ -250,6 +278,8 @@ namespace psm
 
         //    OpaqueInstances::GetInstance()->AddInstance(boxModel, opaqModelMeshMaterials, opaqModelMeshInstances);
         //}
+
+        TextureLoader::Instance()->LoadAllTextures();
 
         OpaqueInstances::GetInstance()->UpdateInstanceBuffer();
         OpaqueInstances::GetInstance()->UpdateMeshToModelData();
@@ -354,18 +384,10 @@ namespace psm
             difference /= (m_Resolution * 0.5f);
 
             eulerRotation += glm::vec3(difference, 0.0);
-
-            //std::cout << eulerRotation.x << " | " << eulerRotation.y << std::endl;
-
             std::swap(eulerRotation.x, eulerRotation.y);
 
             cameraRotated = true;
         }
-
-        /*if(InputSystem::Instance()->IsMouseButtonReleased(MouseKeys::LEFT))
-        {
-
-        }*/
 
         if(cameraRotated)
         {

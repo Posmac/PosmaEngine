@@ -3,6 +3,10 @@
 #if defined(RHI_VULKAN)
 #include "RHI/Vulkan/CVkImage.h"
 #include "RHI/Vulkan/CVkDevice.h"
+#include "RHI/Vulkan/CVkBuffer.h"
+#include "RHI/Vulkan/CVkCommandBuffer.h"
+#include "RHI/Vulkan/CVkCommandPool.h"
+#include "RHI/Vulkan/CVkFence.h"
 #endif
 
 #include <iostream>
@@ -17,7 +21,7 @@ namespace psm
 
     TextureLoader* TextureLoader::Instance()
     {
-        if (s_Instance == nullptr)
+        if(s_Instance == nullptr)
         {
             s_Instance = new TextureLoader();
         }
@@ -26,16 +30,20 @@ namespace psm
     }
 
     TextureLoader::RawTextureData::RawTextureData()
+        : Width(0), Height(0), NrChannels(0), Type(RGB_Type::Default), Data(nullptr)
     {
-        
+
     }
 
-    TextureLoader::RawTextureData::RawTextureData(const std::string& path, RGB_Type type)
+    TextureLoader::RawTextureData::RawTextureData(RGB_Type type)
     {
         Width = Height = NrChannels = 0;
         Data = nullptr;
         Type = type;
+    }
 
+    void TextureLoader::RawTextureData::Load(const std::string& path)
+    {
         Data = stbi_load(path.c_str(), &Width, &Height,
                               &NrChannels, Type);
 
@@ -60,6 +68,139 @@ namespace psm
         return mWhiteTexture;
     }
 
+    void TextureLoader::LoadAllTextures()
+    {
+        //takes all textures data and loads everything using 1 time submit cmd buff and 1 big storage buffer
+
+        //prepare staging buffer
+        //SBufferConfig stagingBufferConfig =
+        //{
+        //    .Size = mTexturesSize,
+        //    .Usage = EBufferUsage::USAGE_TRANSFER_SRC_BIT,
+        //    .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+        //};
+
+        //BufferPtr stagingBuffer = mDeviceInternal->CreateBuffer(stagingBufferConfig);
+
+        //void* pData;
+        //SBufferMapConfig mapping =
+        //{
+        //    .Size = mTexturesSize,
+        //    .Offset = 0,
+        //    .pData = &pData,
+        //    .Flags = 0,
+        //};
+
+        //stagingBuffer->Map(mapping);
+
+        ////copy all textures data into it
+        //char* ptr = (char*)pData;
+
+        //for(auto& item : mStbiImages)
+        //{
+        //    ImageOffset& offset = mImageOffsets[item.first];
+        //    memcpy(ptr, offset.Data, offset.Size);
+        //    ptr += offset.Size;
+        //}
+
+        //stagingBuffer->Unmap();
+
+        //prepare staging buffers
+        std::vector<BufferPtr> stagingBuffers;
+        for(auto& image : mStbiImages)
+        {
+            ImageOffset& offset = mImageOffsets[image.first];
+            SBufferConfig stagingBufferConfig =
+            {
+                .Size = offset.Size,
+                .Usage = EBufferUsage::USAGE_TRANSFER_SRC_BIT,
+                .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+            };
+
+            BufferPtr stagingBuffer = mDeviceInternal->CreateBuffer(stagingBufferConfig);
+
+            void* pData;
+            SBufferMapConfig mapping =
+            {
+                .Size = offset.Size,
+                .Offset = 0,
+                .pData = &pData,
+                .Flags = 0,
+            };
+
+            stagingBuffer->Map(mapping);
+            memcpy(pData, offset.Data, offset.Size);
+            stagingBuffer->Unmap();
+
+            stagingBuffers.push_back(stagingBuffer);
+        }
+
+        //begin command buffer
+        auto commandBuffer = mDeviceInternal->BeginSingleTimeSubmitCommandBuffer(mCommandPoolInternal);
+
+        //write data to each image
+        int currentIndex = 0;
+        for(auto& stbiImage : mStbiImages)
+        {
+            ImageOffset& offset = mImageOffsets[stbiImage.first];
+
+            SImageToBufferCopyConfig layoutTransition =
+            {
+                .FormatBeforeTransition = EFormat::R8G8B8A8_SRGB,
+                .LayoutBeforeTransition = EImageLayout::UNDEFINED,
+                .FormatAfterTransition = EFormat::R8G8B8A8_SRGB,
+                .LayoutAfterTransition = EImageLayout::SHADER_READ_ONLY_OPTIMAL
+            };
+
+            ImagePtr image = mImages[stbiImage.first];
+
+            SImageLayoutTransition beforeLayout =
+            {
+                .Format = layoutTransition.FormatBeforeTransition,
+                .OldLayout = layoutTransition.LayoutBeforeTransition,
+                .NewLayout = EImageLayout::TRANSFER_DST_OPTIMAL,
+                .SourceStage = EPipelineStageFlags::TOP_OF_PIPE_BIT,
+                .DestinationStage = EPipelineStageFlags::TRANSFER_BIT,
+                .SourceMask = EAccessFlags::NONE,
+                .DestinationMask = EAccessFlags::TRANSFER_WRITE_BIT,
+                .ImageAspectFlags = EImageAspect::COLOR_BIT,
+                .MipLevel = 0,
+            };
+
+            mDeviceInternal->ImageLayoutTransition(commandBuffer, image, beforeLayout);
+
+            mDeviceInternal->CopyBufferToImage(commandBuffer, stagingBuffers[currentIndex], image, image->GetImageSize(), EImageAspect::COLOR_BIT, EImageLayout::TRANSFER_DST_OPTIMAL);
+
+            if(image->GetImageMips() > 1)
+            {
+                //GenerateMipMaps(physicalDevice, commandBuffer, *dstImage, VK_FORMAT_R8G8B8A8_SRGB, size.width, size.height, mipLevels);
+            }
+
+            SImageLayoutTransition afterLayout =
+            {
+                .Format = layoutTransition.FormatAfterTransition,
+                .OldLayout = EImageLayout::TRANSFER_DST_OPTIMAL, //or can be undefined
+                .NewLayout = layoutTransition.LayoutAfterTransition,
+                .SourceStage = EPipelineStageFlags::TRANSFER_BIT,
+                .DestinationStage = EPipelineStageFlags::FRAGMENT_SHADER_BIT,
+                .SourceMask = EAccessFlags::TRANSFER_WRITE_BIT,
+                .DestinationMask = EAccessFlags::SHADER_READ_BIT,
+                .ImageAspectFlags = EImageAspect::COLOR_BIT,
+                .MipLevel = 0,
+            };
+
+            mDeviceInternal->ImageLayoutTransition(commandBuffer, image, afterLayout);
+
+            currentIndex++;
+        }
+
+        commandBuffer->End();
+
+        mDeviceInternal->SubmitSingleTimeCommandBuffer(mCommandPoolInternal, commandBuffer);
+
+        mStbiImages.clear();
+    }
+
     void TextureLoader::Init(DevicePtr device, CommandPoolPtr mCommandPool)
     {
         mDeviceInternal = device;
@@ -73,8 +214,14 @@ namespace psm
             return mImages[path];
         }
 
-        RawTextureData textureData(path, Rgb_alpha);
+        if(mStbiImages.count(path) != 0)
+        {
+            return mImages[path];
+        }
 
+        mStbiImages.insert({ path, {Rgb_alpha} });
+        RawTextureData& textureData = mStbiImages[path];
+        textureData.Load(path);
         if(textureData.Data == nullptr)
         {
             LogMessage(MessageSeverity::Error, "Raw texture data pointer is null" + path);
@@ -98,21 +245,14 @@ namespace psm
             .ViewAspect = EImageAspect::COLOR_BIT
         };
 
-        SUntypedBuffer textureBuffer(textureData.Width * textureData.Height * textureData.Type, textureData.Data);
+        ImagePtr emptyImage = mDeviceInternal->CreateImage(imageConfig);
+        mImages.insert({ path, emptyImage });
 
-        SImageToBufferCopyConfig layoutTransition =
-        {
-            .FormatBeforeTransition = EFormat::R8G8B8A8_SRGB,
-            .LayoutBeforeTransition = EImageLayout::UNDEFINED,
-            .FormatAfterTransition = EFormat::R8G8B8A8_SRGB,
-            .LayoutAfterTransition = EImageLayout::SHADER_READ_ONLY_OPTIMAL
-        };
+        ImageOffset offset = { mTexturesSize, textureData.Width * textureData.Height * textureData.Type, textureData.Data };
+        mImageOffsets.insert({ path, offset });
+        mTexturesSize += textureData.Width * textureData.Height * textureData.Type;
 
-        ImagePtr image = mDeviceInternal->CreateImageWithData(mCommandPoolInternal, imageConfig, textureBuffer, layoutTransition);
-
-        mImages.insert({ path, image });
-
-        return image;
+        return emptyImage;
     }
 
     void TextureLoader::Deinit()
@@ -128,6 +268,11 @@ namespace psm
 
     ImagePtr TextureLoader::LoadDDSTexture(const std::string& path)
     {
+        if(mImages.count(path) != 0)
+        {
+            return mImages[path];
+        }
+
         std::ifstream fstream(path, std::ios::binary | std::ios::ate);
         std::streamsize size = fstream.tellg();
         fstream.seekg(0, std::ios::beg);
@@ -170,51 +315,51 @@ namespace psm
             LogMessage(MessageSeverity::Error, "DDS pixel format size mismatch");
         }
 
-        LogMessage(MessageSeverity::Info, "Image header data: ");
-        
+        //LogMessage(MessageSeverity::Info, "Image header data: ");
+
         if(imageData->flags & DDS_WIDTH)
         {
-            LogMessage(MessageSeverity::Info, "     Image width: " + std::to_string(imageData->width));
+            //LogMessage(MessageSeverity::Info, "     Image width: " + std::to_string(imageData->width));
             rawDdsData.Width = imageData->width;
         }
 
         if(imageData->flags & DDS_HEIGHT)
         {
-            LogMessage(MessageSeverity::Info, "     Image height: " + std::to_string(imageData->height));
+            //LogMessage(MessageSeverity::Info, "     Image height: " + std::to_string(imageData->height));
             rawDdsData.Height = imageData->height;
         }
 
         if(imageData->flags & DDS_HEADER_CAPS)
         {
             //do other things
-            LogMessage(MessageSeverity::Info, "     Image caps: ");
+            //LogMessage(MessageSeverity::Info, "     Image caps: ");
             if(imageData->caps & DDS_SURFACE_FLAGS_TEXTURE)
             {
-                LogMessage(MessageSeverity::Info, "         Image is DEFAULT TEXTURE");
+                //LogMessage(MessageSeverity::Info, "         Image is DEFAULT TEXTURE");
             }
             if(imageData->caps & DDS_SURFACE_FLAGS_CUBEMAP)
             {
-                LogMessage(MessageSeverity::Info, "         Image is COMPLEX ( maybe a CUBEMAP)");
+                //LogMessage(MessageSeverity::Info, "         Image is COMPLEX ( maybe a CUBEMAP)");
             }
             if(imageData->caps & DDS_SURFACE_FLAGS_MIPMAP)
             {
-                LogMessage(MessageSeverity::Info, "         Image is MIPMAPPED");
+                //LogMessage(MessageSeverity::Info, "         Image is MIPMAPPED");
             }
         }
 
         bool isCompressed = false;
-        if( (imageData->flags & DDS_HEADER_FLAGS_LINEARSIZE) )
+        if((imageData->flags & DDS_HEADER_FLAGS_LINEARSIZE))
         {
             isCompressed = true;
-            LogMessage(MessageSeverity::Info, "     Image IS COMPRESSED");
-            LogMessage(MessageSeverity::Info, "     Image pitch or linear size: " + std::to_string(imageData->pitchOrLinearSize));
+            //LogMessage(MessageSeverity::Info, "     Image IS COMPRESSED");
+            //LogMessage(MessageSeverity::Info, "     Image pitch or linear size: " + std::to_string(imageData->pitchOrLinearSize));
         }
 
         if((imageData->flags & DDS_HEADER_FLAGS_PITCH))
         {
             isCompressed = false;
-            LogMessage(MessageSeverity::Info, "     Image IS UNCOMPRESSED");
-            LogMessage(MessageSeverity::Info, "     Image pitch or linear size: " + std::to_string(imageData->pitchOrLinearSize));
+            //LogMessage(MessageSeverity::Info, "     Image IS UNCOMPRESSED");
+            //LogMessage(MessageSeverity::Info, "     Image pitch or linear size: " + std::to_string(imageData->pitchOrLinearSize));
         }
 
         rawDdsData.PitchOrLinearSize = imageData->pitchOrLinearSize;
@@ -222,20 +367,20 @@ namespace psm
 
         if(imageData->flags & DDS_HEADER_PIXELFORMAT)
         {
-            LogMessage(MessageSeverity::Info, "     Image pixel formаt: ");
-            LogMessage(MessageSeverity::Info, "         RGBBitCount: " + std::to_string(pixelFormat.RGBBitCount));
-            LogMessage(MessageSeverity::Info, "         RBitMask: " + std::to_string(pixelFormat.RBitMask));
-            LogMessage(MessageSeverity::Info, "         GBitMask: " + std::to_string(pixelFormat.GBitMask));
-            LogMessage(MessageSeverity::Info, "         BBitMask: " + std::to_string(pixelFormat.BBitMask));
-            LogMessage(MessageSeverity::Info, "         ABitMask: " + std::to_string(pixelFormat.ABitMask));
+            //LogMessage(MessageSeverity::Info, "     Image pixel formаt: ");
+            //LogMessage(MessageSeverity::Info, "         RGBBitCount: " + std::to_string(pixelFormat.RGBBitCount));
+            //LogMessage(MessageSeverity::Info, "         RBitMask: " + std::to_string(pixelFormat.RBitMask));
+            //LogMessage(MessageSeverity::Info, "         GBitMask: " + std::to_string(pixelFormat.GBitMask));
+            //LogMessage(MessageSeverity::Info, "         BBitMask: " + std::to_string(pixelFormat.BBitMask));
+            //LogMessage(MessageSeverity::Info, "         ABitMask: " + std::to_string(pixelFormat.ABitMask));
 
             if(pixelFormat.flags & DDS_ALPHAPIXELS)
             {
-                LogMessage(MessageSeverity::Info, "         Texture contains alpha data");
+                //LogMessage(MessageSeverity::Info, "         Texture contains alpha data");
             }
             if(pixelFormat.flags & DDS_ALPHA || pixelFormat.flags & DDS_YUV || pixelFormat.flags & DDS_LUMINANCE)
             {
-                LogMessage(MessageSeverity::Info, "         Texture OLD DDS file!!");
+                //LogMessage(MessageSeverity::Info, "         Texture OLD DDS file!!");
                 DebugBreak();
             }
             if(pixelFormat.flags & DDS_FOURCC)
@@ -244,27 +389,30 @@ namespace psm
                 if(!rawDdsData.IsCompressed)
                     DebugBreak();
 
-                LogMessage(MessageSeverity::Info, "         Texture is COMPRESSED");
+                //LogMessage(MessageSeverity::Info, "         Texture is COMPRESSED");
                 if(pixelFormat.fourCC == MAKEFOURCC('D', 'X', '1', '0'))
                 {
-                    LogMessage(MessageSeverity::Info, "         Texture format is: " + DXGI_TO_STRING(dx10Header->dxgiFormat));
-                    LogMessage(MessageSeverity::Info, "         Texture arraySize is: " + dx10Header->arraySize);
+                    //LogMessage(MessageSeverity::Info, "         Texture format is: " + DXGI_TO_STRING(dx10Header->dxgiFormat));
+                    //LogMessage(MessageSeverity::Info, "         Texture arraySize is: " + dx10Header->arraySize);
                     DebugBreak();
 
-                    switch(dx10Header->resourceDimension)
+                    /*switch(dx10Header->resourceDimension)
                     {
                         case 2:
                             LogMessage(MessageSeverity::Info, "         Texture dimension is: DDS_DIMENSION_TEXTURE1D");
+                            break;
                         case 3:
                             LogMessage(MessageSeverity::Info, "         Texture dimension is: DDS_DIMENSION_TEXTURE2D");
+                            break;
                         case 4:
                             LogMessage(MessageSeverity::Info, "         Texture dimension is: DDS_DIMENSION_TEXTURE3D");
-                    }
+                            break;
+                    }*/
 
                     if(dx10Header->miscFlag & DirectX::DDS_RESOURCE_MISC_FLAG::DDS_RESOURCE_MISC_TEXTURECUBE)
                     {
                         rawDdsData.IsCubemap = true;
-                        LogMessage(MessageSeverity::Info, "         Image is a CUBEMAP");
+                        //LogMessage(MessageSeverity::Info, "         Image is a CUBEMAP");
                     }
 
                     rawImageData = reinterpret_cast<BYTE*>(dx10Header + 1);
@@ -275,33 +423,33 @@ namespace psm
 
                     if(pixelFormat.fourCC == MAKEFOURCC('D', 'X', 'T', '1'))
                     {
-                        LogMessage(MessageSeverity::Info, "         Texture format is: DXT1 (BC1)");
+                        //LogMessage(MessageSeverity::Info, "         Texture format is: DXT1 (BC1)");
                         rawDdsData.Format = EFormat::BC1_RGB_UNORM_BLOCK;
                         rawDdsData.BlockSize = 8;
                     }
                     if(pixelFormat.fourCC == MAKEFOURCC('D', 'X', 'T', '2'))
                     {
-                        LogMessage(MessageSeverity::Info, "         Texture format is: DXT2(BC2)");
+                        //LogMessage(MessageSeverity::Info, "         Texture format is: DXT2(BC2)");
                         rawDdsData.Format = EFormat::BC2_UNORM_BLOCK;
                         rawDdsData.BlockSize = 16;
                     }
                     if(pixelFormat.fourCC == MAKEFOURCC('D', 'X', 'T', '3'))
                     {
-                        LogMessage(MessageSeverity::Info, "         Texture format is: DXT3(BC2)");
+                        //LogMessage(MessageSeverity::Info, "         Texture format is: DXT3(BC2)");
                         rawDdsData.Format = EFormat::BC2_UNORM_BLOCK;
                         rawDdsData.BlockSize = 16;
 
                     }
                     if(pixelFormat.fourCC == MAKEFOURCC('D', 'X', 'T', '4'))
                     {
-                        LogMessage(MessageSeverity::Info, "         Texture format is: DXT4(BC3)");
+                        //LogMessage(MessageSeverity::Info, "         Texture format is: DXT4(BC3)");
                         rawDdsData.Format = EFormat::BC3_UNORM_BLOCK;
                         rawDdsData.BlockSize = 16;
 
                     }
                     if(pixelFormat.fourCC == MAKEFOURCC('D', 'X', 'T', '5'))
                     {
-                        LogMessage(MessageSeverity::Info, "         Texture format is: DXT5(BC3)");
+                        //LogMessage(MessageSeverity::Info, "         Texture format is: DXT5(BC3)");
                         rawDdsData.Format = EFormat::BC3_UNORM_BLOCK;
                         rawDdsData.BlockSize = 16;
 
@@ -316,20 +464,20 @@ namespace psm
 
                 rawDdsData.BitsPerPixel = pixelFormat.RGBBitCount;
 
-                LogMessage(MessageSeverity::Info, "         Texture is UNCOMPRESSED");
+                //LogMessage(MessageSeverity::Info, "         Texture is UNCOMPRESSED");
             }
         }
 
         if(imageData->flags & DDS_HEADER_FLAGS_MIPMAP)
         {
-            LogMessage(MessageSeverity::Info, "     Image mips count: " + std::to_string(imageData->mipMapCount));
+            //LogMessage(MessageSeverity::Info, "     Image mips count: " + std::to_string(imageData->mipMapCount));
             rawDdsData.MipsCount = imageData->mipMapCount;
         }
 
         rawDdsData.Depth = 1;
         if(imageData->flags & DDS_HEADER_FLAGS_VOLUME)
         {
-            LogMessage(MessageSeverity::Info, "     Image depth: " + std::to_string(imageData->depth));
+            //LogMessage(MessageSeverity::Info, "     Image depth: " + std::to_string(imageData->depth));
             rawDdsData.Depth = imageData->depth;
         }
 

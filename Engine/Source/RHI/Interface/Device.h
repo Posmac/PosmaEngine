@@ -65,7 +65,7 @@ namespace psm
         virtual void BindVertexBuffers(const CommandBufferPtr& commandBuffer, const SVertexBufferBindConfig& config) = 0;
         virtual void BindIndexBuffer(const CommandBufferPtr& commandBuffer, const SIndexBufferBindConfig& config) = 0;
         virtual void CopyBuffer(const CommandBufferPtr& commandBuffer, uint64_t size, const BufferPtr& sourceBuffer, const BufferPtr& destinationBuffer) = 0;//copy buffer fully
-        virtual void CopyBufferToImage(const CommandBufferPtr& commandBuffer, const BufferPtr& sourceBuffer, const ImagePtr& destrinationImage, SResourceExtent3D copySize, EImageAspect imageAspect, EImageLayout imageLayoutAfterCopy) = 0;
+        virtual void CopyBufferToImage(const CommandBufferPtr& commandBuffer, const BufferPtr& sourceBuffer, const ImagePtr& destrinationImage, SResourceExtent3D copySize, EImageAspect imageAspect, EImageLayout imageLayoutAfterCopy, uint64_t bufferOffset = 0, uint64_t rowPitch = 0, uint64_t slicePitch = 0) = 0;
         virtual void BindDescriptorSets(const CommandBufferPtr& commandBuffer, EPipelineBindPoint bindPoint, const PipelineLayoutPtr& pipelineLayout, const std::vector<DescriptorSetPtr>& descriptors) = 0;
         virtual void DrawIndexed(const CommandBufferPtr& commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance) = 0;
         virtual void SetDepthBias(const CommandBufferPtr& commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) = 0;

@@ -31,6 +31,7 @@ namespace psm
         Camera m_Camera;
         float m_CameraDefaultMoveSpeed;
         float m_CameraDefaultRotateSpeed;
+        glm::vec4 m_CameraStartingPosition;
 
         //mouse rotation
         glm::vec2 m_PivotMousePosition;

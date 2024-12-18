@@ -20,7 +20,7 @@ namespace psm
         float Range = 300.0f;
         float NearPlane = -1500.0f;
         float FarPlane = 1500.0f;
-        glm::vec3 Position = glm::vec3(500.0f, 1000.0f, -150.0f);
+        glm::vec3 Position = glm::vec3(0.0f, 1000.0f, 600.0f);
         glm::vec3 LookAt = glm::vec3(0, 0, 0);
         glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
     };

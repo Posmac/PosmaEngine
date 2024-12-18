@@ -676,12 +676,12 @@ namespace psm
     }
 
     void CVkDevice::CopyBufferToImage(const CommandBufferPtr& commandBuffer, const BufferPtr& sourceBuffer, const ImagePtr& destrinationImage, SResourceExtent3D copySize,
-                                      EImageAspect imageAspect, EImageLayout imageLayoutAfterCopy)
+                                      EImageAspect imageAspect, EImageLayout imageLayoutAfterCopy, uint64_t bufferOffset, uint64_t rowPitch, uint64_t slicePitch)
     {
         VkBufferImageCopy copy{};
-        copy.bufferOffset = 0;
-        copy.bufferImageHeight = 0;
-        copy.bufferRowLength = 0;
+        copy.bufferOffset = bufferOffset;
+        copy.bufferRowLength = rowPitch;
+        copy.bufferImageHeight = slicePitch;
 
         copy.imageOffset = { 0, 0, 0 };
         copy.imageExtent = copySize;
