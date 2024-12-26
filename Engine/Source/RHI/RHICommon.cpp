@@ -29,7 +29,7 @@ namespace psm
         OutputDebugStringA(str.c_str());
 #endif
 
-        if(severity == MessageSeverity::Fatal)
+        if(severity >= MessageSeverity::Error)
         {
             DebugBreak();
         }

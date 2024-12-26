@@ -105,6 +105,9 @@ namespace psm
 
         void UpdateDefaultDescriptors(uint32_t imageIndex);
         void UpdateDepthDescriptors(uint32_t imageIndex);
+        void UpdateGBufferDescriptors(uint32_t imageIndex);
+
+        void BindCompositeDescriptors(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode);
 
         void UpdateInstanceBuffer();
         void UpdateMeshToModelData();
@@ -123,20 +126,31 @@ namespace psm
 
         BufferPtr mInstanceBuffer;
 
+        //descriptor sets used by all passes 
+        //used in shadow map generation pass and gbuffer pass (layout(set = 1, binding = 0) uniform ModelData)
         DescriptorSetLayoutPtr mModelDataSetLayout; // model instance matrix (set 1)
-        BufferPtr mInstanceToWorldConstantBuffer; //hold all instances of all models
-        
+        BufferPtr mInstanceToWorldConstantBuffer;   // hold all instances of all models
+
+        //layout(set = 0, binding = 0) uniform GlobalBuffer used in GBuffer
         DescriptorSetLayoutPtr mGlobalBufferSetLayout;
         DescriptorSetPtr mGlobalBufferSet;
+         
+        //first pass (shadow map generation) descriptor sets: layout(set = 0, binding = 0) uniform PerViewBuffer
+        DescriptorSetLayoutPtr mPerViewBufferSetLayout;
+        DescriptorSetPtr mPerViewBufferSet;
 
+        //second pass (gbuffer info generation) descriptor sets (layout(set = 2, binding = 0..3)
         DescriptorSetLayoutPtr mMaterialSetLayout;
         DescriptorSetPtr mMaterialSet;
 
-        DescriptorSetLayoutPtr mDepthPassSetLayout;
-        DescriptorSetPtr mDepthPassSet;
+        //third pass (composite, final pass) descriptor sets
+        //layout(set = 3, binding = 0) uniform ShadowsBuffer and layout(set = 3, binding = 1) uniform sampler2D DirectionalShadowMap;
+        DescriptorSetLayoutPtr mShadowBufferShadowMapSetLayout;
+        DescriptorSetPtr mShadowBufferShadowMapSet;
 
-        DescriptorSetLayoutPtr mDefaultSetLayout;
-        DescriptorSetPtr mDefaultSet;
+        //layout(set = 0, binding = 0..1)
+        DescriptorSetLayoutPtr mGbufferTargetsResultSetLayout;
+        DescriptorSetPtr mGbufferTargetsResultSet;
     };
 
     bool operator==(const OpaqueInstances::Material& lhs, const OpaqueInstances::Material& rhs);

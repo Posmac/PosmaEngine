@@ -11,7 +11,7 @@ layout(location = 4) in vec4 meshToParentRow2;
 layout(location = 5) in vec4 meshToParentRow3;
 layout(location = 6) in vec4 meshToParentRow4;
 
-layout(set = 0, binding = 0) uniform PerViewBuffer
+layout(set = 0, binding = 0) uniform PerViewBuffer //shadow cbuffer 
 {
     mat4 ViewProjectionMatrix;
 } perViewBuffer;

@@ -1,6 +1,9 @@
 @ECHO OFF
 
-D:/VulkanSDK/1.3.216.0/Bin/glslc.exe -fshader-stage=vert triangle.vert.glsl -o triangle.vert.txt
-D:/VulkanSDK/1.3.216.0/Bin/glslc.exe -fshader-stage=frag triangle.frag.glsl -o triangle.frag.txt
+C:/VulkanSDK/1.3.296.0/Bin/glslc.exe -fshader-stage=vert composite.vert.glsl -o composite.vert.spirv
+C:/VulkanSDK/1.3.296.0/Bin/glslc.exe -fshader-stage=frag composite.frag.glsl -o composite.frag.spirv
 
-D:/VulkanSDK/1.3.216.0/Bin/glslc.exe -fshader-stage=vert shadow2D.vert.glsl -o shadow2D.vert.txt
+C:/VulkanSDK/1.3.296.0/Bin/glslc.exe -fshader-stage=vert shadow2D.vert.glsl -o shadow2D.vert.spirv
+
+C:/VulkanSDK/1.3.296.0/Bin/glslc.exe -fshader-stage=vert gbuffer.vert.glsl -o gbuffer.vert.spirv
+C:/VulkanSDK/1.3.296.0/Bin/glslc.exe -fshader-stage=frag gbuffer.frag.glsl -o gbuffer.frag.spirv

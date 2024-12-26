@@ -29,7 +29,7 @@ namespace psm
             virtual void Render();
             virtual void PostRender(CommandBufferPtr& commandBuffer) = 0;
             virtual void AddResourceReferences(uint32_t framesCount) = 0;
-            virtual void CollectReferences() = 0;
+            virtual void CollectReferences(uint32_t framesCount) = 0;
             virtual void AddRenderCallback(const std::function<void()>& callback);
             virtual void AddPreRenderCallback(const std::function<void()>& callback);
             virtual RenderPassPtr& GetRenderPass();
@@ -40,7 +40,6 @@ namespace psm
             ResourceMediatorPtr mResourceMediator;
             RenderPassPtr mRenderPass;
             SResourceExtent3D mFramebuffersSize;
-            std::vector<FramebufferPtr> mFramebuffers;
             std::function<void()> mRenderCallback;
             std::function<void()> mPreRenderCallback;
         };

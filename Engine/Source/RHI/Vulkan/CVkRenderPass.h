@@ -21,10 +21,14 @@ namespace psm
 
         virtual void BeginRenderPass(const SRenderPassBeginConfig& config) override;
         virtual void EndRenderPass(CommandBufferPtr commandBuffer) override;
+        virtual uint32_t GetColorAttachmentsCount() const override;
+        virtual bool HasDepthAttachment() const override;
         virtual void* Raw() override;
         virtual void* Raw() const override;
     private:
         VkDevice mDeviceInternal;
         VkRenderPass mRenderPass;
+        uint32_t mColorAttachmentsCount;
+        bool mHasDepthAttachment;
     };
 }

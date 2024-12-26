@@ -19,7 +19,7 @@ namespace psm
 
         return s_Instance;
     }
-        
+   
     std::shared_ptr<Model>& ModelLoader::LoadModel(const std::string& pathToModel, const std::string& modelName, std::vector<MeshPbrMaterial>& modelMeshMaterials, bool flipUv /*= false*/)
     {
         std::string fullPath = pathToModel + modelName;
@@ -91,7 +91,9 @@ namespace psm
     {
         //LogMessage(MessageSeverity::Info, aiMesh->mName.C_Str());
 
-        //std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+        std::vector<Vertex> originalVertices;
+        originalVertices.reserve(aiMesh->mNumVertices);
+
         unsigned meshIndex = model->Meshes.size() - 1;
         Mesh& mesh = model->Meshes[meshIndex];
 

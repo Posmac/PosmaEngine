@@ -104,6 +104,18 @@ namespace psm
             mAllDescriptors.insert({ name, setLayout });
         }
 
+        void ResourceMediator::UpdateImageReference(const foundation::Name& name, const ImagePtr& image)
+        {
+            auto find = mAllImages.find(name);
+
+            if(find == mAllImages.end())
+            {
+                LogMessage(MessageSeverity::Error, "Image resource doesn`t exists");
+            }
+
+            mAllImages[name] = image;
+        }
+
         ImagePtr& ResourceMediator::GetImageByName(const foundation::Name & name)
         {
             auto find = mAllImages.find(name);

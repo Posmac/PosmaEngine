@@ -167,11 +167,13 @@
     <ClInclude Include="Source\Render\Graph\ResourceGeneralInfo.h" />
     <ClInclude Include="Source\Render\Graph\ResourceMediator.h" />
     <ClInclude Include="Source\Render\Graph\ResourceStateManager.h" />
-    <ClInclude Include="Source\Render\Passes\DefaultBackbufferRenderPass.h" />
+    <ClInclude Include="Source\Render\Passes\CompositeBackbufferRenderPass.h" />
     <ClInclude Include="Source\Render\Graph\RenderPassNode.h" />
+    <ClInclude Include="Source\Render\Passes\GbuffferRenderPass.h" />
     <ClInclude Include="Source\Render\Passes\ShadowMapRenderPass.h" />
     <ClInclude Include="Source\Render\Graph\RenderGraph.h" />
-    <ClInclude Include="Source\Render\Pipelines\DefaultRenderPipelineNode.h" />
+    <ClInclude Include="Source\Render\Pipelines\CompositeRenderPipelineNode.h" />
+    <ClInclude Include="Source\Render\Pipelines\GbufferPipelineNode.h" />
     <ClInclude Include="Source\Render\Pipelines\ShadowMapPipelineNode.h" />
     <ClInclude Include="Source\RHI\Common.h" />
     <ClInclude Include="Source\RHI\Configs\Barriers.h" />
@@ -273,9 +275,11 @@
     <ClCompile Include="Source\Render\Graph\RenderPipelineNode.cpp" />
     <ClCompile Include="Source\Render\Graph\ResourceMediator.cpp" />
     <ClCompile Include="Source\Render\Graph\ResourceStateManager.cpp" />
-    <ClCompile Include="Source\Render\Passes\DefaultBackbufferRenderPass.cpp" />
+    <ClCompile Include="Source\Render\Passes\CompositeBackbufferRenderPass.cpp" />
+    <ClCompile Include="Source\Render\Passes\GbuffferRenderPass.cpp" />
     <ClCompile Include="Source\Render\Passes\ShadowMapRenderPass.cpp" />
-    <ClCompile Include="Source\Render\Pipelines\DefaultRenderPipelineNode.cpp" />
+    <ClCompile Include="Source\Render\Pipelines\CompositeRenderPipelineNode.cpp" />
+    <ClCompile Include="Source\Render\Pipelines\GbufferPipelineNode.cpp" />
     <ClCompile Include="Source\Render\Pipelines\ShadowMapPipelineNode.cpp" />
     <ClCompile Include="Source\RHI\Enums\Formats.cpp" />
     <ClCompile Include="Source\RHI\RHI.cpp" />
@@ -327,13 +331,19 @@
     <None Include="cpp.hint" />
     <None Include="packages.config" />
     <None Include="Shaders\compile.bat" />
+    <None Include="Shaders\composite.frag.glsl" />
+    <None Include="Shaders\composite.vert.glsl" />
     <None Include="Shaders\shadow2D.vert.glsl" />
     <None Include="Shaders\triangle.frag.glsl" />
     <None Include="Shaders\triangle.vert.glsl" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Shaders\triangle.frag.txt" />
-    <Text Include="Shaders\triangle.vert.txt" />
+    <None Include="Shaders\gbuffer.frag.glsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\gbuffer.vert.glsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

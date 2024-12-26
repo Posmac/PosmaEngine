@@ -303,7 +303,7 @@
     <ClInclude Include="Source\Render\Graph\RenderPassNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Render\Passes\DefaultBackbufferRenderPass.h">
+    <ClInclude Include="Source\Render\Passes\CompositeBackbufferRenderPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Render\Passes\ShadowMapRenderPass.h">
@@ -315,7 +315,7 @@
     <ClInclude Include="Source\Render\Graph\RenderPipelineNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Render\Pipelines\DefaultRenderPipelineNode.h">
+    <ClInclude Include="Source\Render\Pipelines\CompositeRenderPipelineNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Render\Pipelines\ShadowMapPipelineNode.h">
@@ -337,6 +337,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="External\dxgiformat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Render\Passes\GbuffferRenderPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Render\Pipelines\GbufferPipelineNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -488,7 +494,7 @@
     <ClCompile Include="Source\Render\Graph\RenderPassNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Render\Passes\DefaultBackbufferRenderPass.cpp">
+    <ClCompile Include="Source\Render\Passes\CompositeBackbufferRenderPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Render\Passes\ShadowMapRenderPass.cpp">
@@ -497,7 +503,7 @@
     <ClCompile Include="Source\Render\Graph\RenderPipelineNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Render\Pipelines\DefaultRenderPipelineNode.cpp">
+    <ClCompile Include="Source\Render\Pipelines\CompositeRenderPipelineNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Render\Pipelines\ShadowMapPipelineNode.cpp">
@@ -507,6 +513,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Render\Graph\ResourceStateManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Render\Passes\GbuffferRenderPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Render\Pipelines\GbufferPipelineNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -519,9 +531,9 @@
     <None Include="Shaders\shadow2D.vert.glsl" />
     <None Include="packages.config" />
     <None Include="cpp.hint" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Shaders\triangle.frag.txt" />
-    <Text Include="Shaders\triangle.vert.txt" />
+    <None Include="Shaders\gbuffer.frag.glsl" />
+    <None Include="Shaders\gbuffer.vert.glsl" />
+    <None Include="Shaders\composite.frag.glsl" />
+    <None Include="Shaders\composite.vert.glsl" />
   </ItemGroup>
 </Project>

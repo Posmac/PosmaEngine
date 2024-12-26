@@ -67,7 +67,6 @@ namespace psm
     void ShadowsGenerator::InitSpotLightData()
     {}
 
-
     void ShadowsGenerator::Update()
     {
         glm::mat4 lightView = glm::lookAt(mDirectionalLightData.Position, mDirectionalLightData.LookAt, mDirectionalLightData.Up);

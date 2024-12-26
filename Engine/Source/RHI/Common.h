@@ -9,9 +9,9 @@ namespace psm
     enum class MessageSeverity : uint8_t
     {
         Info = 0,
-        Warning,
-        Error,
-        Fatal
+        Warning = 1,
+        Error = 2,
+        Fatal = 3
     };
 
     using SeverityMessageCallback = std::function<void>(MessageSeverity, const std::string& message);

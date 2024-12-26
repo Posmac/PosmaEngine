@@ -47,7 +47,7 @@ namespace psm
 
             for(auto& renderPass : mRenderPassNodes)
             {
-                renderPass->CollectReferences();
+                renderPass->CollectReferences(framesCount);
             }
 
             for(auto& renderPass : mRenderPassNodes)

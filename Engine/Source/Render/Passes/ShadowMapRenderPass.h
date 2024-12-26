@@ -35,7 +35,7 @@ namespace psm
             virtual void PreRender(CommandBufferPtr& commandBuffer, uint32_t index) override;
             virtual void PostRender(CommandBufferPtr& commandBuffer) override;
             virtual void AddResourceReferences(uint32_t framesCount) override;
-            virtual void CollectReferences() override;
+            virtual void CollectReferences(uint32_t framesCount) override;
 
         private:
             void CreateRenderPass(const DevicePtr& device);
@@ -45,6 +45,7 @@ namespace psm
             void CreateBuffer();
         private:
             std::vector<ImagePtr> mRenderTargets;
+            std::vector<FramebufferPtr> mFramebuffers;
 
             ShadowMapCbuffer mShadowsBuffer;
             BufferPtr mGPUShadowBuffer;

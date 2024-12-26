@@ -15,10 +15,6 @@ namespace psm
             mDeviceInternal = nullptr;
             mResourceMediator = nullptr;
             mRenderPass = nullptr;
-            for(auto& fb : mFramebuffers)
-                fb = nullptr;
-            mFramebuffers.clear();
-
             mRenderCallback = nullptr;
             mPreRenderCallback = nullptr;
         }

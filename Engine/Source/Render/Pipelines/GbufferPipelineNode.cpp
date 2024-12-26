@@ -1,4 +1,4 @@
-#include "DefaultRenderPipelineNode.h"
+#include "GbufferPipelineNode.h"
 
 #include "RHI/Vulkan/CVkDevice.h"
 
@@ -10,50 +10,46 @@ namespace psm
 {
     namespace graph
     {
-        DefaultRenderPipelineNode::DefaultRenderPipelineNode(const foundation::Name& name,
-                                                     const DevicePtr& device,
-                                                     const RenderPassPtr& renderPass,
-                                                     const ResourceMediatorPtr& resourceMediator,
-                                                     const SResourceExtent3D viewportSize) 
+        GbufferPipelineNode::GbufferPipelineNode(const foundation::Name& name, 
+                                                 const DevicePtr& device, 
+                                                 const RenderPassPtr& renderPass, 
+                                                 const ResourceMediatorPtr& resourceMediator, 
+                                                 const SResourceExtent3D viewportSize)
             : RenderPipelineNode(name)
         {
-            
-            constexpr uint32_t descriptorSetLayoutsSize = 4;
-            DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
+            constexpr uint32_t descriptorSetLayoutSize = 3;
+            DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutSize] =
             {
-                resourceMediator->GetDescriptorSetLayoutByName(GLOBAL_BUFFER_SET),
-                resourceMediator->GetDescriptorSetLayoutByName(MODEL_DATA_SET_LAYOUT),
-                resourceMediator->GetDescriptorSetLayoutByName(OPAQUE_MATERIAL_SET),
-                resourceMediator->GetDescriptorSetLayoutByName(DEFAULT_PASS_SET),
+                resourceMediator->GetDescriptorSetLayoutByName(GLOBAL_CBUFFER_SET),
+                resourceMediator->GetDescriptorSetLayoutByName(MODEL_DATA_SET),
+                resourceMediator->GetDescriptorSetLayoutByName(OPAQUE_INSTANCES_MATERIALS_SET),
             };
 
-            SPipelineLayoutConfig pipelingLayoutConfig =
+            SPipelineLayoutConfig pipelineLayoutConfig =
             {
                 .pLayouts = descriptorSetLayouts,
-                .LayoutsSize = static_cast<uint32_t>(descriptorSetLayoutsSize),
+                .LayoutsSize = descriptorSetLayoutSize,
                 .pPushConstants = nullptr,
                 .PushConstantsSize = 0
             };
 
-            mPipelineLayout = device->CreatePipelineLayout(pipelingLayoutConfig);
+            mPipelineLayout = device->CreatePipelineLayout(pipelineLayoutConfig);
 
-            //shader stages (describe all shader stages used in pipeline)
-
-            ShaderPtr vertexShader = device->CreateShaderFromFilename("../Engine/Shaders/triangle.vert.txt", EShaderStageFlag::VERTEX_BIT);
-            ShaderPtr fragmentShader = device->CreateShaderFromFilename("../Engine/Shaders/triangle.frag.txt", EShaderStageFlag::FRAGMENT_BIT);
+            ShaderPtr vertexShader = device->CreateShaderFromFilename("../Engine/Shaders/gbuffer.vert.spirv", EShaderStageFlag::VERTEX_BIT);
+            ShaderPtr fragmentShader = device->CreateShaderFromFilename("../Engine/Shaders/gbuffer.frag.spirv", EShaderStageFlag::FRAGMENT_BIT);
 
             constexpr size_t modulesSize = 2;
             SShaderModuleConfig modules[modulesSize] =
             {
                 {
-                    .Shader = vertexShader,                 // shader module 
-                    .Type = EShaderStageFlag::VERTEX_BIT,   // VkShaderStageFlag
-                    .EntryPoint = "main"                        // entry point
+                    .Shader = vertexShader,
+                    .Type = EShaderStageFlag::VERTEX_BIT,
+                    .EntryPoint = "main"
                 },
                 {
-                    .Shader = fragmentShader,               // shader module 
-                    .Type = EShaderStageFlag::FRAGMENT_BIT, // VkShaderStageFlag
-                    .EntryPoint = "main"                        // entry point
+                    .Shader = fragmentShader,
+                    .Type = EShaderStageFlag::FRAGMENT_BIT,
+                    .EntryPoint = "main"
                 },
             };
 
@@ -170,9 +166,9 @@ namespace psm
             mPipeline = device->CreateRenderPipeline(pipelineConfig);
         }
 
-        DefaultRenderPipelineNode::~DefaultRenderPipelineNode()
+        GbufferPipelineNode::~GbufferPipelineNode()
         {
-            LogMessage(MessageSeverity::Info, "DefaultRenderPipelineNode destructor");
+            LogMessage(MessageSeverity::Info, "GbufferPipelineNode destructor");
         }
     }
 }

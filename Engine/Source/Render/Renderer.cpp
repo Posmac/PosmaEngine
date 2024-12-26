@@ -75,28 +75,49 @@ namespace psm
 
     void Renderer::RegisterRenderPasses()
     {
-        auto preshadowsLambda = [this]()
+        auto preRenderShadowsLambda = [this]()
         {
             //OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mCurrentImageIndex);
         };
 
-        auto predefaultLambda = [this]()
+
+        auto preRenderGbufferLambda = [this]()
+        {
+
+        };
+
+        auto preRenderCompositeLambda = [this]()
         {
             //OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentImageIndex);
         };
 
         //create render passes
-        auto shadowsLambda = [this]()
+        auto renderShadowsLambda = [this]()
         {
             OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mCurrentImageIndex);
             OpaqueInstances::GetInstance()->RenderDepth(mCommandBuffers[mCurrentFrame], mShadowMapPipeline);
         };
 
-        auto defaultLambda = [this]()
+        auto renderGbufferLambda = [this]()
         {
             OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentImageIndex);
-            OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame], mDefaultRenderPipeline);
+            OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame], mGbufferPipelineNode);
+        };
 
+        auto renderCompositeLambda = [this]()
+        {
+            //update descriptors from Gbuffer and shadow map
+            OpaqueInstances::GetInstance()->UpdateGBufferDescriptors(mCurrentImageIndex);
+
+            //draw full quad
+            CommandBufferPtr& commandBuffer = mCommandBuffers[mCurrentFrame];
+            mCompositeRenderPipeline->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
+
+            OpaqueInstances::GetInstance()->BindCompositeDescriptors(commandBuffer, mCompositeRenderPipeline);
+
+            mDevice->Draw(commandBuffer, 3, 1, 0, 0); //draw full screen triangle
+
+            //render gui
             mGui->PrepareNewFrame();
             {
                 ShadowsGenerator::Instance()->DrawShadowParams();
@@ -104,7 +125,7 @@ namespace psm
             mGui->Render(mCommandBuffers[mCurrentFrame]);
         };
 
-        mDefaultBackbufferPass = std::make_shared<graph::DefaultBackbufferRenderPassNode>(graph::DEFAULT_RENDERPASS,
+        mCompositeBackbufferPass = std::make_shared<graph::CompositeBackbufferRenderPassNode>(graph::COMPOSITE_RENDERPASS,
                                                                                           mDevice,
                                                                                           mResourceMediator,
                                                                                           mSwapchain,
@@ -116,23 +137,31 @@ namespace psm
                                                                                 graph::SHADOW_MAP_SIZE,
                                                                                 mSwapchain->GetImagesCount());
 
-        mDefaultBackbufferPass->AddRenderCallback(defaultLambda);
-        mShadowMapRenderPass->AddRenderCallback(shadowsLambda);
-        mDefaultBackbufferPass->AddPreRenderCallback(predefaultLambda);
-        mShadowMapRenderPass->AddPreRenderCallback(preshadowsLambda);
+        mGbufferRenderPass = std::make_shared<graph::GbuffferRenderPassNode>(graph::GBUFFER_RENDERPASS,
+                                                                             mDevice,
+                                                                             mResourceMediator,
+                                                                             mSwapchain->GetSwapchainSize(),
+                                                                             mSwapchain->GetImagesCount());
+        mCompositeBackbufferPass->AddRenderCallback(renderCompositeLambda);
+        mShadowMapRenderPass->AddRenderCallback(renderShadowsLambda);
+        mGbufferRenderPass->AddRenderCallback(renderGbufferLambda);
+        mCompositeBackbufferPass->AddPreRenderCallback(preRenderCompositeLambda);
+        mShadowMapRenderPass->AddPreRenderCallback(preRenderShadowsLambda);
+        mGbufferRenderPass->AddPreRenderCallback(preRenderGbufferLambda);
 
         //add everything into graph
         mRenderGraph = std::make_shared<graph::RenderGraph>();
-        mRenderGraph->AddRenderPass(mShadowMapRenderPass); //add default backbuffer renderpass
-        mRenderGraph->AddRenderPass(mDefaultBackbufferPass);   //shadow map generation renderpass
+        mRenderGraph->AddRenderPass(mShadowMapRenderPass);      //shadow map generation renderpass
+        mRenderGraph->AddRenderPass(mGbufferRenderPass);        //add gbuffer pass
+        mRenderGraph->AddRenderPass(mCompositeBackbufferPass);    //add default backbuffer renderpass
 
         //create all necessary resources and link them
         mRenderGraph->GenerateResourceDependencies(mSwapchain->GetImagesCount());
 
         //create render pipelines
-        mDefaultRenderPipeline = std::make_shared<graph::DefaultRenderPipelineNode>(graph::DEFAULT_GRAPHICS_PIPELINE,
+        mCompositeRenderPipeline = std::make_shared<graph::CompositeRenderPipelineNode>(graph::COMPOSITE_GRAPHICS_PIPELINE,
                                                                                     mDevice,
-                                                                                    mDefaultBackbufferPass->GetRenderPass(),
+                                                                                    mCompositeBackbufferPass->GetRenderPass(),
                                                                                     mResourceMediator,
                                                                                     mSwapchain->GetSwapchainSize());
 
@@ -141,6 +170,12 @@ namespace psm
                                                                             mShadowMapRenderPass->GetRenderPass(),
                                                                             mResourceMediator,
                                                                             graph::SHADOW_MAP_SIZE);
+
+        mGbufferPipelineNode = std::make_shared<graph::GbufferPipelineNode>(graph::GBUFFER_GRAPHICS_PIPELINE,
+                                                                            mDevice,
+                                                                            mGbufferRenderPass->GetRenderPass(),
+                                                                            mResourceMediator,
+                                                                            mSwapchain->GetSwapchainSize());
     }
 
     void Renderer::Deinit()
@@ -161,8 +196,8 @@ namespace psm
         mRenderGraph = nullptr;
         mResourceMediator = nullptr;
         mResourceStateManager = nullptr;
-        mDefaultBackbufferPass = nullptr;
-        mDefaultRenderPipeline = nullptr;
+        mCompositeBackbufferPass = nullptr;
+        mCompositeRenderPipeline = nullptr;
         mShadowMapPipeline = nullptr;
         mShadowMapRenderPass = nullptr;
 
@@ -239,7 +274,7 @@ namespace psm
 
         mDevice->CreateSurface(platformConfig);
         CreateSwapchain(mWindow);
-        mDefaultBackbufferPass->RecreateFramebuffers(mSwapchain);
+        mCompositeBackbufferPass->RecreateFramebuffers(mSwapchain);
     }
 
     void Renderer::CreateRenderFrameCommandBuffers()
@@ -419,7 +454,7 @@ namespace psm
     void Renderer::InitImGui(HWND hWnd)
     {
         //create default imgui render pass with different render target!!
-        mGui = mDevice->CreateGui(mDefaultBackbufferPass->GetRenderPass(), mCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
+        mGui = mDevice->CreateGui(mCompositeBackbufferPass->GetRenderPass(), mCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
     }
 
     void Renderer::CreateDefaultDescriptorPool()

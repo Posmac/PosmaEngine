@@ -20,11 +20,12 @@ namespace std
 {
     template<> struct hash<psm::Vertex>
     {
-        size_t operator()(psm::Vertex const& vertex) const
+        size_t operator()(const psm::Vertex& vertex) const
         {
-            return ((hash<glm::vec3>()(vertex.Position) ^
-                (hash<glm::vec3>()(vertex.Normal) << 1)) >> 1) ^
-                (hash<glm::vec2>()(vertex.TexCoord) << 1);
+            size_t h1 = hash<glm::vec4>()(vertex.Position);
+            size_t h2 = hash<glm::vec4>()(vertex.Normal);
+            size_t h3 = hash<glm::vec2>()(vertex.TexCoord);
+            return h1 ^ (h2 << 1) ^ (h3 << 2);
         }
     };
 }

@@ -18,8 +18,8 @@ namespace psm
             constexpr uint32_t descriptorSetLayoutsSize = 2;
             DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
             {
-                resourceMediator->GetDescriptorSetLayoutByName(DEPTH_PASS_SET),
-                resourceMediator->GetDescriptorSetLayoutByName(MODEL_DATA_SET_LAYOUT),
+                resourceMediator->GetDescriptorSetLayoutByName(SHADOW_MAP_GENERATION_PER_VIEW_CBUFFER_SET),
+                resourceMediator->GetDescriptorSetLayoutByName(MODEL_DATA_SET),
             };
 
             SPipelineLayoutConfig pipelineLayoutConfig =
@@ -32,7 +32,7 @@ namespace psm
 
             mPipelineLayout = device->CreatePipelineLayout(pipelineLayoutConfig);
 
-            ShaderPtr vertexShader = device->CreateShaderFromFilename("../Engine/Shaders/shadow2D.vert.txt", EShaderStageFlag::VERTEX_BIT);
+            ShaderPtr vertexShader = device->CreateShaderFromFilename("../Engine/Shaders/shadow2D.vert.spirv", EShaderStageFlag::VERTEX_BIT);
 
             constexpr size_t modulesSize = 1;
             SShaderModuleConfig modules[modulesSize] =

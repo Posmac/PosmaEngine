@@ -26,6 +26,10 @@ namespace psm
         {
             LogMessage(MessageSeverity::Info, "ShadowMapRenderPassNode destructor");
 
+            for(auto& fb : mFramebuffers)
+                fb = nullptr;
+            mFramebuffers.clear();
+
             for(auto& img : mRenderTargets)
                 img = nullptr;
             mRenderTargets.clear();
@@ -120,9 +124,11 @@ namespace psm
                 .ColorAttachements = {},
                 .DepthAttachment = depthAttachmentDescr,
                 .ResolveAttachment = {},
-                .ColorAttachmentReference = {},
-                .DepthStencilAttachmentReference = depthReference,
-                .ResolveAttachemntReference = {},
+
+                //.ColorAttachmentReference = {},
+                //.DepthStencilAttachmentReference = depthReference,
+                //.ResolveAttachemntReference = {},
+
                 .SubpassDescriptions = {subpassDescr},
                 .SubpassDependensies = subpassDependency,
             };
@@ -194,7 +200,7 @@ namespace psm
             //nothing to add
         }
 
-        void ShadowMapRenderPassNode::CollectReferences()
+        void ShadowMapRenderPassNode::CollectReferences(uint32_t framesCount)
         {
             for(size_t i = 0; i < mRenderTargets.size(); i++)
             {

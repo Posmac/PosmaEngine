@@ -17,28 +17,38 @@ namespace psm
         const foundation::Name SHADOWMAP_RENDERTARGET_NAME = foundation::Name("ShadowMapRenderTarget");
         const foundation::Name DEPTHSTECIL_RENDERTARGET_NAME = foundation::Name("DepthStencilRenderTarget");
 
+        //gbuffer targets 
+        const foundation::Name GBUFFER_ALBEDO_RENDERTARGET_NAME = foundation::Name("GbufferAlbedoTarget");
+        const foundation::Name GBUFFER_NORMAL_RENDERTARGET_NAME = foundation::Name("GbufferNormalTarget");
+        const foundation::Name GBUFFER_WORLDPOS_RENDERTARGET_NAME = foundation::Name("GbufferWorldPosTarget");
+        const foundation::Name GBUFFER_DEPTH_RENDERTARGET_NAME = foundation::Name("GbufferDepthTarget");
+        const foundation::Name GBUFFER_EMISSION_RENDERTARGET_NAME = foundation::Name("GbufferEmissionTarget");
+        const foundation::Name GBUFFER_SPECULAR_GLOSS_RENDERTARGET_NAME = foundation::Name("GbufferSpecularGlossTarget");
+        const foundation::Name GBUFFER_ROUGH_METAL_RENDERTARGET_NAME = foundation::Name("GbufferRoughMetallTarget");
+
         //render passes
-        const foundation::Name DEFAULT_RENDERPASS = foundation::Name("DefaultRenderPass");
+        const foundation::Name COMPOSITE_RENDERPASS = foundation::Name("CompositeBackbufferRenderPass");
         const foundation::Name SHADOWMAP_RENDERPASS = foundation::Name("ShadowMapRenderPass");
+        const foundation::Name GBUFFER_RENDERPASS = foundation::Name("GbufferRenderPass");
 
         //general buffers input
         const foundation::Name GLOBAL_CBUFFER = foundation::Name("GlobalConstantBuffer");
         const foundation::Name SHADOW_CBUFFER = foundation::Name("ShadowConstantBuffer");
 
         //pipelines
-        const foundation::Name DEFAULT_GRAPHICS_PIPELINE = foundation::Name("DefaultGraphicsPipeline");
+        const foundation::Name COMPOSITE_GRAPHICS_PIPELINE = foundation::Name("CompositeGraphicsPipeline");
         const foundation::Name SHADOWMAP_GRAPHICS_PIPELINE = foundation::Name("ShadowMapGraphicsPipeline");
+        const foundation::Name GBUFFER_GRAPHICS_PIPELINE = foundation::Name("GbufferGraphicsPipeline");
 
         //samplers
         const foundation::Name DEFAULT_SAMPLER = foundation::Name("DefaultSampler");
 
         //descriptor sets and layouts
-        //single 
-        const foundation::Name MODEL_DATA_SET_LAYOUT = foundation::Name("ModelDataSetLayout");
-        //combination
-        const foundation::Name GLOBAL_BUFFER_SET = foundation::Name("GlobalBufferSet(Layout)");
-        const foundation::Name OPAQUE_MATERIAL_SET = foundation::Name("OpaqueInstancesMaterialSet(Layout)");
-        const foundation::Name DEPTH_PASS_SET = foundation::Name("DepthPassSet(Layout)");
-        const foundation::Name DEFAULT_PASS_SET = foundation::Name("DefaultPassSet(Layout)");
+        const foundation::Name MODEL_DATA_SET = foundation::Name("MODEL_DATA_SET");
+        const foundation::Name GLOBAL_CBUFFER_SET = foundation::Name("GLOBAL_CBUFFER_SET");
+        const foundation::Name OPAQUE_INSTANCES_MATERIALS_SET = foundation::Name("OPAQUE_INSTANCES_MATERIALS_SET");
+        const foundation::Name SHADOW_MAP_GENERATION_PER_VIEW_CBUFFER_SET = foundation::Name("SHADOW_MAP_GENERATION_PER_VIEW_CBUFFER_SET");
+        const foundation::Name COMPOSITE_PASS_SHADOW_CBUFFER_SHADOWMAP_SET = foundation::Name("COMPOSITE_PASS_SHADOW_CBUFFER_SHADOWMAP_SET");
+        const foundation::Name GBUFFER_RESULT_COMPOSITE_INPUT_SET = foundation::Name("GBUFFER_RESULT_COMPOSITE_INPUT_SET");
     }
 }

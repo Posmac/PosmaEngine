@@ -58,11 +58,14 @@ namespace psm
         mMaterialSetLayout = nullptr;
         mMaterialSet = nullptr;
 
-        mDepthPassSetLayout = nullptr;
-        mDepthPassSet = nullptr;
+        mPerViewBufferSetLayout = nullptr;
+        mPerViewBufferSet = nullptr;
 
-        mDefaultSetLayout = nullptr;
-        mDefaultSet = nullptr;
+        mShadowBufferShadowMapSetLayout = nullptr;
+        mShadowBufferShadowMapSet = nullptr;
+
+        mGbufferTargetsResultSetLayout = nullptr;
+        mGbufferTargetsResultSet = nullptr;
     }
 
     void OpaqueInstances::Render(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode)
@@ -100,7 +103,7 @@ namespace psm
                     uint32_t totalInstances = material.Instances.size();
 
                     mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(),
-                                                        { mGlobalBufferSet, perMesh.MeshToModelData, material.MaterialDescriptorSet, mDefaultSet });
+                                                        { mGlobalBufferSet, perMesh.MeshToModelData, material.MaterialDescriptorSet });
 
                     MeshRange range = perModel.Model->Meshes[i].Range;
                     mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
@@ -145,7 +148,7 @@ namespace psm
                     uint32_t totalInstances = material.Instances.size();
 
                     mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(), 
-                                                        { mDepthPassSet, perMesh.MeshToModelData });
+                                                        { mPerViewBufferSet, perMesh.MeshToModelData });
 
                     MeshRange range = perModel.Model->Meshes[i].Range;
                         mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
@@ -229,7 +232,7 @@ namespace psm
     void OpaqueInstances::SetupDescriptors()
     {
         //global buffer only (set 0)
-        std::vector<SDescriptorLayoutInfo> globalInfo =
+        std::vector<SDescriptorLayoutInfo> globalBufferInfo =
         {
             {
                 .Binding = 0, //binding
@@ -239,25 +242,25 @@ namespace psm
             }
         };
 
-        SDescriptorSetLayoutConfig globalConfig =
+        SDescriptorSetLayoutConfig globalBufferConfig =
         {
-            .pLayoutsInfo = globalInfo.data(),
-            .LayoutsCount = static_cast<uint32_t>(globalInfo.size())
+            .pLayoutsInfo = globalBufferInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(globalBufferInfo.size())
         };
 
-        mGlobalBufferSetLayout = mDeviceInternal->CreateDescriptorSetLayout(globalConfig);
+        mGlobalBufferSetLayout = mDeviceInternal->CreateDescriptorSetLayout(globalBufferConfig);
 
-        SDescriptorSetAllocateConfig globalAlloc =
+        SDescriptorSetAllocateConfig globalBufferAlloc =
         {
              .DescriptorPool = mDescriptorPoolInternal,
              .DescriptorSetLayouts = {mGlobalBufferSetLayout},
              .MaxSets = 1,
         };
 
-        mGlobalBufferSet = mDeviceInternal->AllocateDescriptorSets(globalAlloc);
+        mGlobalBufferSet = mDeviceInternal->AllocateDescriptorSets(globalBufferAlloc);
 
         // model instance matrix (set 1)
-        std::vector<SDescriptorLayoutInfo> modelInfo =
+        std::vector<SDescriptorLayoutInfo> modelInstanceMatrixBufferInfo =
         {
             {
                 .Binding = 0, //binding
@@ -267,35 +270,36 @@ namespace psm
             }
         };
 
-        SDescriptorSetLayoutConfig modelConfig =
+        SDescriptorSetLayoutConfig modelInstanceMatrixBufferConfig =
         {
-            .pLayoutsInfo = modelInfo.data(),
-            .LayoutsCount = static_cast<uint32_t>(modelInfo.size())
+            .pLayoutsInfo = modelInstanceMatrixBufferInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(modelInstanceMatrixBufferInfo.size())
         };
 
-        mModelDataSetLayout = mDeviceInternal->CreateDescriptorSetLayout(modelConfig);
+        mModelDataSetLayout = mDeviceInternal->CreateDescriptorSetLayout(modelInstanceMatrixBufferConfig);
 
-        // material albedo (set 2)
-        std::vector<SDescriptorLayoutInfo> materialInfo =
+        // material PBR (set 2)
+        std::vector<SDescriptorLayoutInfo> meshMaterialInfo =
         {
             {
                 .Binding = 0, //binding
                 .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER, //descriptor type
                 .DescriptorCount = 1, //count
                 .ShaderStage = EShaderStageFlag::FRAGMENT_BIT //vertex stage
-            }
+            },
+            //add more
         };
 
-        SDescriptorSetLayoutConfig materialConfig =
+        SDescriptorSetLayoutConfig meshMaterialConfig =
         {
-            .pLayoutsInfo = materialInfo.data(),
-            .LayoutsCount = static_cast<uint32_t>(materialInfo.size())
+            .pLayoutsInfo = meshMaterialInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(meshMaterialInfo.size())
         };
 
-        mMaterialSetLayout = mDeviceInternal->CreateDescriptorSetLayout(materialConfig);
+        mMaterialSetLayout = mDeviceInternal->CreateDescriptorSetLayout(meshMaterialConfig);
 
         //depth pass light projection matrices buffer(set 3)
-        std::vector<SDescriptorLayoutInfo> depthInfo =
+        std::vector<SDescriptorLayoutInfo> depthRenderPassPerViewBufferInfo =
         {
             {
                 .Binding = 0, //binding
@@ -305,25 +309,25 @@ namespace psm
             }
         };
 
-        SDescriptorSetLayoutConfig depthConfig =
+        SDescriptorSetLayoutConfig depthRenderPassPerViewBufferConfig =
         {
-            .pLayoutsInfo = depthInfo.data(),
-            .LayoutsCount = static_cast<uint32_t>(depthInfo.size())
+            .pLayoutsInfo = depthRenderPassPerViewBufferInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(depthRenderPassPerViewBufferInfo.size())
         };
 
-        mDepthPassSetLayout = mDeviceInternal->CreateDescriptorSetLayout(depthConfig);
+        mPerViewBufferSetLayout = mDeviceInternal->CreateDescriptorSetLayout(depthRenderPassPerViewBufferConfig);
 
         SDescriptorSetAllocateConfig depthAlloc =
         {
              .DescriptorPool = mDescriptorPoolInternal,
-             .DescriptorSetLayouts = {mDepthPassSetLayout},
+             .DescriptorSetLayouts = {mPerViewBufferSetLayout},
              .MaxSets = 1,
         };
 
-        mDepthPassSet = mDeviceInternal->AllocateDescriptorSets(depthAlloc);
+        mPerViewBufferSet = mDeviceInternal->AllocateDescriptorSets(depthAlloc);
 
         // depth pass light projection matrices buffer(b0) and shadow map(b1) (set 4)
-        std::vector<SDescriptorLayoutInfo> depthInputInfo =
+        std::vector<SDescriptorLayoutInfo> compositeDepthBufferSamplerInfo =
         {
             {
                 .Binding = 0, //binding
@@ -339,22 +343,86 @@ namespace psm
             }
         };
 
-        SDescriptorSetLayoutConfig depthInputConfig =
+        SDescriptorSetLayoutConfig compositeDepthBufferSamplerConfig =
         {
-            .pLayoutsInfo = depthInputInfo.data(),
-            .LayoutsCount = static_cast<uint32_t>(depthInputInfo.size())
+            .pLayoutsInfo = compositeDepthBufferSamplerInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(compositeDepthBufferSamplerInfo.size())
         };
 
-        mDefaultSetLayout = mDeviceInternal->CreateDescriptorSetLayout(depthInputConfig);
+        mShadowBufferShadowMapSetLayout = mDeviceInternal->CreateDescriptorSetLayout(compositeDepthBufferSamplerConfig);
 
         SDescriptorSetAllocateConfig depthDataAlloc =
         {
              .DescriptorPool = mDescriptorPoolInternal,
-             .DescriptorSetLayouts = {mDefaultSetLayout},
+             .DescriptorSetLayouts = {mShadowBufferShadowMapSetLayout},
              .MaxSets = 1,
         };
 
-        mDefaultSet = mDeviceInternal->AllocateDescriptorSets(depthDataAlloc);
+        mShadowBufferShadowMapSet = mDeviceInternal->AllocateDescriptorSets(depthDataAlloc);
+
+        //composite pass <- gbuffer result 
+        std::vector<SDescriptorLayoutInfo> gbufferInputInfo =
+        {
+            {
+                .Binding = 0,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER,
+                .DescriptorCount = 1,
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT
+            },
+            {
+                .Binding = 1,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER,
+                .DescriptorCount = 1,
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT
+            },
+            {
+                .Binding = 2,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER,
+                .DescriptorCount = 1,
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT
+            },
+            {
+                .Binding = 3,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER,
+                .DescriptorCount = 1,
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT
+            },
+            {
+                .Binding = 4,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER,
+                .DescriptorCount = 1,
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT
+            },
+            {
+                .Binding = 5,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER,
+                .DescriptorCount = 1,
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT
+            },
+            {
+                .Binding = 6,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER,
+                .DescriptorCount = 1,
+                .ShaderStage = EShaderStageFlag::FRAGMENT_BIT
+            },
+        };
+
+        SDescriptorSetLayoutConfig gbufferInputConfig =
+        {
+            .pLayoutsInfo = gbufferInputInfo.data(),
+            .LayoutsCount = static_cast<uint32_t>(gbufferInputInfo.size())
+        };
+
+        mGbufferTargetsResultSetLayout = mDeviceInternal->CreateDescriptorSetLayout(gbufferInputConfig);
+
+        SDescriptorSetAllocateConfig gbufferInputAllocConfig =
+        {
+            .DescriptorPool = mDescriptorPoolInternal,
+            .DescriptorSetLayouts = {mGbufferTargetsResultSetLayout},
+            .MaxSets = 1,
+        };
+
+        mGbufferTargetsResultSet = mDeviceInternal->AllocateDescriptorSets(gbufferInputAllocConfig);
     }
 
     void OpaqueInstances::SetupMaterialDescriptor(DescriptorSetPtr& descriptorSet, const Material& material)
@@ -386,19 +454,22 @@ namespace psm
 
     void OpaqueInstances::RegisterResources()
     {
-        mResourceMediator->RegisterDescriptorSetLayout(graph::MODEL_DATA_SET_LAYOUT, mModelDataSetLayout);
+        mResourceMediator->RegisterDescriptorSetLayout(graph::MODEL_DATA_SET, mModelDataSetLayout);
 
-        mResourceMediator->RegisterDescriptorSet(graph::GLOBAL_BUFFER_SET, mGlobalBufferSet);
-        mResourceMediator->RegisterDescriptorSetLayout(graph::GLOBAL_BUFFER_SET, mGlobalBufferSetLayout);
+        mResourceMediator->RegisterDescriptorSet(graph::GLOBAL_CBUFFER_SET, mGlobalBufferSet);
+        mResourceMediator->RegisterDescriptorSetLayout(graph::GLOBAL_CBUFFER_SET, mGlobalBufferSetLayout);
 
-        mResourceMediator->RegisterDescriptorSet(graph::OPAQUE_MATERIAL_SET, mMaterialSet);
-        mResourceMediator->RegisterDescriptorSetLayout(graph::OPAQUE_MATERIAL_SET, mMaterialSetLayout);
+        mResourceMediator->RegisterDescriptorSet(graph::OPAQUE_INSTANCES_MATERIALS_SET, mMaterialSet);
+        mResourceMediator->RegisterDescriptorSetLayout(graph::OPAQUE_INSTANCES_MATERIALS_SET, mMaterialSetLayout);
 
-        mResourceMediator->RegisterDescriptorSet(graph::DEPTH_PASS_SET, mDepthPassSet);
-        mResourceMediator->RegisterDescriptorSetLayout(graph::DEPTH_PASS_SET, mDepthPassSetLayout);
+        mResourceMediator->RegisterDescriptorSet(graph::SHADOW_MAP_GENERATION_PER_VIEW_CBUFFER_SET, mPerViewBufferSet);
+        mResourceMediator->RegisterDescriptorSetLayout(graph::SHADOW_MAP_GENERATION_PER_VIEW_CBUFFER_SET, mPerViewBufferSetLayout);
 
-        mResourceMediator->RegisterDescriptorSet(graph::DEFAULT_PASS_SET, mDefaultSet);
-        mResourceMediator->RegisterDescriptorSetLayout(graph::DEFAULT_PASS_SET, mDefaultSetLayout);
+        mResourceMediator->RegisterDescriptorSet(graph::COMPOSITE_PASS_SHADOW_CBUFFER_SHADOWMAP_SET, mShadowBufferShadowMapSet);
+        mResourceMediator->RegisterDescriptorSetLayout(graph::COMPOSITE_PASS_SHADOW_CBUFFER_SHADOWMAP_SET, mShadowBufferShadowMapSetLayout);
+
+        mResourceMediator->RegisterDescriptorSet(graph::GBUFFER_RESULT_COMPOSITE_INPUT_SET, mGbufferTargetsResultSet);
+        mResourceMediator->RegisterDescriptorSetLayout(graph::GBUFFER_RESULT_COMPOSITE_INPUT_SET, mGbufferTargetsResultSetLayout);
     }
 
     void OpaqueInstances::UpdateInstanceBuffer()
@@ -567,34 +638,6 @@ namespace psm
         };
 
         mDeviceInternal->UpdateDescriptorSets(mGlobalBufferSet, {}, buffersInfo);
-
-        BufferPtr& shadowMapBuffer = mResourceMediator->GetBufferByName(graph::SHADOW_CBUFFER);
-        std::vector<SUpdateBuffersConfig> shadowBuffersInfo =
-        {
-            {
-               .Buffer = shadowMapBuffer,
-               .Offset = 0,
-               .Range = shadowMapBuffer->Size(),
-               .DstBinding = 0,
-               .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
-           },
-        };
-
-        SamplerPtr& sampler = mResourceMediator->GetSamplerByName(graph::DEFAULT_SAMPLER);
-        foundation::Name shadowImageRefName = graph::GetResourceIndexedName(graph::SHADOWMAP_RENDERTARGET_NAME, imageIndex);
-        ImagePtr& shadowMapImage = mResourceMediator->GetImageByName(shadowImageRefName);
-        std::vector<SUpdateTextureConfig> textureUpdateInfo =
-        {
-            {
-                .Sampler = sampler,
-                .Image = shadowMapImage,
-                .ImageLayout = EImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-                .DstBinding = 1,
-                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
-            }
-        };
-
-        mDeviceInternal->UpdateDescriptorSets(mDefaultSet, textureUpdateInfo, shadowBuffersInfo);
     }
 
     void OpaqueInstances::UpdateDepthDescriptors(uint32_t imageIndex)
@@ -609,7 +652,120 @@ namespace psm
             .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
         };
 
-        mDeviceInternal->UpdateDescriptorSets(mDepthPassSet, {}, { buffers });
+        mDeviceInternal->UpdateDescriptorSets(mPerViewBufferSet, {}, { buffers });
+    }
+
+    void OpaqueInstances::UpdateGBufferDescriptors(uint32_t imageIndex)
+    {
+        /* resourceMediator->GetDescriptorSetLayoutByName(GBUFFER_RESULT_COMPOSITE_INPUT_SET),
+                resourceMediator->GetDescriptorSetLayoutByName(COMPOSITE_PASS_SHADOW_CBUFFER_SHADOWMAP_SET),*/
+        SamplerPtr& sampler = mResourceMediator->GetSamplerByName(graph::DEFAULT_SAMPLER);
+
+        //update gbuffer resulted render target images
+        foundation::Name albedoRefName = graph::GetResourceIndexedName(graph::GBUFFER_ALBEDO_RENDERTARGET_NAME, imageIndex);
+        foundation::Name normalRefName = graph::GetResourceIndexedName(graph::GBUFFER_NORMAL_RENDERTARGET_NAME, imageIndex);
+        foundation::Name depthRefName = graph::GetResourceIndexedName(graph::GBUFFER_DEPTH_RENDERTARGET_NAME, imageIndex);
+        foundation::Name worldPosRefName = graph::GetResourceIndexedName(graph::GBUFFER_WORLDPOS_RENDERTARGET_NAME, imageIndex);
+        foundation::Name emissionRefName = graph::GetResourceIndexedName(graph::GBUFFER_EMISSION_RENDERTARGET_NAME, imageIndex);
+        foundation::Name specularGlossRefName = graph::GetResourceIndexedName(graph::GBUFFER_SPECULAR_GLOSS_RENDERTARGET_NAME, imageIndex);
+        foundation::Name roughMetallRefName = graph::GetResourceIndexedName(graph::GBUFFER_ROUGH_METAL_RENDERTARGET_NAME, imageIndex);
+
+        ImagePtr& albedoImage = mResourceMediator->GetImageByName(albedoRefName);
+        ImagePtr& normalImage = mResourceMediator->GetImageByName(normalRefName);
+        ImagePtr& depthImage = mResourceMediator->GetImageByName(depthRefName);
+        ImagePtr& worldPosImage = mResourceMediator->GetImageByName(worldPosRefName);
+        ImagePtr& emissionImage = mResourceMediator->GetImageByName(emissionRefName);
+        ImagePtr& specularGlossImage = mResourceMediator->GetImageByName(specularGlossRefName);
+        ImagePtr& roughMetallImage = mResourceMediator->GetImageByName(roughMetallRefName);
+
+        std::vector<SUpdateTextureConfig> gbufferTextureUpdateInfo =
+        {
+            {
+                .Sampler = sampler,
+                .Image = albedoImage,
+                .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .DstBinding = 0,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
+            },
+            {
+                .Sampler = sampler,
+                .Image = normalImage,
+                .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .DstBinding = 1,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
+            },
+            {
+                .Sampler = sampler,
+                .Image = depthImage,
+                .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .DstBinding = 2,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
+            },
+            {
+                .Sampler = sampler,
+                .Image = worldPosImage,
+                .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .DstBinding = 3,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
+            },
+            {
+                .Sampler = sampler,
+                .Image = emissionImage,
+                .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .DstBinding = 4,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
+            },
+            {
+                .Sampler = sampler,
+                .Image = specularGlossImage,
+                .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .DstBinding = 5,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
+            },
+            {
+                .Sampler = sampler,
+                .Image = roughMetallImage,
+                .ImageLayout = EImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                .DstBinding = 6,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
+            }
+        };
+
+        mDeviceInternal->UpdateDescriptorSets(mGbufferTargetsResultSet, gbufferTextureUpdateInfo, {});
+
+        //update shadow buffer and shadow map
+        BufferPtr& shadowMapBuffer = mResourceMediator->GetBufferByName(graph::SHADOW_CBUFFER);
+        std::vector<SUpdateBuffersConfig> shadowBuffersInfo =
+        {
+            {
+               .Buffer = shadowMapBuffer,
+               .Offset = 0,
+               .Range = shadowMapBuffer->Size(),
+               .DstBinding = 0,
+               .DescriptorType = EDescriptorType::UNIFORM_BUFFER,
+           },
+        };
+
+        foundation::Name shadowImageRefName = graph::GetResourceIndexedName(graph::SHADOWMAP_RENDERTARGET_NAME, imageIndex);
+        ImagePtr& shadowMapImage = mResourceMediator->GetImageByName(shadowImageRefName);
+        std::vector<SUpdateTextureConfig> textureUpdateInfo =
+        {
+            {
+                .Sampler = sampler,
+                .Image = shadowMapImage,
+                .ImageLayout = EImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                .DstBinding = 1,
+                .DescriptorType = EDescriptorType::COMBINED_IMAGE_SAMPLER
+            }
+        };
+
+        mDeviceInternal->UpdateDescriptorSets(mShadowBufferShadowMapSet, textureUpdateInfo, shadowBuffersInfo);
+    }
+
+    void OpaqueInstances::BindCompositeDescriptors(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode)
+    {
+        mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(), 
+                                            {mGbufferTargetsResultSet, mShadowBufferShadowMapSet});
     }
 
     bool OpaqueInstances::Material::operator==(const Material& lhs)

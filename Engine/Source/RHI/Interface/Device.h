@@ -68,6 +68,7 @@ namespace psm
         virtual void CopyBufferToImage(const CommandBufferPtr& commandBuffer, const BufferPtr& sourceBuffer, const ImagePtr& destrinationImage, SResourceExtent3D copySize, EImageAspect imageAspect, EImageLayout imageLayoutAfterCopy, uint64_t bufferOffset = 0, uint64_t rowPitch = 0, uint64_t slicePitch = 0) = 0;
         virtual void BindDescriptorSets(const CommandBufferPtr& commandBuffer, EPipelineBindPoint bindPoint, const PipelineLayoutPtr& pipelineLayout, const std::vector<DescriptorSetPtr>& descriptors) = 0;
         virtual void DrawIndexed(const CommandBufferPtr& commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance) = 0;
+        virtual void Draw(const CommandBufferPtr& commandBuffer, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) = 0;
         virtual void SetDepthBias(const CommandBufferPtr& commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) = 0;
         virtual void UpdateDescriptorSets(const DescriptorSetPtr& descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) = 0;
         virtual DescriptorSetPtr AllocateDescriptorSets(SDescriptorSetAllocateConfig& config) = 0;

@@ -44,9 +44,9 @@ namespace psm
         std::optional<SAttachmentDescription> DepthAttachment;
         std::optional<SAttachmentDescription> ResolveAttachment;
 
-        std::optional<SAttachmentReference> ColorAttachmentReference;
-        std::optional<SAttachmentReference> DepthStencilAttachmentReference;
-        std::optional<SAttachmentReference> ResolveAttachemntReference;
+        //std::optional<SAttachmentReference> ColorAttachmentReference;
+        //std::optional<SAttachmentReference> DepthStencilAttachmentReference;
+        //std::optional<SAttachmentReference> ResolveAttachemntReference;
 
         std::vector<SSubpassDescription> SubpassDescriptions;
         std::vector<SSubpassDependency> SubpassDependensies;

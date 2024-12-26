@@ -22,11 +22,13 @@
 
 #include "Graph/RenderGraph.h"
 
-#include "Passes/DefaultBackbufferRenderPass.h"
+#include "Passes/CompositeBackbufferRenderPass.h"
 #include "Passes/ShadowMapRenderPass.h"
+#include "Passes/GbuffferRenderPass.h"
 
-#include "Pipelines/DefaultRenderPipelineNode.h"
+#include "Pipelines/CompositeRenderPipelineNode.h"
 #include "Pipelines/ShadowMapPipelineNode.h"
+#include "Pipelines/GbufferPipelineNode.h"
 
 #include "Graph/ResourceMediator.h"
 #include "Graph/ResourceStateManager.h"
@@ -107,11 +109,13 @@ namespace psm
         graph::ResourceMediatorPtr mResourceMediator;
         graph::ResourceStateManagerPtr mResourceStateManager;
         //renderpasses
-        graph::RenderPassNodePtr mDefaultBackbufferPass;
+        graph::RenderPassNodePtr mCompositeBackbufferPass;
         graph::RenderPassNodePtr mShadowMapRenderPass;
+        graph::RenderPassNodePtr mGbufferRenderPass;
         //graphics pipelines
-        graph::RenderPipelineNodePtr mDefaultRenderPipeline;
+        graph::RenderPipelineNodePtr mCompositeRenderPipeline;
         graph::RenderPipelineNodePtr mShadowMapPipeline;
+        graph::RenderPipelineNodePtr mGbufferPipelineNode;
 
         DescriptorPoolPtr mDescriptorPool;
 

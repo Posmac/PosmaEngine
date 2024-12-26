@@ -25,6 +25,8 @@ namespace psm
             void RegisterDescriptorSetLayout(const foundation::Name& name, const DescriptorSetLayoutPtr& sampler);
             void RegisterDescriptorSet(const foundation::Name& name, const DescriptorSetPtr& sampler);
 
+            void UpdateImageReference(const foundation::Name& name, const ImagePtr& image);
+
             ImagePtr& GetImageByName(const foundation::Name& name);
             BufferPtr& GetBufferByName(const foundation::Name& name);
             SamplerPtr& GetSamplerByName(const foundation::Name& name);

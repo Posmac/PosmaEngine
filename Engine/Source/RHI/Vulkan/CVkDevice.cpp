@@ -716,6 +716,11 @@ namespace psm
                      range.IndicesOffset, range.VerticesOffset, firstInstance);
     }
 
+    void CVkDevice::Draw(const CommandBufferPtr& commandBuffer, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
+    {
+        vkCmdDraw(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()), vertexCount, instanceCount, firstVertex, firstInstance);
+    }
+
     void CVkDevice::SetDepthBias(const CommandBufferPtr& commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
     {
         vkCmdSetDepthBias(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()),

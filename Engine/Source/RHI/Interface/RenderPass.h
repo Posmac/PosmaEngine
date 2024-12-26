@@ -14,5 +14,7 @@ namespace psm
 
         virtual void BeginRenderPass(const SRenderPassBeginConfig& config) = 0;
         virtual void EndRenderPass(CommandBufferPtr commandBuffer) = 0;
+        virtual uint32_t GetColorAttachmentsCount() const = 0;
+        virtual bool HasDepthAttachment() const = 0;
     };
 }

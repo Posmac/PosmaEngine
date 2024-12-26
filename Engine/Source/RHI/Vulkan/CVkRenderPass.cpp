@@ -15,6 +15,8 @@ namespace psm
 {
     CVkRenderPass::CVkRenderPass(const DevicePtr& device, const SRenderPassConfig& config)
     {
+        mColorAttachmentsCount = static_cast<uint32_t>(config.ColorAttachements.size());
+
         //Get all VkAttachmentDescription for current subpass
         std::vector<VkAttachmentDescription> attachmentDescriptions;
         attachmentDescriptions.resize(config.ColorAttachements.size());
@@ -37,8 +39,10 @@ namespace psm
         }
 
         //add depth subpass description to current subpass
+        mHasDepthAttachment = false;
         if(config.DepthAttachment.has_value())
         {
+            mHasDepthAttachment = true;
             VkAttachmentDescription depthAttachment =
             {
                 .flags = ToVulkan(config.DepthAttachment.value().Flags),
@@ -239,6 +243,16 @@ namespace psm
     {
         VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw());
         vkCmdEndRenderPass(vkCommandBuffer);
+    }
+
+    uint32_t CVkRenderPass::GetColorAttachmentsCount() const
+    {
+        return mColorAttachmentsCount;
+    }
+
+    bool CVkRenderPass::HasDepthAttachment() const
+    {
+        return mHasDepthAttachment;
     }
 
     void* CVkRenderPass::Raw()
