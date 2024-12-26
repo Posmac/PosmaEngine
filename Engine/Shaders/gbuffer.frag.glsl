@@ -25,7 +25,7 @@ void main()
     EmissionRT = vec4(1, 0, 0, 1);
     SpecularGlossRT = vec4(0, 1, 0, 1);
     RoughMetallicRT = vec4(0, 0, 1, 1);
-    NormalRT = WorldNormal;
+    NormalRT = normalize(WorldNormal);
     WorldPosRT = WorldPosition;
 	AlbedoRT = texture(Albedo, TexCoords);
 }

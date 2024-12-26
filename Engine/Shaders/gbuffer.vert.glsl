@@ -36,7 +36,7 @@ void main()
     mat4 meshToModel = mat4(meshToParentRow1, meshToParentRow2, meshToParentRow3, meshToParentRow4);
 	mat4 modelToWorld = modelData.ModelToWorldMatrix * meshToModel;
 	WorldPosition = modelToWorld * localPosition;
-    WorldNormal = modelToWorld * normal;
+    WorldNormal = modelToWorld * vec4(normal.xyz, 0.0);
 	ClipPos = globalBuffer.ViewProjectionMatrix * WorldPosition;
 	gl_Position = ClipPos;
 }

@@ -14,12 +14,12 @@ layout(set = 0, binding = 5) uniform sampler2D SpecularGlossTarget;
 layout(set = 0, binding = 6) uniform sampler2D RoughtMetallTarget;
 
 //shadow 
-layout(set = 3, binding = 0) uniform ShadowsBuffer
+layout(set = 1, binding = 0) uniform ShadowsBuffer
 {
     mat4 DirectionalViewProjectionMatrix;
 } shadowBuffer;
 
-layout(set = 3, binding = 1) uniform sampler2D DirectionalShadowMap;
+layout(set = 1, binding = 1) uniform sampler2D DirectionalShadowMap;
 
 float ShadowCalculation(vec2 texCoords, float currentDepth)
 {
@@ -34,12 +34,11 @@ float ShadowCalculation(vec2 texCoords, float currentDepth)
 
 void main()
 {
-    // vec4 ndc = shadowBuffer.DirectionalViewProjectionMatrix * WorldPosition;
-    // ndc /= ndc.w;
+    vec4 worldPosition = texture(WorldPositionTarget, TexCoords);
+    vec4 ndc = shadowBuffer.DirectionalViewProjectionMatrix * worldPosition;
+    ndc /= ndc.w;
 
-    // float shadow = ShadowCalculation(ndc.xy, ndc.z);
+    float shadow = ShadowCalculation(ndc.xy, ndc.z);
 
-	// AttachmentColor = texture(Albedo, TexCoord) * shadow;
-
-    AttachmentColor = texture(AlbedoTarget, TexCoords);
+    AttachmentColor = texture(AlbedoTarget, TexCoords) * shadow;
 }
