@@ -147,11 +147,11 @@ namespace psm
                 {
                     uint32_t totalInstances = material.Instances.size();
 
-                    mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(), 
+                    mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(),
                                                         { mPerViewBufferSet, perMesh.MeshToModelData });
 
                     MeshRange range = perModel.Model->Meshes[i].Range;
-                        mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
+                    mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
                     firstInstance += totalInstances;
                 }
             }
@@ -764,8 +764,8 @@ namespace psm
 
     void OpaqueInstances::BindCompositeDescriptors(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode)
     {
-        mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(), 
-                                            {mGbufferTargetsResultSet, mShadowBufferShadowMapSet});
+        mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(),
+                                            { mGbufferTargetsResultSet, mShadowBufferShadowMapSet });
     }
 
     bool OpaqueInstances::Material::operator==(const Material& lhs)
