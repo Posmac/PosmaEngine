@@ -24,11 +24,6 @@ namespace psm
             return mName;
         }
 
-        void RenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
-        {
-            mPreRenderCallback();
-        }
-
         void RenderPassNode::Render()
         {
             mRenderCallback();
@@ -39,19 +34,9 @@ namespace psm
             mRenderCallback = callback;
         }
 
-        void RenderPassNode::AddPreRenderCallback(const std::function<void()>& callback)
-        {
-            mPreRenderCallback = callback;
-        }
-
         RenderPassPtr& RenderPassNode::GetRenderPass()
         {
             return mRenderPass;
-        }
-
-        void RenderPassNode::RecreateFramebuffers(const SwapchainPtr swapchain)
-        {
-
         }
     }
 }

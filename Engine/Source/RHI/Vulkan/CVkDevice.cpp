@@ -16,7 +16,8 @@
 #include "CVkShader.h"
 #include "CVkPipelineLayout.h"
 #include "CVkSampler.h"
-#include "CVkPipeline.h"
+#include "CVkGraphicsPipeline.h"
+#include "CVkComputePipeline.h"
 #include "CVkDescriptorSetLayout.h"
 #include "CVkImGui.h"
 #include "RHI/Memory/UntypedBuffer.h"
@@ -187,9 +188,9 @@ namespace psm
         {
             VkBool32 presentSupport = false;
             vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, reinterpret_cast<VkSurfaceKHR>(mVkSurface->Raw()), &presentSupport);
-            if(family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            if(family.queueFlags & VK_QUEUE_GRAPHICS_BIT && family.queueFlags & VK_QUEUE_COMPUTE_BIT)
             {
-                mQueues.GraphicsFamily = i;
+                mQueues.GraphicsAndComputeFamily = i;
             }
             if(presentSupport)
             {
@@ -203,7 +204,7 @@ namespace psm
         }
 
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-        std::set<uint32_t> uniqueQueueFamilies = { mQueues.GraphicsFamily.value(),
+        std::set<uint32_t> uniqueQueueFamilies = { mQueues.GraphicsAndComputeFamily.value(),
                                                   mQueues.PresentFamily.value() };
         float queuePriority = 1.0f;
 
@@ -227,16 +228,19 @@ namespace psm
             FatalError("Failed to create logical device");
         }
 
-        vkGetDeviceQueue(mDevice, mQueues.GraphicsFamily.value(), 0, &mQueues.GraphicsQueue);
+        vkGetDeviceQueue(mDevice, mQueues.GraphicsAndComputeFamily.value(), 0, &mQueues.GraphicsQueue);
         vkGetDeviceQueue(mDevice, mQueues.PresentFamily.value(), 0, &mQueues.PresentQueue);
+        vkGetDeviceQueue(mDevice, mQueues.GraphicsAndComputeFamily.value(), 0, &mQueues.ComputeQueue);
 
         mDeviceData.vkData =
         {
             .Device = mDevice,
             .Instance = Instance,
             .PhysicalDevice = physicalDevice,
-            .GraphicsQueueIndex = mQueues.GraphicsFamily.value(),
+            .GraphicsQueueIndex = mQueues.GraphicsAndComputeFamily.value(),
             .GraphicsQueue = mQueues.GraphicsQueue,
+            .ComputeQueueIndex = mQueues.GraphicsAndComputeFamily.value(),
+            .ComputeQueue = mQueues.ComputeQueue,
         };
     }
 
@@ -362,9 +366,9 @@ namespace psm
 
         FencePtr submitFence = CreateFence(fenceConfig);
 
-        SSubmitConfig submitConfig =
+        SSubmitGraphicsConfig submitConfig =
         {
-            .Queue = mQueues.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .GraphicsQueue = mQueues.GraphicsQueue,
             .SubmitCount = 1,
             .WaitStageFlags = EPipelineStageFlags::NONE,
             .WaitSemaphoresCount = 0,
@@ -376,7 +380,7 @@ namespace psm
             .Fence = submitFence,
         };
 
-        Submit(submitConfig);
+        SubmitGraphics(submitConfig);
 
         SFenceWaitConfig waitConfig =
         {
@@ -583,7 +587,7 @@ namespace psm
             1, &barrier);
     }
 
-    void CVkDevice::Submit(const SSubmitConfig& config)
+    void CVkDevice::SubmitGraphics(const SSubmitGraphicsConfig& config)
     {
         std::vector<VkSemaphore> waitSemapthores(config.WaitSemaphoresCount);
         for(int i = 0; i < waitSemapthores.size(); i++)
@@ -616,7 +620,47 @@ namespace psm
         submitInfo.signalSemaphoreCount = signalSemapthores.size();
         submitInfo.pSignalSemaphores = signalSemapthores.data();
 
-        VkResult result = vkQueueSubmit(reinterpret_cast<VkQueue>(config.Queue), config.SubmitCount, &submitInfo, reinterpret_cast<VkFence>(config.Fence->Raw()));
+        VkResult result = vkQueueSubmit(reinterpret_cast<VkQueue>(config.GraphicsQueue), config.SubmitCount, &submitInfo, reinterpret_cast<VkFence>(config.Fence->Raw()));
+
+        VK_CHECK_RESULT(result);
+    }
+
+    void CVkDevice::SubmitCompute(const SSubmitComputeConfig& config)
+    {
+        std::vector<VkSemaphore> waitSemapthores(config.WaitSemaphoresCount);
+        for(int i = 0; i < waitSemapthores.size(); i++)
+        {
+            waitSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[i]->Raw());
+        }
+
+        std::vector<VkSemaphore> signalSemapthores(config.WaitSemaphoresCount);
+        for(int i = 0; i < signalSemapthores.size(); i++)
+        {
+            signalSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pSignalSemaphores[i]->Raw());
+        }
+
+        std::vector<VkCommandBuffer> cmdBuffers(config.CommandBuffersCount);
+        for(int i = 0; i < cmdBuffers.size(); i++)
+        {
+            cmdBuffers[i] = reinterpret_cast<VkCommandBuffer>(config.pCommandBuffers[i]->Raw());
+        }
+
+        VkPipelineStageFlags stageFlags = ToVulkan(config.WaitStageFlags);
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.pNext = nullptr;
+        submitInfo.waitSemaphoreCount = waitSemapthores.size();
+        submitInfo.pWaitSemaphores = waitSemapthores.data();
+        submitInfo.pWaitDstStageMask = &stageFlags;
+        submitInfo.commandBufferCount = cmdBuffers.size();
+        submitInfo.pCommandBuffers = cmdBuffers.data();
+        submitInfo.signalSemaphoreCount = signalSemapthores.size();
+        submitInfo.pSignalSemaphores = signalSemapthores.data();
+
+        VkResult result = vkQueueSubmit(reinterpret_cast<VkQueue>(config.ComputeQueue), config.SubmitCount, &submitInfo, reinterpret_cast<VkFence>(config.Fence->Raw()));
+
+        VK_CHECK_RESULT(result);
     }
 
     void CVkDevice::Present(const SPresentConfig& config)
@@ -696,7 +740,10 @@ namespace psm
                                ToVulkan(imageLayoutAfterCopy), 1, &copy);
     }
 
-    void CVkDevice::BindDescriptorSets(const CommandBufferPtr& commandBuffer, EPipelineBindPoint bindPoint, const PipelineLayoutPtr& pipelineLayout, const std::vector<DescriptorSetPtr>& descriptors)
+    void CVkDevice::BindDescriptorSets(const CommandBufferPtr& commandBuffer, 
+                                       EPipelineBindPoint bindPoint, 
+                                       const PipelineLayoutPtr& pipelineLayout, 
+                                       const std::vector<DescriptorSetPtr>& descriptors)
     {
         std::vector<VkDescriptorSet> vkDescriptors(descriptors.size());
         for(int i = 0; i < vkDescriptors.size(); i++)
@@ -719,6 +766,11 @@ namespace psm
     void CVkDevice::Draw(const CommandBufferPtr& commandBuffer, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
     {
         vkCmdDraw(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()), vertexCount, instanceCount, firstVertex, firstInstance);
+    }
+
+    void CVkDevice::Dispatch(const CommandBufferPtr& commandBuffer, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
+    {
+        vkCmdDispatch(reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw()), groupCountX, groupCountY, groupCountZ);
     }
 
     void CVkDevice::SetDepthBias(const CommandBufferPtr& commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
@@ -808,9 +860,9 @@ namespace psm
 
         FencePtr submitFence = CreateFence(fenceConfig);
 
-        SSubmitConfig submitConfig =
+        SSubmitGraphicsConfig submitConfig =
         {
-            .Queue = GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .GraphicsQueue = GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
             .SubmitCount = 1,
             .WaitStageFlags = EPipelineStageFlags::NONE,
             .WaitSemaphoresCount = 0,
@@ -822,7 +874,7 @@ namespace psm
             .Fence = submitFence,
         };
 
-        Submit(submitConfig);
+        SubmitGraphics(submitConfig);
 
         SFenceWaitConfig waitConfig =
         {
@@ -928,9 +980,14 @@ namespace psm
 
     }
 
-    PipelinePtr CVkDevice::CreateRenderPipeline(const SPipelineConfig& config)
+    PipelinePtr CVkDevice::CreateGraphicsPipeline(const SGraphicsPipelineConfig& config)
     {
-        return std::make_shared<CVkPipeline>(RenderDevice, config);
+        return std::make_shared<CVkGraphicsPipeline>(RenderDevice, config);
+    }
+
+    PipelinePtr CVkDevice::CreateComputePipeline(const SComputePipelineConfig& config)
+    {
+        return std::make_shared<CVkComputePipeline>(RenderDevice, config);
     }
 
     ShaderPtr CVkDevice::CreateShaderFromFilename(const std::string& path, EShaderStageFlag shaderType)

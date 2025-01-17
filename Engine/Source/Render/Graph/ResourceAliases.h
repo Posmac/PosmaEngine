@@ -14,5 +14,6 @@ namespace psm
         using SamplerHash = std::unordered_map<foundation::Name, SamplerPtr, foundation::NameHashFunction>;
         using DescriptorSetLayoutHash = std::unordered_map<foundation::Name, DescriptorSetLayoutPtr, foundation::NameHashFunction>;
         using DescriptorSetHash = std::unordered_map<foundation::Name, DescriptorSetPtr, foundation::NameHashFunction>;
+        using PipelineHash = std::unordered_map<foundation::Name, PipelinePtr, foundation::NameHashFunction>;
     }
 }

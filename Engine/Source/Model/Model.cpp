@@ -168,9 +168,9 @@ namespace psm
 
         FencePtr submitFence = device->CreateFence(fenceConfig);
 
-        SSubmitConfig submitConfig =
+        SSubmitGraphicsConfig submitConfig =
         {
-            .Queue = device->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .GraphicsQueue = device->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
             .SubmitCount = 1,
             .WaitStageFlags = EPipelineStageFlags::NONE,
             .WaitSemaphoresCount = 0,
@@ -182,7 +182,7 @@ namespace psm
             .Fence = submitFence,
         };
 
-        device->Submit(submitConfig);
+        device->SubmitGraphics(submitConfig);
 
         SFenceWaitConfig wait =
         {

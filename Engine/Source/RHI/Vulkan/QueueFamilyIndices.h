@@ -8,19 +8,20 @@ namespace psm
 {
     struct QueueFamilyIndices
     {
-        std::optional<uint32_t> GraphicsFamily;
+        std::optional<uint32_t> GraphicsAndComputeFamily;
         std::optional<uint32_t> PresentFamily;
         VkQueue GraphicsQueue;
         VkQueue PresentQueue;
+        VkQueue ComputeQueue;
 
         bool IsComplete()
         {
-            return GraphicsFamily.has_value() && PresentFamily.has_value();
+            return GraphicsAndComputeFamily.has_value() && PresentFamily.has_value();
         }
 
         bool IdenticalQueues()
         {
-            return GraphicsFamily.value() == PresentFamily.value();
+            return GraphicsAndComputeFamily.value() == PresentFamily.value();
         }
     };
 }

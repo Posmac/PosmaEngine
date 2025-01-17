@@ -13,11 +13,11 @@
 
 namespace psm
 {
-    class CVkPipeline : public IPipeline, std::enable_shared_from_this<CVkPipeline>
+    class CVkComputePipeline : public IPipeline, std::enable_shared_from_this<CVkComputePipeline>
     {
     public:
-        CVkPipeline(const DevicePtr& device, const SPipelineConfig& config);
-        virtual ~CVkPipeline();
+        CVkComputePipeline(const DevicePtr& device, const SComputePipelineConfig& config);
+        virtual ~CVkComputePipeline();
 
         virtual void Bind(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint) override;
         virtual void* Raw() override;

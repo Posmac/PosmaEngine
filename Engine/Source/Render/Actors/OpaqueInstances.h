@@ -99,8 +99,9 @@ namespace psm
         void Init(DevicePtr device, graph::ResourceMediatorPtr& resourceMediator, DescriptorPoolPtr descriptorPool);
         void Deinit();
 
-        void Render(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode);
+        void RenderGbuffer(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode);
         void RenderDepth(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode);
+        void RenderVisBuffer(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode);
         void AddInstance(std::shared_ptr<Model> model, const OpaqModelMeshMaterials& materials, const OpaqModelMeshInstances& instances);
 
         void UpdateDefaultDescriptors(uint32_t imageIndex);

@@ -26,7 +26,7 @@ namespace psm
         BufferPtr Buffer;
     };
 
-    struct SPipelineConfig
+    struct SGraphicsPipelineConfig
     {
         RenderPassPtr RenderPass;
         SResourceExtent2D ViewPortExtent;
@@ -42,5 +42,11 @@ namespace psm
         SInputAssemblyConfig InputAssembly;
         SRasterizationConfig Rasterization;
         ECompareOp DepthStencilCompareOp;
+    };
+
+    struct SComputePipelineConfig
+    {
+        PipelineLayoutPtr PipelineLayout;
+        SShaderModuleConfig ShaderModule;
     };
 }

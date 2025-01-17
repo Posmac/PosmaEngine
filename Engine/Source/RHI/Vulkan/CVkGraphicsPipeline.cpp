@@ -1,4 +1,4 @@
-#include "CVkPipeline.h"
+#include "CVkGraphicsPipeline.h"
 
 #include "CVkDevice.h"
 #include "CVkCommandBuffer.h"
@@ -9,7 +9,7 @@
 
 namespace psm
 {
-    CVkPipeline::CVkPipeline(const DevicePtr& device, const SPipelineConfig& config)
+    CVkGraphicsPipeline::CVkGraphicsPipeline(const DevicePtr& device, const SGraphicsPipelineConfig& config)
     {
         mDeviceInternal = reinterpret_cast<VkDevice>(device->GetDeviceData().vkData.Device);
         assert(mDeviceInternal != nullptr);
@@ -189,23 +189,23 @@ namespace psm
         VK_CHECK_RESULT(result);
     }
 
-    CVkPipeline::~CVkPipeline()
+    CVkGraphicsPipeline::~CVkGraphicsPipeline()
     {
         vkDestroyPipeline(mDeviceInternal, mPipeline, nullptr);
     }
 
-    void CVkPipeline::Bind(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint)
+    void CVkGraphicsPipeline::Bind(CommandBufferPtr commandBuffer, EPipelineBindPoint bindPoint)
     {
         VkCommandBuffer vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(commandBuffer->Raw());
         vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
     }
 
-    void* CVkPipeline::Raw()
+    void* CVkGraphicsPipeline::Raw()
     {
         return mPipeline;
     }
 
-    void* CVkPipeline::Raw() const
+    void* CVkGraphicsPipeline::Raw() const
     {
         return mPipeline;
     }

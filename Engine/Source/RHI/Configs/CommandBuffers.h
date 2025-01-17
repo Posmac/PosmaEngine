@@ -26,9 +26,23 @@ namespace psm
         bool IsBufferLevelPrimary;
     };
 
-    struct SSubmitConfig
+    struct SSubmitGraphicsConfig
     {
-        void* Queue; //not sure if Queue should be abstracted to CVk(IQueue)
+        void* GraphicsQueue;
+        uint32_t SubmitCount;
+        EPipelineStageFlags WaitStageFlags;
+        uint32_t WaitSemaphoresCount;
+        SemaphorePtr* pWaitSemaphores;
+        uint32_t CommandBuffersCount;
+        CommandBufferPtr* pCommandBuffers;
+        uint32_t SignalSemaphoresCount;
+        SemaphorePtr* pSignalSemaphores;
+        FencePtr Fence;
+    };
+
+    struct SSubmitComputeConfig
+    {
+        void* ComputeQueue;
         uint32_t SubmitCount;
         EPipelineStageFlags WaitStageFlags;
         uint32_t WaitSemaphoresCount;

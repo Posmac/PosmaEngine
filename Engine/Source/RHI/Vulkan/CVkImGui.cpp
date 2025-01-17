@@ -107,9 +107,9 @@ namespace psm
 
             FencePtr submitFence = mDeviceInternal->CreateFence(fenceConfig);
 
-            SSubmitConfig submitConfig =
+            SSubmitGraphicsConfig submitConfig =
             {
-                .Queue = mDeviceInternal->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+                .GraphicsQueue = mDeviceInternal->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
                 .SubmitCount = 1,
                 .WaitStageFlags = EPipelineStageFlags::NONE,
                 .WaitSemaphoresCount = 0,
@@ -120,7 +120,7 @@ namespace psm
                 .pSignalSemaphores = nullptr,
                 .Fence = submitFence,
             };
-            mDeviceInternal->Submit(submitConfig);
+            mDeviceInternal->SubmitGraphics(submitConfig);
             mDeviceInternal->WaitIdle();
 
             ImGui_ImplVulkan_DestroyFontUploadObjects();

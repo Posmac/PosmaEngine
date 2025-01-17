@@ -255,7 +255,7 @@
     <ClInclude Include="Source\RHI\Interface\DescriptorPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\RHI\Vulkan\CVkPipeline.h">
+    <ClInclude Include="Source\RHI\Vulkan\CVkGraphicsPipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\RHI\Enums\PipelineFormats.h">
@@ -343,6 +343,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Render\Pipelines\GbufferPipelineNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Render\Passes\VisibilityBufferGeneratorRenderPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Render\Pipelines\VisibilityBufferGeneratorPipeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Render\Passes\VisibilityBufferShadeRenderPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Render\Pipelines\VisibilityBufferShadePipeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RHI\Vulkan\CVkComputePipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -461,7 +476,7 @@
     <ClCompile Include="Source\RHI\Vulkan\CVkDescriptorPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RHI\Vulkan\CVkPipeline.cpp">
+    <ClCompile Include="Source\RHI\Vulkan\CVkGraphicsPipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\RHI\Vulkan\CVkShader.cpp">
@@ -521,6 +536,21 @@
     <ClCompile Include="Source\Render\Pipelines\GbufferPipelineNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Render\Passes\VisibilityBufferGeneratorRenderPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Render\Pipelines\VisibilityBufferGeneratorPipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Render\Passes\VisibilityBufferShadeRenderPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Render\Pipelines\VisibilityBufferShadePipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RHI\Vulkan\CVkComputePipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\triangle.vert.glsl" />
@@ -535,5 +565,9 @@
     <None Include="Shaders\gbuffer.vert.glsl" />
     <None Include="Shaders\composite.frag.glsl" />
     <None Include="Shaders\composite.vert.glsl" />
+    <None Include="Shaders\visbufgen.frag.glsl" />
+    <None Include="Shaders\visbufgen.vert.glsl" />
+    <None Include="Shaders\visibility_utils.glsl" />
+    <None Include="Shaders\visbufshade.csh.glsl" />
   </ItemGroup>
 </Project>

@@ -46,7 +46,6 @@ namespace psm
     using FramebufferPtr = std::shared_ptr<IFramebuffer>;
     using DescriptorPoolPtr = std::shared_ptr<IDescriptorPool>;
     using DescriptorSetPtr = std::shared_ptr<IDescriptorSet>;
-    using PipelinePtr = std::shared_ptr<IPipeline>;
     using DescriptorSetLayoutPtr = std::shared_ptr<IDescriptorSetLayout>;
     using ShaderPtr = std::shared_ptr<IShader>;
     using PushConstantPtr = std::shared_ptr<IPushConstant>;

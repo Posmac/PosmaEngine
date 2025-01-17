@@ -46,7 +46,8 @@ namespace psm
         virtual SamplerPtr CreateSampler(const SSamplerConfig& config) = 0;
         virtual SwapchainPtr CreateSwapchain(const SSwapchainConfig& config) = 0;
         virtual PipelineLayoutPtr CreatePipelineLayout(const SPipelineLayoutConfig& config) = 0;
-        virtual PipelinePtr CreateRenderPipeline(const SPipelineConfig& config) = 0;
+        virtual PipelinePtr CreateGraphicsPipeline(const SGraphicsPipelineConfig& config) = 0;
+        virtual PipelinePtr CreateComputePipeline(const SComputePipelineConfig& config) = 0;
         virtual ShaderPtr CreateShaderFromFilename(const std::string& path, EShaderStageFlag shaderType) = 0;
         virtual FencePtr CreateFence(const SFenceConfig& config) = 0;
         virtual SemaphorePtr CreateSemaphore(const SSemaphoreConfig& config) = 0;
@@ -59,7 +60,8 @@ namespace psm
         virtual ImGuiPtr CreateGui(const RenderPassPtr& renderPass, const CommandPoolPtr& commandPool, uint8_t swapchainImagesCount, ESamplesCount samplesCount) = 0;
 
         virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) = 0;
-        virtual void Submit(const SSubmitConfig& config) = 0;
+        virtual void SubmitGraphics(const SSubmitGraphicsConfig& config)  = 0;
+        virtual void SubmitCompute(const SSubmitComputeConfig& config)  = 0;
         virtual void Present(const SPresentConfig& config) = 0;
         virtual bool WaitIdle() = 0;
         virtual void BindVertexBuffers(const CommandBufferPtr& commandBuffer, const SVertexBufferBindConfig& config) = 0;
@@ -69,6 +71,7 @@ namespace psm
         virtual void BindDescriptorSets(const CommandBufferPtr& commandBuffer, EPipelineBindPoint bindPoint, const PipelineLayoutPtr& pipelineLayout, const std::vector<DescriptorSetPtr>& descriptors) = 0;
         virtual void DrawIndexed(const CommandBufferPtr& commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance) = 0;
         virtual void Draw(const CommandBufferPtr& commandBuffer, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) = 0;
+        virtual void Dispatch(const CommandBufferPtr& commandBuffer, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
         virtual void SetDepthBias(const CommandBufferPtr& commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) = 0;
         virtual void UpdateDescriptorSets(const DescriptorSetPtr& descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) = 0;
         virtual DescriptorSetPtr AllocateDescriptorSets(SDescriptorSetAllocateConfig& config) = 0;

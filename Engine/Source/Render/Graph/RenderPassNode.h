@@ -25,15 +25,15 @@ namespace psm
             virtual ~RenderPassNode();
             foundation::Name GetName() const;
 
-            virtual void PreRender(CommandBufferPtr& commandBuffer, uint32_t index);
+            virtual void PreRender(CommandBufferPtr& commandBuffer, uint32_t index) = 0;
             virtual void Render();
             virtual void PostRender(CommandBufferPtr& commandBuffer) = 0;
             virtual void AddResourceReferences(uint32_t framesCount) = 0;
             virtual void CollectReferences(uint32_t framesCount) = 0;
             virtual void AddRenderCallback(const std::function<void()>& callback);
-            virtual void AddPreRenderCallback(const std::function<void()>& callback);
             virtual RenderPassPtr& GetRenderPass();
-            virtual void RecreateFramebuffers(const SwapchainPtr swapchain);
+            virtual void RecreateFramebuffers(const SwapchainPtr swapchain) = 0;
+
         protected:
             foundation::Name mName;
             DevicePtr mDeviceInternal;

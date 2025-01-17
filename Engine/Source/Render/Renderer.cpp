@@ -22,6 +22,7 @@
 
 #include "Graph/GraphResourceNames.h"
 #include "Graph/ResourceGeneralInfo.h"
+#include "Passes/VisibilityBufferShadeRenderPass.h"
 
 namespace psm
 {
@@ -65,8 +66,8 @@ namespace psm
         RegisterRenderPasses();
         CreateSampler();
 
-        ModelLoader::Instance()->Init(mDevice, mCommandPool);
-        TextureLoader::Instance()->Init(mDevice, mCommandPool);
+        ModelLoader::Instance()->Init(mDevice, mGraphicsCommandPool);
+        TextureLoader::Instance()->Init(mDevice, mGraphicsCommandPool);
 
         InitImGui(static_cast<HWND>(config.win32.hWnd));
 
@@ -75,33 +76,23 @@ namespace psm
 
     void Renderer::RegisterRenderPasses()
     {
-        auto preRenderShadowsLambda = [this]()
-        {
-            //OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mCurrentImageIndex);
-        };
-
-
-        auto preRenderGbufferLambda = [this]()
-        {
-
-        };
-
-        auto preRenderCompositeLambda = [this]()
-        {
-            //OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentImageIndex);
-        };
-
         //create render passes
         auto renderShadowsLambda = [this]()
         {
             OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mCurrentImageIndex);
-            OpaqueInstances::GetInstance()->RenderDepth(mCommandBuffers[mCurrentFrame], mShadowMapPipeline);
+            OpaqueInstances::GetInstance()->RenderDepth(mGraphicsCommandBuffers[mCurrentFrame], mShadowMapPipeline);
         };
 
         auto renderGbufferLambda = [this]()
         {
             OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentImageIndex);
-            OpaqueInstances::GetInstance()->Render(mCommandBuffers[mCurrentFrame], mGbufferPipelineNode);
+            OpaqueInstances::GetInstance()->RenderGbuffer(mGraphicsCommandBuffers[mCurrentFrame], mGbufferPipelineNode);
+        };
+
+        auto renderVisBufferLambda = [this]()
+        {
+            //OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentImageIndex);
+            OpaqueInstances::GetInstance()->RenderVisBuffer(mGraphicsCommandBuffers[mCurrentFrame], mVisBufferGenPipelineNode);
         };
 
         auto renderCompositeLambda = [this]()
@@ -110,7 +101,7 @@ namespace psm
             OpaqueInstances::GetInstance()->UpdateGBufferDescriptors(mCurrentImageIndex);
 
             //draw full quad
-            CommandBufferPtr& commandBuffer = mCommandBuffers[mCurrentFrame];
+            CommandBufferPtr& commandBuffer = mGraphicsCommandBuffers[mCurrentFrame];
             mCompositeRenderPipeline->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
 
             OpaqueInstances::GetInstance()->BindCompositeDescriptors(commandBuffer, mCompositeRenderPipeline);
@@ -122,7 +113,17 @@ namespace psm
             {
                 ShadowsGenerator::Instance()->DrawShadowParams();
             }
-            mGui->Render(mCommandBuffers[mCurrentFrame]);
+            mGui->Render(mGraphicsCommandBuffers[mCurrentFrame]);
+        };
+
+        auto dispathVisBufShadeLambda = [this]()
+        {
+            mVisBufferShadePipelineNode->Bind(mComputeCommandBuffers[mCurrentFrame], EPipelineBindPoint::COMPUTE);
+
+            DescriptorSetPtr set = mResourceMediator->GetDescriptorSetByName(graph::VISBUF_SHADE_SET);
+            mDevice->BindDescriptorSets(mComputeCommandBuffers[mCurrentFrame], EPipelineBindPoint::COMPUTE, mVisBufferShadePipelineNode->GetPipelineLayout(), { set });
+
+            mDevice->Dispatch(mComputeCommandBuffers[mCurrentFrame], graph::PARTICLE_COUNT / 256, 1, 1);
         };
 
         mCompositeBackbufferPass = std::make_shared<graph::CompositeBackbufferRenderPassNode>(graph::COMPOSITE_RENDERPASS,
@@ -142,18 +143,37 @@ namespace psm
                                                                              mResourceMediator,
                                                                              mSwapchain->GetSwapchainSize(),
                                                                              mSwapchain->GetImagesCount());
+
+        mVisBufferGenRenderPass = std::make_shared<graph::VisibilityBufferGeneratorRenderPassNode>(graph::VISBUF_GENERATION_RENDERPASS,
+                                                                             mDevice,
+                                                                             mResourceMediator,
+                                                                             mSwapchain->GetSwapchainSize(),
+                                                                             mSwapchain->GetImagesCount());
+
+        mVisBufferShadeRenderPass = std::make_shared<graph::VisibilityBufferShadeRenderPassNode>(graph::VISBUF_SHADE_RENDERPASS,
+                                                                                                 mDevice,
+                                                                                                 mResourceMediator,
+                                                                                                 mComputeCommandPool,
+                                                                                                 mGraphicsCommandPool,
+                                                                                                 mDescriptorPool,
+                                                                                                 mSwapchain->GetSwapchainSize(),
+                                                                                                 mSwapchain->GetImagesCount());
+
         mCompositeBackbufferPass->AddRenderCallback(renderCompositeLambda);
         mShadowMapRenderPass->AddRenderCallback(renderShadowsLambda);
         mGbufferRenderPass->AddRenderCallback(renderGbufferLambda);
-        mCompositeBackbufferPass->AddPreRenderCallback(preRenderCompositeLambda);
-        mShadowMapRenderPass->AddPreRenderCallback(preRenderShadowsLambda);
-        mGbufferRenderPass->AddPreRenderCallback(preRenderGbufferLambda);
+        mVisBufferGenRenderPass->AddRenderCallback(renderVisBufferLambda);
+        mVisBufferShadeRenderPass->AddRenderCallback(dispathVisBufShadeLambda);
 
         //add everything into graph
         mRenderGraph = std::make_shared<graph::RenderGraph>();
-        mRenderGraph->AddRenderPass(mShadowMapRenderPass);      //shadow map generation renderpass
-        mRenderGraph->AddRenderPass(mGbufferRenderPass);        //add gbuffer pass
-        mRenderGraph->AddRenderPass(mCompositeBackbufferPass);    //add default backbuffer renderpass
+
+        mRenderGraph->AddComputeRenderPass(mVisBufferShadeRenderPass); //visibility buffer shade render pass
+
+        mRenderGraph->AddGraphicsRenderPass(mShadowMapRenderPass);      //shadow map generation renderpass
+        mRenderGraph->AddGraphicsRenderPass(mGbufferRenderPass);        //add gbuffer pass
+        mRenderGraph->AddGraphicsRenderPass(mVisBufferGenRenderPass);   //visibility buffer generation render pass
+        mRenderGraph->AddGraphicsRenderPass(mCompositeBackbufferPass);  //add default backbuffer renderpass
 
         //create all necessary resources and link them
         mRenderGraph->GenerateResourceDependencies(mSwapchain->GetImagesCount());
@@ -176,6 +196,16 @@ namespace psm
                                                                             mGbufferRenderPass->GetRenderPass(),
                                                                             mResourceMediator,
                                                                             mSwapchain->GetSwapchainSize());
+
+        mVisBufferGenPipelineNode = std::make_shared<graph::VisibilityBufferGeneratorPipelineNode>(graph::VISBUF_GENERATION_PIPELINE,
+                                                                            mDevice,
+                                                                            mVisBufferGenRenderPass->GetRenderPass(),
+                                                                            mResourceMediator,
+                                                                            mSwapchain->GetSwapchainSize());
+
+        mVisBufferShadePipelineNode = std::make_shared<graph::VisibilityBufferShadePipelineNode>(graph::VISBUF_SHADE_PIPELINE,
+                                                                            mDevice,
+                                                                            mResourceMediator);
     }
 
     void Renderer::Deinit()
@@ -202,21 +232,21 @@ namespace psm
         mShadowMapRenderPass = nullptr;
 
         mImageAvailableSemaphores.clear();;
-        mRenderFinishedSemaphores.clear();
-        mFlightFences.clear();
+        mGraphicsRenderFinishedSemaphores.clear();
+        mGraphicsFlightFences.clear();
 
-        mGlobalBuffer = nullptr;
+        mGlobalBuffers.clear();
         mSwapchain = nullptr;
 
         mSampler = nullptr;
         mDescriptorPool = nullptr;
 
-        mCommandPool->FreeCommandBuffers(mCommandBuffers);
-        /*for(auto& cb : mCommandBuffers)
+        mGraphicsCommandPool->FreeCommandBuffers(mGraphicsCommandBuffers);
+        /*for(auto& cb : mGraphicsCommandBuffers)
             cb = nullptr;*/
-        mCommandBuffers.clear();
+        mGraphicsCommandBuffers.clear();
 
-        mCommandPool = nullptr;
+        mGraphicsCommandPool = nullptr;
 
         mGui = nullptr;
         mDevice = nullptr;
@@ -235,19 +265,31 @@ namespace psm
             return;
         }
     
-        mCurrentImageIndex = BeginRender();
-
-        mDevice->UpdateBuffer(mGlobalBuffer, &buffer);
+        mDevice->UpdateBuffer(mGlobalBuffers[mCurrentImageIndex], &buffer);
         ShadowsGenerator::Instance()->Update();
 
-        for(auto& renderPass : *mRenderGraph)
+        //for compute commands
+        BeginComputeRender();
+        for(auto& rp : mRenderGraph->ComputeNodes())
         {
-            renderPass->PreRender(mCommandBuffers[mCurrentFrame], mCurrentImageIndex);
-            renderPass->Render();
-            renderPass->PostRender(mCommandBuffers[mCurrentFrame]);
+            rp->PreRender(mComputeCommandBuffers[mCurrentFrame], mCurrentImageIndex);
+            rp->Render();
+            rp->PostRender(mComputeCommandBuffers[mCurrentFrame]);
         }
+        EndComputeRender();
 
-        EndRender(mCurrentImageIndex);
+        //for graphics commands
+        mCurrentImageIndex = BeginGraphicsRender();
+        for(auto& rp : mRenderGraph->GraphicsNodes())
+        {
+            rp->PreRender(mGraphicsCommandBuffers[mCurrentFrame], mCurrentImageIndex);
+            rp->Render();
+            rp->PostRender(mGraphicsCommandBuffers[mCurrentFrame]);
+        }
+        EndGraphicsRender(mCurrentImageIndex);
+
+        mCurrentFrame = (mCurrentFrame + 1) % mSwapchain->GetImagesCount();
+        mTotalFrames++;
     }
 
     void Renderer::ResizeWindowInternal(HWND hWnd)
@@ -279,38 +321,60 @@ namespace psm
 
     void Renderer::CreateRenderFrameCommandBuffers()
     {
-        SCommandBufferConfig cmdBuffersConfig =
+        SCommandBufferConfig graphicsCmdBuffersConfig =
         {
             .Size = mSwapchain->GetImagesCount(),
             .IsBufferLevelPrimary = true,
         };
 
-        mCommandBuffers = mDevice->CreateCommandBuffers(mCommandPool, cmdBuffersConfig);
+        mGraphicsCommandBuffers = mDevice->CreateCommandBuffers(mGraphicsCommandPool, graphicsCmdBuffersConfig);
+
+        SCommandBufferConfig computeCmdBuffersConfig =
+        {
+            .Size = mSwapchain->GetImagesCount(),
+            .IsBufferLevelPrimary = true,
+        };
+
+        mComputeCommandBuffers = mDevice->CreateCommandBuffers(mComputeCommandPool, computeCmdBuffersConfig);
     }
 
     void Renderer::CreateCommandPool()
     {
-        SCommandPoolConfig cmdPoolConfig =
+        SCommandPoolConfig graphicsCmdPoolConfig =
         {
             .QueueFamilyIndex = mDevice->GetDeviceData().vkData.GraphicsQueueIndex,
             .QueueType = EQueueType::GRAHPICS
         };
 
-        mCommandPool = mDevice->CreateCommandPool(cmdPoolConfig);
+        mGraphicsCommandPool = mDevice->CreateCommandPool(graphicsCmdPoolConfig);
+
+        SCommandPoolConfig computeCmdPoolConfig =
+        {
+            .QueueFamilyIndex = mDevice->GetDeviceData().vkData.ComputeQueueIndex,
+            .QueueType = EQueueType::COMPUTE
+        };
+
+        mComputeCommandPool = mDevice->CreateCommandPool(computeCmdPoolConfig);
     }
 
     void Renderer::CreateGlobalBuffer()
     {
-        SBufferConfig bufferConfig =
+        for(int i = 0; i < mSwapchain->GetImagesCount(); i++)
         {
-            .Size = sizeof(GlobalBuffer),
-            .Usage = EBufferUsage::USAGE_UNIFORM_BUFFER_BIT,
-            .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
-        };
+            SBufferConfig bufferConfig =
+            {
+                .Size = sizeof(GlobalBuffer),
+                .Usage = EBufferUsage::USAGE_UNIFORM_BUFFER_BIT,
+                .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
+            };
 
-        mGlobalBuffer = mDevice->CreateBuffer(bufferConfig);
 
-        mResourceMediator->RegisterBufferResource(graph::GLOBAL_CBUFFER, mGlobalBuffer);
+            BufferPtr buffer = mDevice->CreateBuffer(bufferConfig);
+            mGlobalBuffers.push_back(buffer);
+
+            foundation::Name name = graph::GetResourceIndexedName(graph::GLOBAL_CBUFFER, i);
+            mResourceMediator->RegisterBufferResource(name, buffer);
+        }
     }
 
     void Renderer::CreateSampler()
@@ -351,7 +415,56 @@ namespace psm
         mWindowResizeQueue.push(hWnd);
     }
 
-    uint32_t Renderer::BeginRender()
+    void Renderer::BeginComputeRender()
+    {
+        //begin command buffer
+        SCommandBufferBeginConfig commandBufferBegin =
+        {
+            .BufferIndex = mCurrentFrame,
+            .Usage = ECommandBufferUsage::NONE,
+        };
+
+        mComputeCommandBuffers[mCurrentFrame]->Begin(commandBufferBegin);
+    }
+
+    void Renderer::EndComputeRender()
+    {
+        SFenceWaitConfig fenceWait =
+        {
+            .WaitAll = true,
+            .Timeout = FLT_MAX,
+        };
+
+        //compute queue submit
+        mComputeCommandBuffers[mCurrentFrame]->End();
+
+        SSubmitComputeConfig submitComputeConfig =
+        {
+            .ComputeQueue = mDevice->GetDeviceData().vkData.ComputeQueue,
+            .SubmitCount = 1,
+            .WaitStageFlags = EPipelineStageFlags::COMPUTE_SHADER_BIT,
+            .WaitSemaphoresCount = 0,
+            .pWaitSemaphores = nullptr,
+            .CommandBuffersCount = 1,
+            .pCommandBuffers = &mComputeCommandBuffers[mCurrentFrame],
+            .SignalSemaphoresCount = 1,
+            .pSignalSemaphores = &mComputeDispatchFinishedSemaphores[mCurrentFrame],
+            .Fence = mComputeFlightFences[mCurrentFrame],
+        };
+
+        mDevice->SubmitCompute(submitComputeConfig);
+
+        while(!mComputeFlightFences[mCurrentFrame]->Wait(fenceWait))
+        {
+            LogMessage(MessageSeverity::Info, "Waiting for compute fence");
+        };
+
+        mComputeFlightFences[mCurrentFrame]->Reset();
+
+        mComputeCommandBuffers[mCurrentFrame]->Reset();
+    }
+
+    uint32_t Renderer::BeginGraphicsRender()
     {
         uint32_t imageIndex;
         SSwapchainAquireNextImageConfig nextImageConfig
@@ -369,30 +482,37 @@ namespace psm
             .Usage = ECommandBufferUsage::NONE,
         };
 
-        mCommandBuffers[mCurrentFrame]->Begin(commandBufferBegin);
+        mGraphicsCommandBuffers[mCurrentFrame]->Begin(commandBufferBegin);
 
         return imageIndex;
     }
 
-    void Renderer::EndRender(uint32_t imageIndex)
+    void Renderer::EndGraphicsRender(uint32_t imageIndex)
     {
-        mCommandBuffers[mCurrentFrame]->End();
-
-        SSubmitConfig submitConfig =
+        SFenceWaitConfig fenceWait =
         {
-            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
+            .WaitAll = true,
+            .Timeout = FLT_MAX,
+        };
+
+        //graphics queue submit
+        mGraphicsCommandBuffers[mCurrentFrame]->End();
+
+        SSubmitGraphicsConfig submitConfig =
+        {
+            .GraphicsQueue = mDevice->GetDeviceData().vkData.GraphicsQueue,
             .SubmitCount = 1,
             .WaitStageFlags = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT,
             .WaitSemaphoresCount = 1,
             .pWaitSemaphores = &mImageAvailableSemaphores[mCurrentFrame],
             .CommandBuffersCount = 1,
-            .pCommandBuffers = &mCommandBuffers[mCurrentFrame],
+            .pCommandBuffers = &mGraphicsCommandBuffers[mCurrentFrame],
             .SignalSemaphoresCount = 1,
-            .pSignalSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
-            .Fence = mFlightFences[mCurrentFrame],
+            .pSignalSemaphores = &mGraphicsRenderFinishedSemaphores[mCurrentFrame],
+            .Fence = mGraphicsFlightFences[mCurrentFrame],
         };
 
-        mDevice->Submit(submitConfig);
+        mDevice->SubmitGraphics(submitConfig);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -400,30 +520,21 @@ namespace psm
         {
             .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
             .WaitSemaphoresCount = 1,
-            .pWaitSemaphores = &mRenderFinishedSemaphores[mCurrentFrame],
+            .pWaitSemaphores = &mGraphicsRenderFinishedSemaphores[mCurrentFrame],
             .ImageIndex = imageIndex
         };
 
         //mDevice->Present(presentConfig);
         mSwapchain->Present(presentConfig);
 
-        SFenceWaitConfig fenceWait =
+        while(!mGraphicsFlightFences[mCurrentFrame]->Wait(fenceWait))
         {
-            .WaitAll = true,
-            .Timeout = FLT_MAX,
+            LogMessage(MessageSeverity::Info, "Waiting for graphics fence");
         };
 
-        while(!mFlightFences[mCurrentFrame]->Wait(fenceWait))
-        {
-            LogMessage(MessageSeverity::Info, "Waiting for fence");
-        };
+        mGraphicsFlightFences[mCurrentFrame]->Reset();
 
-        mFlightFences[mCurrentFrame]->Reset();
-
-        mCommandBuffers[mCurrentFrame]->Reset();
-
-        mCurrentFrame = (mCurrentFrame + 1) % mSwapchain->GetImagesCount();
-        mTotalFrames++;
+        mGraphicsCommandBuffers[mCurrentFrame]->Reset();
     }
 
     void Renderer::CreateSwapchain(HWND hWnd)
@@ -440,21 +551,30 @@ namespace psm
     {
         int swapchainImages = mSwapchain->GetImagesCount();
         mImageAvailableSemaphores.resize(swapchainImages);
-        mRenderFinishedSemaphores.resize(swapchainImages);
-        mFlightFences.resize(swapchainImages);
+        mGraphicsRenderFinishedSemaphores.resize(swapchainImages);
+        mGraphicsFlightFences.resize(swapchainImages);
+
+        mComputeFlightFences.resize(swapchainImages);
+        mComputeDispatchFinishedSemaphores.resize(swapchainImages);
 
         for(int i = 0; i < swapchainImages; i++)
         {
-            mFlightFences[i] = mDevice->CreateFence({ false });
+            mGraphicsFlightFences[i] = mDevice->CreateFence({ false });
             mImageAvailableSemaphores[i] = mDevice->CreateSemaphore({ false });
-            mRenderFinishedSemaphores[i] = mDevice->CreateSemaphore({ false });
+            mGraphicsRenderFinishedSemaphores[i] = mDevice->CreateSemaphore({ false });
+        }
+
+        for(int i = 0; i < swapchainImages; i++)
+        {
+            mComputeFlightFences[i] = mDevice->CreateFence({ false });
+            mComputeDispatchFinishedSemaphores[i] = mDevice->CreateSemaphore({ false });
         }
     }
 
     void Renderer::InitImGui(HWND hWnd)
     {
         //create default imgui render pass with different render target!!
-        mGui = mDevice->CreateGui(mCompositeBackbufferPass->GetRenderPass(), mCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
+        mGui = mDevice->CreateGui(mCompositeBackbufferPass->GetRenderPass(), mGraphicsCommandPool, mSwapchain->GetImagesCount(), ESamplesCount::COUNT_1);
     }
 
     void Renderer::CreateDefaultDescriptorPool()
@@ -462,17 +582,27 @@ namespace psm
         constexpr uint32_t maxUniformBuffers = 500;
         constexpr uint32_t maxCombinedImageSamples = 500;
         constexpr uint32_t maxDescriptorSets = 500;
+        constexpr uint32_t maxStorageBuffer = 500;
+        constexpr uint32_t maxStorageImage = 500;
 
         //create descriptor pool for everything
         std::vector<SDescriptorPoolSize> shaderDescriptors =
         {
             {
-                EDescriptorType::UNIFORM_BUFFER, //VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                EDescriptorType::UNIFORM_BUFFER,
                 maxUniformBuffers
             },
             {
-                EDescriptorType::COMBINED_IMAGE_SAMPLER, //VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                EDescriptorType::COMBINED_IMAGE_SAMPLER,
                 maxCombinedImageSamples
+            },
+            {
+                EDescriptorType::STORAGE_BUFFER, 
+                maxStorageBuffer
+            },
+            {
+                EDescriptorType::STORAGE_IMAGE,
+                maxStorageImage
             }
         };
 

@@ -104,6 +104,18 @@ namespace psm
             mAllDescriptors.insert({ name, setLayout });
         }
 
+        void ResourceMediator::RegisterPipeline(const foundation::Name& name, const PipelinePtr& pipeline)
+        {
+            auto find = mAllPipelines.find(name);
+
+            if(find != mAllPipelines.end())
+            {
+                LogMessage(MessageSeverity::Error, "Pipeline already exists");
+            }
+
+            mAllPipelines.insert({ name, pipeline });
+        }
+
         void ResourceMediator::UpdateImageReference(const foundation::Name& name, const ImagePtr& image)
         {
             auto find = mAllImages.find(name);
@@ -171,6 +183,18 @@ namespace psm
             if(find == mAllDescriptors.end())
             {
                 LogMessage(MessageSeverity::Error, "Descriptor set didn`t found");
+            }
+
+            return find->second;
+        }
+
+        PipelinePtr& ResourceMediator::GetPipelineByName(const foundation::Name& name)
+        {
+            auto find = mAllPipelines.find(name);
+
+            if(find == mAllPipelines.end())
+            {
+                LogMessage(MessageSeverity::Error, "Pipeline set didn`t found");
             }
 
             return find->second;

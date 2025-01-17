@@ -82,7 +82,7 @@ namespace psm
                 .LineWidth = 1.0f,
             };
 
-            SPipelineConfig pipelineConfig =
+            SGraphicsPipelineConfig pipelineConfig =
             {
                 .RenderPass = renderPass,
                 .ViewPortExtent = {viewportSize.width, viewportSize.height},
@@ -100,7 +100,9 @@ namespace psm
                 .DepthStencilCompareOp = ECompareOp::COMPARE_OP_GREATER,
             };
 
-            mPipeline = device->CreateRenderPipeline(pipelineConfig);
+            mPipeline = device->CreateGraphicsPipeline(pipelineConfig);
+
+            resourceMediator->RegisterPipeline(graph::COMPOSITE_GRAPHICS_PIPELINE, mPipeline);
         }
 
         CompositeRenderPipelineNode::~CompositeRenderPipelineNode()

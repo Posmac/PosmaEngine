@@ -23,20 +23,19 @@ namespace psm
             RenderGraph(const ResourceMediatorPtr& mediator);
             virtual ~RenderGraph();
 
-            void AddRenderPass(RenderPassNodePtr& renderPass);
+            void AddGraphicsRenderPass(RenderPassNodePtr& renderPass);
+            void AddComputeRenderPass(RenderPassNodePtr& renderPass);
             void GenerateResourceDependencies(uint32_t framesCount);
 
-            std::vector<RenderPassNodePtr>::iterator begin();
-            std::vector<RenderPassNodePtr>::const_iterator begin() const;
-
-            std::vector<RenderPassNodePtr>::iterator end();
-            std::vector<RenderPassNodePtr>::const_iterator end() const;
+            std::vector<RenderPassNodePtr>& GraphicsNodes();
+            std::vector<RenderPassNodePtr>& ComputeNodes();
 
         private:
             ResourceMediatorPtr mResourceMediator;
 
             std::set<foundation::Name> mRenderPassNodesMeta;
-            std::vector<RenderPassNodePtr> mRenderPassNodes;
+            std::vector<RenderPassNodePtr> mGraphicsRenderPassNodes;
+            std::vector<RenderPassNodePtr> mComputeRenderPassNodes;
         };
 
         using RenderGraphPtr = std::shared_ptr<RenderGraph>;

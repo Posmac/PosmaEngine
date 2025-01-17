@@ -172,9 +172,13 @@
     <ClInclude Include="Source\Render\Passes\GbuffferRenderPass.h" />
     <ClInclude Include="Source\Render\Passes\ShadowMapRenderPass.h" />
     <ClInclude Include="Source\Render\Graph\RenderGraph.h" />
+    <ClInclude Include="Source\Render\Passes\VisibilityBufferGeneratorRenderPass.h" />
+    <ClInclude Include="Source\Render\Passes\VisibilityBufferShadeRenderPass.h" />
     <ClInclude Include="Source\Render\Pipelines\CompositeRenderPipelineNode.h" />
     <ClInclude Include="Source\Render\Pipelines\GbufferPipelineNode.h" />
     <ClInclude Include="Source\Render\Pipelines\ShadowMapPipelineNode.h" />
+    <ClInclude Include="Source\Render\Pipelines\VisibilityBufferGeneratorPipeline.h" />
+    <ClInclude Include="Source\Render\Pipelines\VisibilityBufferShadePipeline.h" />
     <ClInclude Include="Source\RHI\Common.h" />
     <ClInclude Include="Source\RHI\Configs\Barriers.h" />
     <ClInclude Include="Source\RHI\Configs\CommandBuffers.h" />
@@ -201,11 +205,12 @@
     <ClInclude Include="Source\RHI\RHIVulkan.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkCommandBuffer.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkCommandPool.h" />
+    <ClInclude Include="Source\RHI\Vulkan\CVkComputePipeline.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkDescriptorPool.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkDescriptorSetLayout.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkFence.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkFramebuffer.h" />
-    <ClInclude Include="Source\RHI\Vulkan\CVkPipeline.h" />
+    <ClInclude Include="Source\RHI\Vulkan\CVkGraphicsPipeline.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkPipelineLayout.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkRenderPass.h" />
     <ClInclude Include="Source\RHI\Vulkan\CVkSemaphore.h" />
@@ -278,21 +283,26 @@
     <ClCompile Include="Source\Render\Passes\CompositeBackbufferRenderPass.cpp" />
     <ClCompile Include="Source\Render\Passes\GbuffferRenderPass.cpp" />
     <ClCompile Include="Source\Render\Passes\ShadowMapRenderPass.cpp" />
+    <ClCompile Include="Source\Render\Passes\VisibilityBufferGeneratorRenderPass.cpp" />
+    <ClCompile Include="Source\Render\Passes\VisibilityBufferShadeRenderPass.cpp" />
     <ClCompile Include="Source\Render\Pipelines\CompositeRenderPipelineNode.cpp" />
     <ClCompile Include="Source\Render\Pipelines\GbufferPipelineNode.cpp" />
     <ClCompile Include="Source\Render\Pipelines\ShadowMapPipelineNode.cpp" />
+    <ClCompile Include="Source\Render\Pipelines\VisibilityBufferGeneratorPipeline.cpp" />
+    <ClCompile Include="Source\Render\Pipelines\VisibilityBufferShadePipeline.cpp" />
     <ClCompile Include="Source\RHI\Enums\Formats.cpp" />
     <ClCompile Include="Source\RHI\RHI.cpp" />
     <ClCompile Include="Source\RHI\RHICommon.cpp" />
     <ClCompile Include="Source\RHI\RHIVulkan.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkCommandBuffer.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkCommandPool.cpp" />
+    <ClCompile Include="Source\RHI\Vulkan\CVkComputePipeline.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkDescriptorPool.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkDescriptorSetLayout.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkFence.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkFramebuffer.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkImGui.cpp" />
-    <ClCompile Include="Source\RHI\Vulkan\CVkPipeline.cpp" />
+    <ClCompile Include="Source\RHI\Vulkan\CVkGraphicsPipeline.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkPipelineLayout.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkRenderPass.cpp" />
     <ClCompile Include="Source\RHI\Vulkan\CVkSemaphore.cpp" />
@@ -336,6 +346,10 @@
     <None Include="Shaders\shadow2D.vert.glsl" />
     <None Include="Shaders\triangle.frag.glsl" />
     <None Include="Shaders\triangle.vert.glsl" />
+    <None Include="Shaders\visbufgen.frag.glsl" />
+    <None Include="Shaders\visbufgen.vert.glsl" />
+    <None Include="Shaders\visbufshade.csh.glsl" />
+    <None Include="Shaders\visibility_utils.glsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\gbuffer.frag.glsl">

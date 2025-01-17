@@ -30,7 +30,8 @@ namespace psm
         virtual SamplerPtr CreateSampler(const SSamplerConfig& config) override;
         virtual SwapchainPtr CreateSwapchain(const SSwapchainConfig& config) override;
         virtual PipelineLayoutPtr CreatePipelineLayout(const SPipelineLayoutConfig& config) override;
-        virtual PipelinePtr CreateRenderPipeline(const SPipelineConfig& config) override;
+        virtual PipelinePtr CreateGraphicsPipeline(const SGraphicsPipelineConfig& config) override;
+        virtual PipelinePtr CreateComputePipeline(const SComputePipelineConfig& config) override;
         virtual ShaderPtr CreateShaderFromFilename(const std::string& path, EShaderStageFlag shaderType) override;
         virtual FencePtr CreateFence(const SFenceConfig& config) override;
         virtual SemaphorePtr CreateSemaphore(const SSemaphoreConfig& config) override;
@@ -43,7 +44,8 @@ namespace psm
         virtual ImGuiPtr CreateGui(const RenderPassPtr& renderPass, const CommandPoolPtr& commandPool, uint8_t swapchainImagesCount, ESamplesCount samplesCount) override;
 
         virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) override;
-        virtual void Submit(const SSubmitConfig& config) override;
+        virtual void SubmitGraphics(const SSubmitGraphicsConfig& config) override;
+        virtual void SubmitCompute(const SSubmitComputeConfig& config) override;
         virtual void Present(const SPresentConfig& config) override;
         virtual bool WaitIdle() override;
         virtual void BindVertexBuffers(const CommandBufferPtr& commandBuffer, const SVertexBufferBindConfig& config) override;
@@ -53,6 +55,7 @@ namespace psm
         virtual void BindDescriptorSets(const CommandBufferPtr& commandBuffer, EPipelineBindPoint bindPoint, const PipelineLayoutPtr& pipelineLayout, const std::vector<DescriptorSetPtr>& descriptors) override;
         virtual void DrawIndexed(const CommandBufferPtr& commandBuffer, const MeshRange& range, uint32_t totalInstances, uint32_t firstInstance) override;
         virtual void Draw(const CommandBufferPtr& commandBuffer, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) override;
+        virtual void Dispatch(const CommandBufferPtr& commandBuffer, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
         virtual void SetDepthBias(const CommandBufferPtr& commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) override;
         virtual void UpdateDescriptorSets(const DescriptorSetPtr& descriptorSet, const std::vector<SUpdateTextureConfig>& updateTextures, const std::vector<SUpdateBuffersConfig>& updateBuffers) override;
         virtual DescriptorSetPtr AllocateDescriptorSets(SDescriptorSetAllocateConfig& config) override;

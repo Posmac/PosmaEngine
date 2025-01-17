@@ -1,51 +1,55 @@
-#include "ShadowMapPipelineNode.h"
+#include "VisibilityBufferGeneratorPipeline.h"
 
 #include "RHI/Vulkan/CVkDevice.h"
 
 #include "Model/Vertex.h"
 
+#include "Render/Graph/ResourceGeneralInfo.h"
+
 namespace psm
 {
     namespace graph
     {
-        ShadowMapPipelineNode::ShadowMapPipelineNode(const foundation::Name& name,
-                                                     const DevicePtr& device,
-                                                     const RenderPassPtr& renderPass,
-                                                     const ResourceMediatorPtr& resourceMediator,
-                                                     const SResourceExtent3D viewportSize) :
-            RenderPipelineNode(name)
+        VisibilityBufferGeneratorPipelineNode::VisibilityBufferGeneratorPipelineNode(const foundation::Name& name, const DevicePtr& device, const RenderPassPtr& renderPass, const ResourceMediatorPtr& resourceMediator, const SResourceExtent3D viewportSize)
+            : RenderPipelineNode(name)
         {
-            constexpr uint32_t descriptorSetLayoutsSize = 2;
-            DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutsSize] =
+            constexpr uint32_t descriptorSetLayoutSize = 2;
+            DescriptorSetLayoutPtr descriptorSetLayouts[descriptorSetLayoutSize] =
             {
-                resourceMediator->GetDescriptorSetLayoutByName(SHADOW_MAP_GENERATION_PER_VIEW_CBUFFER_SET),
+                resourceMediator->GetDescriptorSetLayoutByName(GLOBAL_CBUFFER_SET),
                 resourceMediator->GetDescriptorSetLayoutByName(MODEL_DATA_SET),
             };
 
             SPipelineLayoutConfig pipelineLayoutConfig =
             {
                 .pLayouts = descriptorSetLayouts,
-                .LayoutsSize = static_cast<uint32_t>(descriptorSetLayoutsSize),
+                .LayoutsSize = descriptorSetLayoutSize,
                 .pPushConstants = nullptr,
-                .PushConstantsSize = 0,
+                .PushConstantsSize = 0
             };
 
             mPipelineLayout = device->CreatePipelineLayout(pipelineLayoutConfig);
 
-            ShaderPtr vertexShader = device->CreateShaderFromFilename("../Engine/Shaders/shadow2D.vert.spirv", EShaderStageFlag::VERTEX_BIT);
+            ShaderPtr vertexShader = device->CreateShaderFromFilename("../Engine/Shaders/visbufgen.vert.spirv", EShaderStageFlag::VERTEX_BIT);
+            ShaderPtr fragmentShader = device->CreateShaderFromFilename("../Engine/Shaders/visbufgen.frag.spirv", EShaderStageFlag::FRAGMENT_BIT);
 
-            constexpr size_t modulesSize = 1;
+            constexpr size_t modulesSize = 2;
             SShaderModuleConfig modules[modulesSize] =
             {
                 {
-                    .Shader = vertexShader,                 // shader module 
-                    .Type = EShaderStageFlag::VERTEX_BIT,   // VkShaderStageFlag
-                    .EntryPoint = "main"                        // entry point
+                    .Shader = vertexShader,
+                    .Type = EShaderStageFlag::VERTEX_BIT,
+                    .EntryPoint = "main"
+                },
+                {
+                    .Shader = fragmentShader,
+                    .Type = EShaderStageFlag::FRAGMENT_BIT,
+                    .EntryPoint = "main"
                 },
             };
 
-            constexpr int vertexInputAttributesSize = 7;
-            SVertexInputAttributeDescription vertexInputAttributes[vertexInputAttributesSize] =
+            constexpr size_t perVertexAttribsSize = 7;
+            SVertexInputAttributeDescription vertexAttribDescr[perVertexAttribsSize] =
             {
                 //vertex attribs input (per vertex input data)
                 {
@@ -115,22 +119,21 @@ namespace psm
                 .RestartPrimitives = false
             };
 
-            constexpr size_t dynamicStatesCount = 3;
+            constexpr size_t dynamicStatesCount = 2;
             EDynamicState dynamicStates[dynamicStatesCount] =
             {
                 EDynamicState::SCISSOR,
-                EDynamicState::VIEWPORT,
-                EDynamicState::DEPTH_BIAS
+                EDynamicState::VIEWPORT
             };
 
             SRasterizationConfig rasterization =
             {
                 .DepthClampEnable = false,
                 .RasterizerDiscardEnable = false,
-                .CullMode = ECullMode::FRONT_BIT,
+                .CullMode = ECullMode::BACK_BIT,
                 .PolygonMode = EPolygonMode::FILL,
                 .FrontFace = EFrontFace::COUNTER_CLOCKWISE,
-                .DepthBiasEnable = true,
+                .DepthBiasEnable = false,
                 .DepthBiasConstantFactor = 0.0f,
                 .DepthBiasClamp = 0.0f,
                 .DepthBiasSlopeFactor = 0.0f,
@@ -142,8 +145,8 @@ namespace psm
                 .RenderPass = renderPass,
                 .ViewPortExtent = {viewportSize.width, viewportSize.height},
                 .PipelineLayout = mPipelineLayout,
-                .pVertexInputAttributes = vertexInputAttributes,
-                .VertexInputAttributeCount = vertexInputAttributesSize,
+                .pVertexInputAttributes = vertexAttribDescr,
+                .VertexInputAttributeCount = perVertexAttribsSize,
                 .pVertexInputBindings = bindingDescriptions,
                 .VertexInputBindingCount = bindingsSize,
                 .pShaderModules = modules,
@@ -157,13 +160,12 @@ namespace psm
 
             mPipeline = device->CreateGraphicsPipeline(pipelineConfig);
 
-            resourceMediator->RegisterPipeline(graph::SHADOWMAP_GRAPHICS_PIPELINE, mPipeline);
+            resourceMediator->RegisterPipeline(graph::VISBUF_GENERATION_PIPELINE, mPipeline);
         }
 
-        ShadowMapPipelineNode::~ShadowMapPipelineNode()
+        VisibilityBufferGeneratorPipelineNode::~VisibilityBufferGeneratorPipelineNode()
         {
-            LogMessage(MessageSeverity::Info, "ShadowMapPipelineNode destructor");
+            LogMessage(MessageSeverity::Info, "VisibilityBufferGeneratorPipelineNode destructor");
         }
     }
 }
-

@@ -25,6 +25,8 @@ namespace psm
             void* PhysicalDevice;
             uint32_t GraphicsQueueIndex;
             void* GraphicsQueue;
+            uint32_t ComputeQueueIndex;
+            void* ComputeQueue;
         } vkData;
 
         struct

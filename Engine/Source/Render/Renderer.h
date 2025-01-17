@@ -25,10 +25,14 @@
 #include "Passes/CompositeBackbufferRenderPass.h"
 #include "Passes/ShadowMapRenderPass.h"
 #include "Passes/GbuffferRenderPass.h"
+#include "Passes/VisibilityBufferGeneratorRenderPass.h"
+#include "Passes/VisibilityBufferShadeRenderPass.h"
 
 #include "Pipelines/CompositeRenderPipelineNode.h"
 #include "Pipelines/ShadowMapPipelineNode.h"
 #include "Pipelines/GbufferPipelineNode.h"
+#include "Pipelines/VisibilityBufferGeneratorPipeline.h"
+#include "Pipelines/VisibilityBufferShadePipeline.h"
 
 #include "Graph/ResourceMediator.h"
 #include "Graph/ResourceStateManager.h"
@@ -54,8 +58,11 @@ namespace psm
         void ResizeWindow(HWND hWnd);
 
     private:
-        uint32_t BeginRender();
-        void EndRender(uint32_t imageIndex);
+        void BeginComputeRender();
+        void EndComputeRender();
+
+        uint32_t BeginGraphicsRender();
+        void EndGraphicsRender(uint32_t imageIndex);
 
         void RegisterRenderPasses();
         void CreateSwapchain(HWND hWnd);
@@ -79,19 +86,25 @@ namespace psm
 
         //new RHI data
         DevicePtr mDevice;
-        BufferPtr mGlobalBuffer;
+        std::vector<BufferPtr> mGlobalBuffers;
         SwapchainPtr mSwapchain;
 
-        //specific things
-        //RenderPassPtr mRenderPass;
-        //std::vector<FramebufferPtr> mFramebuffers;
-
-        CommandPoolPtr mCommandPool;
-        std::vector<CommandBufferPtr> mCommandBuffers;
-
+        //present submit
         std::vector<SemaphorePtr> mImageAvailableSemaphores;
-        std::vector<SemaphorePtr> mRenderFinishedSemaphores;
-        std::vector<FencePtr> mFlightFences;
+
+        //graphics
+        CommandPoolPtr mGraphicsCommandPool;
+        std::vector<CommandBufferPtr> mGraphicsCommandBuffers;
+
+        std::vector<SemaphorePtr> mGraphicsRenderFinishedSemaphores;
+        std::vector<FencePtr> mGraphicsFlightFences;
+
+        //compute
+        CommandPoolPtr mComputeCommandPool;
+        std::vector<CommandBufferPtr> mComputeCommandBuffers;
+
+        std::vector<SemaphorePtr> mComputeDispatchFinishedSemaphores;
+        std::vector<FencePtr> mComputeFlightFences;
 
         bool isInit;
         uint32_t mCurrentImageIndex;
@@ -112,10 +125,14 @@ namespace psm
         graph::RenderPassNodePtr mCompositeBackbufferPass;
         graph::RenderPassNodePtr mShadowMapRenderPass;
         graph::RenderPassNodePtr mGbufferRenderPass;
+        graph::RenderPassNodePtr mVisBufferGenRenderPass;
+        graph::RenderPassNodePtr mVisBufferShadeRenderPass;
         //graphics pipelines
         graph::RenderPipelineNodePtr mCompositeRenderPipeline;
         graph::RenderPipelineNodePtr mShadowMapPipeline;
         graph::RenderPipelineNodePtr mGbufferPipelineNode;
+        graph::RenderPipelineNodePtr mVisBufferGenPipelineNode;
+        graph::RenderPipelineNodePtr mVisBufferShadePipelineNode;
 
         DescriptorPoolPtr mDescriptorPool;
 

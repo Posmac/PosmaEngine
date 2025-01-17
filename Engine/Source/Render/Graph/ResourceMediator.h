@@ -25,6 +25,8 @@ namespace psm
             void RegisterDescriptorSetLayout(const foundation::Name& name, const DescriptorSetLayoutPtr& sampler);
             void RegisterDescriptorSet(const foundation::Name& name, const DescriptorSetPtr& sampler);
 
+            void RegisterPipeline(const foundation::Name& name, const PipelinePtr& pipeline);
+
             void UpdateImageReference(const foundation::Name& name, const ImagePtr& image);
 
             ImagePtr& GetImageByName(const foundation::Name& name);
@@ -32,6 +34,7 @@ namespace psm
             SamplerPtr& GetSamplerByName(const foundation::Name& name);
             DescriptorSetLayoutPtr& GetDescriptorSetLayoutByName(const foundation::Name& name);
             DescriptorSetPtr& GetDescriptorSetByName(const foundation::Name& name);
+            PipelinePtr& GetPipelineByName(const foundation::Name& name);
         private:
 
             DevicePtr mDeviceInternal;
@@ -39,6 +42,7 @@ namespace psm
             ImageHash mAllImages;
             BufferHash mAllBuffers;
             SamplerHash mAllSamplers;
+            PipelineHash mAllPipelines;
 
             DescriptorSetLayoutHash mAllDescriptorLayouts;
             DescriptorSetHash mAllDescriptors;

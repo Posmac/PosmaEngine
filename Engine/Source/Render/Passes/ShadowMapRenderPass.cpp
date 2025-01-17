@@ -39,8 +39,6 @@ namespace psm
 
         void ShadowMapRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
         {
-            RenderPassNode::PreRender(commandBuffer, index);
-
             UClearValue shadowMapClearColor;
             shadowMapClearColor.DepthStencil = { 0.0f, 0 };
 
@@ -208,6 +206,10 @@ namespace psm
                 mResourceMediator->RegisterImageResource(refName, mRenderTargets[i]);
             }
             mResourceMediator->RegisterBufferResource(SHADOW_CBUFFER, mGPUShadowBuffer);
+        }
+
+        void ShadowMapRenderPassNode::RecreateFramebuffers(const SwapchainPtr swapchain)
+        {
         }
     }
 }

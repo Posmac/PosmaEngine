@@ -30,6 +30,7 @@ namespace psm
 
             for(auto& target : mTargets)
             {
+                target.Framebuffer = nullptr;
                 target.AlbedoTarget.Image = nullptr;
                 target.DepthTarget.Image = nullptr;
                 target.EmissionTarget.Image = nullptr;
@@ -44,8 +45,6 @@ namespace psm
 
         void GbuffferRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
         {
-            RenderPassNode::PreRender(commandBuffer, index);
-
             std::vector<UClearValue> clearValues;
             clearValues.resize(mTargetsCount + 1); //+1 because we have depth stencil target
 
@@ -86,7 +85,7 @@ namespace psm
 
         void GbuffferRenderPassNode::CollectReferences(uint32_t framesCount)
         {
-            mResourceMediator->RegisterImageResource(DEPTHSTECIL_RENDERTARGET_NAME, mDepthStencilRenderTarget.Image);
+            mResourceMediator->RegisterImageResource(GBUFFER_DEPTHSTECIL_RENDERTARGET_NAME, mDepthStencilRenderTarget.Image);
 
             for(int i = 0; i < mTargets.size(); i++)
             {
@@ -137,7 +136,7 @@ namespace psm
             CreateDepthStencilRenderTarget(swapchain->GetSwapchainSize());
             CreateFramebuffers(swapchain->GetSwapchainSize(), framebuffersCount);
 
-            mResourceMediator->UpdateImageReference(DEPTHSTECIL_RENDERTARGET_NAME, mDepthStencilRenderTarget.Image);
+            mResourceMediator->UpdateImageReference(GBUFFER_DEPTHSTECIL_RENDERTARGET_NAME, mDepthStencilRenderTarget.Image);
 
             for(int i = 0; i < mTargets.size(); i++)
             {

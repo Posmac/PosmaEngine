@@ -6,7 +6,8 @@
 
 #ifdef RHI_VULKAN
 #include "RHI/Vulkan/CVkDevice.h"
-#include "RHI/Vulkan/CVkPipeline.h"
+#include "RHI/Vulkan/CVkGraphicsPipeline.h"
+#include "RHI/Vulkan/CVkComputePipeline.h"
 #include "RHI/Vulkan/CVkBuffer.h"
 #endif
 
@@ -68,7 +69,7 @@ namespace psm
         mGbufferTargetsResultSet = nullptr;
     }
 
-    void OpaqueInstances::Render(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode)
+    void OpaqueInstances::RenderGbuffer(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode)
     {
         if(m_Models.size() == 0)
         {
@@ -149,6 +150,51 @@ namespace psm
 
                     mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(),
                                                         { mPerViewBufferSet, perMesh.MeshToModelData });
+
+                    MeshRange range = perModel.Model->Meshes[i].Range;
+                    mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
+                    firstInstance += totalInstances;
+                }
+            }
+        }
+    }
+
+    void OpaqueInstances::RenderVisBuffer(const CommandBufferPtr& commandBuffer, graph::RenderPipelineNodePtr& pipelineNode)
+    {
+        if(m_Models.size() == 0)
+        {
+            return;
+        }
+
+        pipelineNode->Bind(commandBuffer, EPipelineBindPoint::GRAPHICS);
+
+        SVertexBufferBindConfig vertexBufferBind =
+        {
+            .FirstSlot = 1,
+            .BindingCount = 1,
+            .Offsets = {0},
+            .Buffers = &mInstanceBuffer
+        };
+
+        mDeviceInternal->BindVertexBuffers(commandBuffer, vertexBufferBind);
+
+        uint32_t firstInstance = 0;
+
+        for(auto& perModel : m_PerModels)
+        {
+            perModel.Model->BindBuffers(mDeviceInternal, commandBuffer);
+
+            for(int i = 0; i < perModel.Meshes.size(); i++)
+            {
+                PerMesh& perMesh = perModel.Meshes[i];
+                Mesh& modelMesh = perModel.Model->Meshes[i];
+
+                for(auto& material : perMesh.PerMaterials)
+                {
+                    uint32_t totalInstances = material.Instances.size();
+
+                    mDeviceInternal->BindDescriptorSets(commandBuffer, EPipelineBindPoint::GRAPHICS, pipelineNode->GetPipelineLayout(),
+                                                        { mGlobalBufferSet, perMesh.MeshToModelData });
 
                     MeshRange range = perModel.Model->Meshes[i].Range;
                     mDeviceInternal->DrawIndexed(commandBuffer, range, totalInstances, firstInstance);
@@ -625,7 +671,9 @@ namespace psm
 
     void OpaqueInstances::UpdateDefaultDescriptors(uint32_t imageIndex)
     {
-        BufferPtr& globalBuffer = mResourceMediator->GetBufferByName(graph::GLOBAL_CBUFFER);
+        foundation::Name gbName = graph::GetResourceIndexedName(graph::GLOBAL_CBUFFER, imageIndex);
+        BufferPtr& globalBuffer = mResourceMediator->GetBufferByName(gbName);
+
         std::vector<SUpdateBuffersConfig> buffersInfo =
         {
            {
