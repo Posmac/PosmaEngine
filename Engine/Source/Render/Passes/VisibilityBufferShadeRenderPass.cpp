@@ -33,14 +33,14 @@ namespace psm
             LogMessage(MessageSeverity::Info, "VisibilityBufferShadeRenderPassNode");
         }
 
-        void VisibilityBufferShadeRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
+        void VisibilityBufferShadeRenderPassNode::PreRender()
         {
-            
+            RenderPassNode::PreRender();
         }
 
-        void VisibilityBufferShadeRenderPassNode::PostRender(CommandBufferPtr& commandBuffer)
+        void VisibilityBufferShadeRenderPassNode::PostRender()
         {
-
+            RenderPassNode::PostRender();
         }
 
         void VisibilityBufferShadeRenderPassNode::AddResourceReferences(uint32_t framesCount)

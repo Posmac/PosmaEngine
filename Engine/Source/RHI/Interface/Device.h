@@ -60,8 +60,7 @@ namespace psm
         virtual ImGuiPtr CreateGui(const RenderPassPtr& renderPass, const CommandPoolPtr& commandPool, uint8_t swapchainImagesCount, ESamplesCount samplesCount) = 0;
 
         virtual void InsertImageMemoryBarrier(const SImageBarrierConfig& config) = 0;
-        virtual void SubmitGraphics(const SSubmitGraphicsConfig& config)  = 0;
-        virtual void SubmitCompute(const SSubmitComputeConfig& config)  = 0;
+        virtual void SubmitQueue(const SSubmitConfig& config)  = 0;
         virtual void Present(const SPresentConfig& config) = 0;
         virtual bool WaitIdle() = 0;
         virtual void BindVertexBuffers(const CommandBufferPtr& commandBuffer, const SVertexBufferBindConfig& config) = 0;

@@ -37,16 +37,18 @@ namespace psm
             mGPUShadowBuffer = nullptr;
         }
 
-        void ShadowMapRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
+        void ShadowMapRenderPassNode::PreRender()
         {
+            RenderPassNode::PreRender();
+
             UClearValue shadowMapClearColor;
             shadowMapClearColor.DepthStencil = { 0.0f, 0 };
 
             SRenderPassBeginConfig shadowMapRenderPassBeginConfig =
             {
                 .RenderPass = mRenderPass,
-                .Framebuffer = mFramebuffers[index],
-                .CommandBuffer = commandBuffer,
+                .Framebuffer = mFramebuffers[mCurrentFramebufferIndex],
+                .CommandBuffer = mCurrentCommandBuffer,
                 .Offset = {0, 0},
                 .Extent = {mFramebuffersSize.width, mFramebuffersSize.height},
                 .ClearValuesCount = 1,
@@ -56,9 +58,9 @@ namespace psm
 
             mRenderPass->BeginRenderPass(shadowMapRenderPassBeginConfig);
 
-            mDeviceInternal->SetViewport(commandBuffer, 0, 0, static_cast<float>(mFramebuffersSize.width), static_cast<float>(mFramebuffersSize.height), 0.0f, 1.0f);
-            mDeviceInternal->SetScissors(commandBuffer, { 0,0 }, { mFramebuffersSize.width, mFramebuffersSize.height });
-            mDeviceInternal->SetDepthBias(commandBuffer, ShadowsGenerator::Instance()->DepthBias, 0.0f, ShadowsGenerator::Instance()->DepthSlope);
+            mDeviceInternal->SetViewport(mCurrentCommandBuffer, 0, 0, static_cast<float>(mFramebuffersSize.width), static_cast<float>(mFramebuffersSize.height), 0.0f, 1.0f);
+            mDeviceInternal->SetScissors(mCurrentCommandBuffer, { 0,0 }, { mFramebuffersSize.width, mFramebuffersSize.height });
+            mDeviceInternal->SetDepthBias(mCurrentCommandBuffer, ShadowsGenerator::Instance()->DepthBias, 0.0f, ShadowsGenerator::Instance()->DepthSlope);
         }
 
         void ShadowMapRenderPassNode::CreateRenderPass(const DevicePtr& device)
@@ -188,9 +190,11 @@ namespace psm
             mGPUShadowBuffer = mDeviceInternal->CreateBuffer(bufferConfig);
         }
 
-        void ShadowMapRenderPassNode::PostRender(CommandBufferPtr& commandBuffer)
+        void ShadowMapRenderPassNode::PostRender()
         {
-            mRenderPass->EndRenderPass(commandBuffer);
+            mRenderPass->EndRenderPass(mCurrentCommandBuffer);
+
+            RenderPassNode::PostRender();
         }
 
         void ShadowMapRenderPassNode::AddResourceReferences(uint32_t framesCount)

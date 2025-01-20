@@ -27,6 +27,10 @@ namespace psm
             void AddComputeRenderPass(RenderPassNodePtr& renderPass);
             void GenerateResourceDependencies(uint32_t framesCount);
 
+            void Update();
+            void Render();
+
+            std::vector<RenderPassNodePtr>& RenderPassNodes();
             std::vector<RenderPassNodePtr>& GraphicsNodes();
             std::vector<RenderPassNodePtr>& ComputeNodes();
 
@@ -34,6 +38,7 @@ namespace psm
             ResourceMediatorPtr mResourceMediator;
 
             std::set<foundation::Name> mRenderPassNodesMeta;
+            std::vector<RenderPassNodePtr> mAllRenderPassNodes;
             std::vector<RenderPassNodePtr> mGraphicsRenderPassNodes;
             std::vector<RenderPassNodePtr> mComputeRenderPassNodes;
         };

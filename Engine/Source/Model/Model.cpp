@@ -150,7 +150,6 @@ namespace psm
 
         SCommandBufferBeginConfig beginConfig =
         {
-            .BufferIndex = 0,
             .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
         };
 
@@ -168,21 +167,18 @@ namespace psm
 
         FencePtr submitFence = device->CreateFence(fenceConfig);
 
-        SSubmitGraphicsConfig submitConfig =
+        SSubmitConfig submitConfig =
         {
-            .GraphicsQueue = device->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .Queue = device->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
             .SubmitCount = 1,
-            .WaitStageFlags = EPipelineStageFlags::NONE,
-            .WaitSemaphoresCount = 0,
-            .pWaitSemaphores = nullptr,
-            .CommandBuffersCount = 1,
-            .pCommandBuffers = &commandBuffer,
-            .SignalSemaphoresCount = 0,
-            .pSignalSemaphores = nullptr,
+            .WaitStageFlags = {},
+            .WaitSemaphores = {},
+            .CommandBuffers = {commandBuffer},
+            .SignalSemaphores = {},
             .Fence = submitFence,
         };
 
-        device->SubmitGraphics(submitConfig);
+        device->SubmitQueue(submitConfig);
 
         SFenceWaitConfig wait =
         {

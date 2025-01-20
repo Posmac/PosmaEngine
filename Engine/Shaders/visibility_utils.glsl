@@ -3,7 +3,7 @@
 //packs vertex id and instance id into 1 uint
 uint calculateOutputVIID(uint vertexId, uint instanceId)
 {
-	uint drawID_primID = ((vertexId << 23) & 0x7F800000) | (instanceId & 0x007FFFFF);
+	uint drawID_primID = ((instanceId << 23) & 0x7F800000) | (vertexId & 0x007FFFFF);
 	return drawID_primID;
 }
 

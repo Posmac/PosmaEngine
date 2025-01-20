@@ -21,6 +21,7 @@ namespace psm
 #if defined(RHI_VULKAN)
 #include "Include/vulkan/vulkan.h"
 #include "Include/vulkan/vk_enum_string_helper.h"
+#include "Include/vulkan/vulkan_beta.h"
 
 using SResourceSize = VkDeviceSize;
 using SResourceExtent2D = VkExtent2D;

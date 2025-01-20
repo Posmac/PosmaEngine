@@ -10,7 +10,6 @@ namespace psm
 {
     struct SCommandBufferBeginConfig
     {
-        uint32_t BufferIndex;
         ECommandBufferUsage Usage;
     };
 
@@ -26,31 +25,14 @@ namespace psm
         bool IsBufferLevelPrimary;
     };
 
-    struct SSubmitGraphicsConfig
+    struct SSubmitConfig
     {
-        void* GraphicsQueue;
+        void* Queue;
         uint32_t SubmitCount;
-        EPipelineStageFlags WaitStageFlags;
-        uint32_t WaitSemaphoresCount;
-        SemaphorePtr* pWaitSemaphores;
-        uint32_t CommandBuffersCount;
-        CommandBufferPtr* pCommandBuffers;
-        uint32_t SignalSemaphoresCount;
-        SemaphorePtr* pSignalSemaphores;
-        FencePtr Fence;
-    };
-
-    struct SSubmitComputeConfig
-    {
-        void* ComputeQueue;
-        uint32_t SubmitCount;
-        EPipelineStageFlags WaitStageFlags;
-        uint32_t WaitSemaphoresCount;
-        SemaphorePtr* pWaitSemaphores;
-        uint32_t CommandBuffersCount;
-        CommandBufferPtr* pCommandBuffers;
-        uint32_t SignalSemaphoresCount;
-        SemaphorePtr* pSignalSemaphores;
+        std::vector<EPipelineStageFlags> WaitStageFlags;
+        std::vector<SemaphorePtr> WaitSemaphores;
+        std::vector <CommandBufferPtr> CommandBuffers;
+        std::vector <SemaphorePtr> SignalSemaphores;
         FencePtr Fence;
     };
 }

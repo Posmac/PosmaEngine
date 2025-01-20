@@ -31,7 +31,7 @@ namespace psm
 
         if(severity >= MessageSeverity::Error)
         {
-            DebugBreak();
+            //DebugBreak();
         }
     }
 

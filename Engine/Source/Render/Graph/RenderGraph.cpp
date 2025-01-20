@@ -35,12 +35,13 @@ namespace psm
             auto it = mRenderPassNodesMeta.find(renderPass->GetName());
             if(it != mRenderPassNodesMeta.end())
             {
-                LogMessage(MessageSeverity::Warning, "RenderPass with name: " + renderPass->GetName().ToString() + " already exists!");
+                LogMessage(MessageSeverity::Warning, "Graphics RenderPass with name: " + renderPass->GetName().ToString() + " already exists!");
                 return;
             }
 
             mRenderPassNodesMeta.insert(renderPass->GetName());
             mGraphicsRenderPassNodes.push_back(renderPass);
+            mAllRenderPassNodes.push_back(renderPass);
         }
 
         void RenderGraph::AddComputeRenderPass(RenderPassNodePtr& renderPass)
@@ -48,12 +49,13 @@ namespace psm
             auto it = mRenderPassNodesMeta.find(renderPass->GetName());
             if(it != mRenderPassNodesMeta.end())
             {
-                LogMessage(MessageSeverity::Warning, "RenderPass with name: " + renderPass->GetName().ToString() + " already exists!");
+                LogMessage(MessageSeverity::Warning, "Compute RenderPass with name: " + renderPass->GetName().ToString() + " already exists!");
                 return;
             }
 
             mRenderPassNodesMeta.insert(renderPass->GetName());
             mComputeRenderPassNodes.push_back(renderPass);
+            mAllRenderPassNodes.push_back(renderPass);
         }
 
         void RenderGraph::GenerateResourceDependencies(uint32_t framesCount)
@@ -80,6 +82,25 @@ namespace psm
             {
                 renderPass->AddResourceReferences(framesCount);
             }
+        }
+
+        void RenderGraph::Update()
+        {
+        }
+
+        void RenderGraph::Render()
+        {
+            for(auto& rp : mAllRenderPassNodes)
+            {
+                rp->PreRender();
+                rp->Render();
+                rp->PostRender();
+            }
+        }
+
+        std::vector<RenderPassNodePtr>& RenderGraph::RenderPassNodes()
+        {
+            return mAllRenderPassNodes;
         }
 
         std::vector<RenderPassNodePtr>& RenderGraph::GraphicsNodes()

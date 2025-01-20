@@ -314,7 +314,6 @@ namespace psm
 
         SCommandBufferBeginConfig beginConfig =
         {
-            .BufferIndex = 0,
             .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
         };
 
@@ -366,21 +365,18 @@ namespace psm
 
         FencePtr submitFence = CreateFence(fenceConfig);
 
-        SSubmitGraphicsConfig submitConfig =
+        SSubmitConfig submitConfig =
         {
-            .GraphicsQueue = mQueues.GraphicsQueue,
+            .Queue = mQueues.GraphicsQueue,
             .SubmitCount = 1,
-            .WaitStageFlags = EPipelineStageFlags::NONE,
-            .WaitSemaphoresCount = 0,
-            .pWaitSemaphores = nullptr,
-            .CommandBuffersCount = 1,
-            .pCommandBuffers = &commandBuffer,
-            .SignalSemaphoresCount = 0,
-            .pSignalSemaphores = nullptr,
+            .WaitStageFlags = {},
+            .WaitSemaphores = {},
+            .CommandBuffers = {commandBuffer},
+            .SignalSemaphores = {},
             .Fence = submitFence,
         };
 
-        SubmitGraphics(submitConfig);
+        SubmitQueue(submitConfig);
 
         SFenceWaitConfig waitConfig =
         {
@@ -587,78 +583,46 @@ namespace psm
             1, &barrier);
     }
 
-    void CVkDevice::SubmitGraphics(const SSubmitGraphicsConfig& config)
+    void CVkDevice::SubmitQueue(const SSubmitConfig& config)
     {
-        std::vector<VkSemaphore> waitSemapthores(config.WaitSemaphoresCount);
+        std::vector<VkSemaphore> waitSemapthores(config.WaitSemaphores.size());
         for(int i = 0; i < waitSemapthores.size(); i++)
         {
-            waitSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[i]->Raw());
+            waitSemapthores[i] = reinterpret_cast<VkSemaphore>(config.WaitSemaphores[i]->Raw());
         }
 
-        std::vector<VkSemaphore> signalSemapthores(config.WaitSemaphoresCount);
+        std::vector<VkSemaphore> signalSemapthores(config.SignalSemaphores.size());
         for(int i = 0; i < signalSemapthores.size(); i++)
         {
-            signalSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pSignalSemaphores[i]->Raw());
+            signalSemapthores[i] = reinterpret_cast<VkSemaphore>(config.SignalSemaphores[i]->Raw());
         }
 
-        std::vector<VkCommandBuffer> cmdBuffers(config.CommandBuffersCount);
+        std::vector<VkCommandBuffer> cmdBuffers(config.CommandBuffers.size());
         for(int i = 0; i < cmdBuffers.size(); i++)
         {
-            cmdBuffers[i] = reinterpret_cast<VkCommandBuffer>(config.pCommandBuffers[i]->Raw());
+            cmdBuffers[i] = reinterpret_cast<VkCommandBuffer>(config.CommandBuffers[i]->Raw());
         }
 
-        VkPipelineStageFlags stageFlags = ToVulkan(config.WaitStageFlags);
+        std::vector<VkPipelineStageFlags> waitStageFlags(config.WaitStageFlags.size());
+        for(int i = 0; i < waitStageFlags.size(); i++)
+        {
+            waitStageFlags[i] = ToVulkan(config.WaitStageFlags[i]);
+        }
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.pNext = nullptr;
         submitInfo.waitSemaphoreCount = waitSemapthores.size();
         submitInfo.pWaitSemaphores = waitSemapthores.data();
-        submitInfo.pWaitDstStageMask = &stageFlags;
+        submitInfo.pWaitDstStageMask = waitStageFlags.data();
         submitInfo.commandBufferCount = cmdBuffers.size();
         submitInfo.pCommandBuffers = cmdBuffers.data();
         submitInfo.signalSemaphoreCount = signalSemapthores.size();
         submitInfo.pSignalSemaphores = signalSemapthores.data();
 
-        VkResult result = vkQueueSubmit(reinterpret_cast<VkQueue>(config.GraphicsQueue), config.SubmitCount, &submitInfo, reinterpret_cast<VkFence>(config.Fence->Raw()));
-
-        VK_CHECK_RESULT(result);
-    }
-
-    void CVkDevice::SubmitCompute(const SSubmitComputeConfig& config)
-    {
-        std::vector<VkSemaphore> waitSemapthores(config.WaitSemaphoresCount);
-        for(int i = 0; i < waitSemapthores.size(); i++)
-        {
-            waitSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pWaitSemaphores[i]->Raw());
-        }
-
-        std::vector<VkSemaphore> signalSemapthores(config.WaitSemaphoresCount);
-        for(int i = 0; i < signalSemapthores.size(); i++)
-        {
-            signalSemapthores[i] = reinterpret_cast<VkSemaphore>(config.pSignalSemaphores[i]->Raw());
-        }
-
-        std::vector<VkCommandBuffer> cmdBuffers(config.CommandBuffersCount);
-        for(int i = 0; i < cmdBuffers.size(); i++)
-        {
-            cmdBuffers[i] = reinterpret_cast<VkCommandBuffer>(config.pCommandBuffers[i]->Raw());
-        }
-
-        VkPipelineStageFlags stageFlags = ToVulkan(config.WaitStageFlags);
-
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.pNext = nullptr;
-        submitInfo.waitSemaphoreCount = waitSemapthores.size();
-        submitInfo.pWaitSemaphores = waitSemapthores.data();
-        submitInfo.pWaitDstStageMask = &stageFlags;
-        submitInfo.commandBufferCount = cmdBuffers.size();
-        submitInfo.pCommandBuffers = cmdBuffers.data();
-        submitInfo.signalSemaphoreCount = signalSemapthores.size();
-        submitInfo.pSignalSemaphores = signalSemapthores.data();
-
-        VkResult result = vkQueueSubmit(reinterpret_cast<VkQueue>(config.ComputeQueue), config.SubmitCount, &submitInfo, reinterpret_cast<VkFence>(config.Fence->Raw()));
+        VkResult result = vkQueueSubmit(reinterpret_cast<VkQueue>(config.Queue), config.SubmitCount, 
+                                        &submitInfo, 
+                                        config.Fence != nullptr ? reinterpret_cast<VkFence>(config.Fence->Raw()) : nullptr);
 
         VK_CHECK_RESULT(result);
     }
@@ -841,7 +805,6 @@ namespace psm
 
         SCommandBufferBeginConfig beginConfig =
         {
-            .BufferIndex = 0,
             .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT,
         };
 
@@ -860,21 +823,18 @@ namespace psm
 
         FencePtr submitFence = CreateFence(fenceConfig);
 
-        SSubmitGraphicsConfig submitConfig =
+        SSubmitConfig submitConfig =
         {
-            .GraphicsQueue = GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+            .Queue = GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
             .SubmitCount = 1,
-            .WaitStageFlags = EPipelineStageFlags::NONE,
-            .WaitSemaphoresCount = 0,
-            .pWaitSemaphores = nullptr,
-            .CommandBuffersCount = 1,
-            .pCommandBuffers = &commandBuffer,
-            .SignalSemaphoresCount = 0,
-            .pSignalSemaphores = nullptr,
+            .WaitStageFlags = {},
+            .WaitSemaphores = {},
+            .CommandBuffers = {commandBuffer},
+            .SignalSemaphores = {},
             .Fence = submitFence,
         };
 
-        SubmitGraphics(submitConfig);
+        SubmitQueue(submitConfig);
 
         SFenceWaitConfig waitConfig =
         {

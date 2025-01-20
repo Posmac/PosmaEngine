@@ -25,12 +25,16 @@ namespace psm
             virtual ~RenderPassNode();
             foundation::Name GetName() const;
 
-            virtual void PreRender(CommandBufferPtr& commandBuffer, uint32_t index) = 0;
+            virtual void PreRender();
             virtual void Render();
-            virtual void PostRender(CommandBufferPtr& commandBuffer) = 0;
+            virtual void PostRender();
+            virtual void SetState(CommandBufferPtr& commandBuffer, uint32_t framebufferIndex);
+            virtual void ResetState();
             virtual void AddResourceReferences(uint32_t framesCount) = 0;
             virtual void CollectReferences(uint32_t framesCount) = 0;
             virtual void AddRenderCallback(const std::function<void()>& callback);
+            virtual void AddPreRenderCallback(const std::function<void()>& callback);
+            virtual void AddPostRenderCallback(const std::function<void()>& callback);
             virtual RenderPassPtr& GetRenderPass();
             virtual void RecreateFramebuffers(const SwapchainPtr swapchain) = 0;
 
@@ -40,8 +44,12 @@ namespace psm
             ResourceMediatorPtr mResourceMediator;
             RenderPassPtr mRenderPass;
             SResourceExtent3D mFramebuffersSize;
-            std::function<void()> mRenderCallback;
             std::function<void()> mPreRenderCallback;
+            std::function<void()> mRenderCallback;
+            std::function<void()> mPostRenderCallback;
+
+            CommandBufferPtr mCurrentCommandBuffer;
+            uint32_t mCurrentFramebufferIndex;
         };
 
         using RenderPassNodePtr = std::shared_ptr<RenderPassNode>;

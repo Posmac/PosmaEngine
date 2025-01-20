@@ -43,8 +43,10 @@ namespace psm
             mTargets.clear();
         }
 
-        void GbuffferRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
+        void GbuffferRenderPassNode::PreRender()
         {
+            RenderPassNode::PreRender();
+
             std::vector<UClearValue> clearValues;
             clearValues.resize(mTargetsCount + 1); //+1 because we have depth stencil target
 
@@ -58,8 +60,8 @@ namespace psm
             SRenderPassBeginConfig shadowMapRenderPassBeginConfig =
             {
                 .RenderPass = mRenderPass,
-                .Framebuffer = mTargets[index].Framebuffer,
-                .CommandBuffer = commandBuffer,
+                .Framebuffer = mTargets[mCurrentFramebufferIndex].Framebuffer,
+                .CommandBuffer = mCurrentCommandBuffer,
                 .Offset = {0, 0},
                 .Extent = {mFramebuffersSize.width, mFramebuffersSize.height},
                 .ClearValuesCount = static_cast<uint32_t>(clearValues.size()),
@@ -69,13 +71,15 @@ namespace psm
 
             mRenderPass->BeginRenderPass(shadowMapRenderPassBeginConfig);
 
-            mDeviceInternal->SetViewport(commandBuffer, 0, 0, static_cast<float>(mFramebuffersSize.width), static_cast<float>(mFramebuffersSize.height), 0.0f, 1.0f);
-            mDeviceInternal->SetScissors(commandBuffer, { 0,0 }, { mFramebuffersSize.width, mFramebuffersSize.height });
+            mDeviceInternal->SetViewport(mCurrentCommandBuffer, 0, 0, static_cast<float>(mFramebuffersSize.width), static_cast<float>(mFramebuffersSize.height), 0.0f, 1.0f);
+            mDeviceInternal->SetScissors(mCurrentCommandBuffer, { 0,0 }, { mFramebuffersSize.width, mFramebuffersSize.height });
         }
 
-        void GbuffferRenderPassNode::PostRender(CommandBufferPtr& commandBuffer)
+        void GbuffferRenderPassNode::PostRender()
         {
-            mRenderPass->EndRenderPass(commandBuffer);
+            mRenderPass->EndRenderPass(mCurrentCommandBuffer);
+
+            RenderPassNode::PostRender();
         }
 
         void GbuffferRenderPassNode::AddResourceReferences(uint32_t framesCount)

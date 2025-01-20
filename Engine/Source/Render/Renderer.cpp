@@ -76,29 +76,129 @@ namespace psm
 
     void Renderer::RegisterRenderPasses()
     {
-        //create render passes
+        // c - compute, g - graphics
+        // (SMP) SHADOW MAP PASS(g) -> (GBP) GBUFFER PASS(g) -> (VGP) VISBUFFER GEN PASS(g) -> (VSP) VISBUFFER SHADE PASS(c) -> (CMP) COMPOSITE PASS(g)
+
+        // CMDBUF - graphics command buffer
+        // COMPBUF - compute command buffer
+        // CMDBUF START -> SMP -> GBP -> VGP -> CMDBUF END -> COMPBUF START -> VSP -> COMPBUF END -> CMDBUF START -> CMP -> CMDBUF END -> PRESENT
+
+        //SMP
+        auto preShadowsLambda = [this]()
+        {
+            BeginGraphicsRender(mGraphicsCommandBuffers[mCurrentFrame]);
+        };
+
         auto renderShadowsLambda = [this]()
         {
-            OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mCurrentImageIndex);
+            OpaqueInstances::GetInstance()->UpdateDepthDescriptors(mCurrentFrame);
             OpaqueInstances::GetInstance()->RenderDepth(mGraphicsCommandBuffers[mCurrentFrame], mShadowMapPipeline);
+        };
+
+        auto postShadowsLambda = [this]()
+        {
+        };
+
+        //GBP
+        auto preGbufferLambda = [this]()
+        {
         };
 
         auto renderGbufferLambda = [this]()
         {
-            OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentImageIndex);
+            OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentFrame);
             OpaqueInstances::GetInstance()->RenderGbuffer(mGraphicsCommandBuffers[mCurrentFrame], mGbufferPipelineNode);
+        };
+
+        auto postGbufferLambda = [this]()
+        {
+        };
+
+        //VGP
+        auto preVisBufferLambda = [this]()
+        {
         };
 
         auto renderVisBufferLambda = [this]()
         {
-            //OpaqueInstances::GetInstance()->UpdateDefaultDescriptors(mCurrentImageIndex);
             OpaqueInstances::GetInstance()->RenderVisBuffer(mGraphicsCommandBuffers[mCurrentFrame], mVisBufferGenPipelineNode);
+        };
+
+        auto postVisBufferLambda = [this]()
+        {
+            EndGraphicsRender(mGraphicsCommandBuffers[mCurrentFrame]);
+
+            SSubmitConfig submitConfig =
+            {
+                .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
+                .SubmitCount = 1,
+                .WaitStageFlags = {},
+                .WaitSemaphores = {},
+                .CommandBuffers = {mGraphicsCommandBuffers[mCurrentFrame]},
+                .SignalSemaphores = {mGraphicsRenderFinishedSemaphores[mCurrentFrame]},
+                .Fence = mGraphicsFlightFences[mCurrentFrame],
+            };
+
+            mDevice->SubmitQueue(submitConfig);
+
+            SFenceWaitConfig fenceWait =
+            {
+                .WaitAll = true,
+                .Timeout = FLT_MAX,
+            };
+
+            while(!mGraphicsFlightFences[mCurrentFrame]->Wait(fenceWait))
+            {
+                LogMessage(MessageSeverity::Info, "Waiting for graphics fence");
+            };
+
+            mGraphicsFlightFences[mCurrentFrame]->Reset();
+        };
+
+        //VSP
+        auto preVisBufShadeLambda = [this]()
+        {
+            BeginComputeRender(mComputeCommandBuffers[mCurrentFrame]);
+        };
+
+        auto dispathVisBufShadeLambda = [this]()
+        {
+            mVisBufferShadePipelineNode->Bind(mComputeCommandBuffers[mCurrentFrame], EPipelineBindPoint::COMPUTE);
+
+            DescriptorSetPtr set = mResourceMediator->GetDescriptorSetByName(graph::VISBUF_SHADE_SET);
+            mDevice->BindDescriptorSets(mComputeCommandBuffers[mCurrentFrame], EPipelineBindPoint::COMPUTE, mVisBufferShadePipelineNode->GetPipelineLayout(), { set });
+
+            mDevice->Dispatch(mComputeCommandBuffers[mCurrentFrame], graph::PARTICLE_COUNT / 256, 1, 1);
+        };
+
+        auto postVisBufShadeLambda = [this]()
+        {
+            EndComputeRender(mComputeCommandBuffers[mCurrentFrame]);
+
+            SSubmitConfig submitComputeConfig =
+            {
+                .Queue = mDevice->GetDeviceData().vkData.ComputeQueue,
+                .SubmitCount = 1,
+                .WaitStageFlags = {EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT},
+                .WaitSemaphores = {mGraphicsRenderFinishedSemaphores[mCurrentFrame]},
+                .CommandBuffers = {mComputeCommandBuffers[mCurrentFrame]},
+                .SignalSemaphores = {mComputeDispatchFinishedSemaphores[mCurrentFrame]},
+                .Fence = nullptr
+            };
+
+            mDevice->SubmitQueue(submitComputeConfig);
+        };
+
+        //CMP
+        auto preCompositeLambda = [this]()
+        {
+            BeginGraphicsRender(mGraphicsCommandBuffers[mCurrentFrame]);
         };
 
         auto renderCompositeLambda = [this]()
         {
             //update descriptors from Gbuffer and shadow map
-            OpaqueInstances::GetInstance()->UpdateGBufferDescriptors(mCurrentImageIndex);
+            OpaqueInstances::GetInstance()->UpdateGBufferDescriptors(mCurrentFrame);
 
             //draw full quad
             CommandBufferPtr& commandBuffer = mGraphicsCommandBuffers[mCurrentFrame];
@@ -116,23 +216,69 @@ namespace psm
             mGui->Render(mGraphicsCommandBuffers[mCurrentFrame]);
         };
 
-        auto dispathVisBufShadeLambda = [this]()
+        auto postCompositeLambda = [this]()
         {
-            mVisBufferShadePipelineNode->Bind(mComputeCommandBuffers[mCurrentFrame], EPipelineBindPoint::COMPUTE);
+            EndGraphicsRender(mGraphicsCommandBuffers[mCurrentFrame]);
 
-            DescriptorSetPtr set = mResourceMediator->GetDescriptorSetByName(graph::VISBUF_SHADE_SET);
-            mDevice->BindDescriptorSets(mComputeCommandBuffers[mCurrentFrame], EPipelineBindPoint::COMPUTE, mVisBufferShadePipelineNode->GetPipelineLayout(), { set });
+            //get next image
+            uint32_t imageIndex;
+            SSwapchainAquireNextImageConfig nextImageConfig
+            {
+                .Timeout = UINT64_MAX,
+                .Semaphore = mImageAvailableSemaphores[mCurrentImageIndex]
+            };
 
-            mDevice->Dispatch(mComputeCommandBuffers[mCurrentFrame], graph::PARTICLE_COUNT / 256, 1, 1);
+            mSwapchain->GetNextImage(nextImageConfig, &imageIndex);
+
+            //submit graphics renderer
+            SSubmitConfig submitConfig =
+            {
+                .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
+                .SubmitCount = 1,
+                .WaitStageFlags = {EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT, EPipelineStageFlags::COMPUTE_SHADER_BIT},
+                .WaitSemaphores = {mImageAvailableSemaphores[mCurrentImageIndex], mComputeDispatchFinishedSemaphores[mCurrentFrame]},
+                .CommandBuffers = {mGraphicsCommandBuffers[mCurrentFrame]},
+                .SignalSemaphores = {mGraphicsRenderFinishedSemaphores[mCurrentFrame]},
+                .Fence = mGraphicsFlightFences[mCurrentFrame],
+            };
+
+            mDevice->SubmitQueue(submitConfig);
+
+            //present
+            SFenceWaitConfig fenceWait =
+            {
+                .WaitAll = true,
+                .Timeout = FLT_MAX,
+            };
+
+            SPresentConfig presentConfig =
+            {
+                .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
+                .WaitSemaphoresCount = 1,
+                .pWaitSemaphores = &mGraphicsRenderFinishedSemaphores[mCurrentFrame],
+                .ImageIndex = imageIndex
+            };
+
+            mSwapchain->Present(presentConfig);
+
+            while(!mGraphicsFlightFences[mCurrentFrame]->Wait(fenceWait))
+            {
+                LogMessage(MessageSeverity::Info, "Waiting for graphics fence");
+            };
+
+            mGraphicsFlightFences[mCurrentFrame]->Reset();
+
+            mCurrentImageIndex = imageIndex;
         };
 
+        // create render passes
         mCompositeBackbufferPass = std::make_shared<graph::CompositeBackbufferRenderPassNode>(graph::COMPOSITE_RENDERPASS,
                                                                                           mDevice,
                                                                                           mResourceMediator,
                                                                                           mSwapchain,
                                                                                           mSwapchain->GetSwapchainImageFormat());
 
-        mShadowMapRenderPass = std::make_shared<graph::ShadowMapRenderPassNode>(graph::SHADOWMAP_RENDERPASS, 
+        mShadowMapRenderPass = std::make_shared<graph::ShadowMapRenderPassNode>(graph::SHADOWMAP_RENDERPASS,
                                                                                 mResourceMediator,
                                                                                 mDevice,
                                                                                 graph::SHADOW_MAP_SIZE,
@@ -160,19 +306,32 @@ namespace psm
                                                                                                  mSwapchain->GetImagesCount());
 
         mCompositeBackbufferPass->AddRenderCallback(renderCompositeLambda);
+        mCompositeBackbufferPass->AddPreRenderCallback(preCompositeLambda);
+        mCompositeBackbufferPass->AddPostRenderCallback(postCompositeLambda);
+
         mShadowMapRenderPass->AddRenderCallback(renderShadowsLambda);
+        mShadowMapRenderPass->AddPreRenderCallback(preShadowsLambda);
+        mShadowMapRenderPass->AddPostRenderCallback(postShadowsLambda);
+
         mGbufferRenderPass->AddRenderCallback(renderGbufferLambda);
+        mGbufferRenderPass->AddPreRenderCallback(preGbufferLambda);
+        mGbufferRenderPass->AddPostRenderCallback(postGbufferLambda);
+
         mVisBufferGenRenderPass->AddRenderCallback(renderVisBufferLambda);
+        mVisBufferGenRenderPass->AddPreRenderCallback(preVisBufferLambda);
+        mVisBufferGenRenderPass->AddPostRenderCallback(postVisBufferLambda);
+
         mVisBufferShadeRenderPass->AddRenderCallback(dispathVisBufShadeLambda);
+        mVisBufferShadeRenderPass->AddPreRenderCallback(preVisBufShadeLambda);
+        mVisBufferShadeRenderPass->AddPostRenderCallback(postVisBufShadeLambda);
 
         //add everything into graph
         mRenderGraph = std::make_shared<graph::RenderGraph>();
 
-        mRenderGraph->AddComputeRenderPass(mVisBufferShadeRenderPass); //visibility buffer shade render pass
-
         mRenderGraph->AddGraphicsRenderPass(mShadowMapRenderPass);      //shadow map generation renderpass
         mRenderGraph->AddGraphicsRenderPass(mGbufferRenderPass);        //add gbuffer pass
         mRenderGraph->AddGraphicsRenderPass(mVisBufferGenRenderPass);   //visibility buffer generation render pass
+        mRenderGraph->AddComputeRenderPass(mVisBufferShadeRenderPass); //visibility buffer shade render pass
         mRenderGraph->AddGraphicsRenderPass(mCompositeBackbufferPass);  //add default backbuffer renderpass
 
         //create all necessary resources and link them
@@ -264,29 +423,23 @@ namespace psm
         {
             return;
         }
-    
-        mDevice->UpdateBuffer(mGlobalBuffers[mCurrentImageIndex], &buffer);
+
+        mDevice->UpdateBuffer(mGlobalBuffers[mCurrentFrame], &buffer);
         ShadowsGenerator::Instance()->Update();
 
-        //for compute commands
-        BeginComputeRender();
-        for(auto& rp : mRenderGraph->ComputeNodes())
-        {
-            rp->PreRender(mComputeCommandBuffers[mCurrentFrame], mCurrentImageIndex);
-            rp->Render();
-            rp->PostRender(mComputeCommandBuffers[mCurrentFrame]);
-        }
-        EndComputeRender();
+        mCompositeBackbufferPass->SetState(mGraphicsCommandBuffers[mCurrentFrame], mCurrentFrame);
+        mShadowMapRenderPass->SetState(mGraphicsCommandBuffers[mCurrentFrame], mCurrentFrame);
+        mGbufferRenderPass->SetState(mGraphicsCommandBuffers[mCurrentFrame], mCurrentFrame);
+        mVisBufferGenRenderPass->SetState(mGraphicsCommandBuffers[mCurrentFrame], mCurrentFrame);
+        mVisBufferShadeRenderPass->SetState(mComputeCommandBuffers[mCurrentFrame], mCurrentFrame);
 
-        //for graphics commands
-        mCurrentImageIndex = BeginGraphicsRender();
-        for(auto& rp : mRenderGraph->GraphicsNodes())
-        {
-            rp->PreRender(mGraphicsCommandBuffers[mCurrentFrame], mCurrentImageIndex);
-            rp->Render();
-            rp->PostRender(mGraphicsCommandBuffers[mCurrentFrame]);
-        }
-        EndGraphicsRender(mCurrentImageIndex);
+        mRenderGraph->Render();
+
+        mCompositeBackbufferPass->ResetState();
+        mShadowMapRenderPass->ResetState();
+        mGbufferRenderPass->ResetState();
+        mVisBufferGenRenderPass->ResetState();
+        mVisBufferShadeRenderPass->ResetState();
 
         mCurrentFrame = (mCurrentFrame + 1) % mSwapchain->GetImagesCount();
         mTotalFrames++;
@@ -415,126 +568,37 @@ namespace psm
         mWindowResizeQueue.push(hWnd);
     }
 
-    void Renderer::BeginComputeRender()
+    void Renderer::BeginComputeRender(CommandBufferPtr& commandBuffer)
+    {
+        SCommandBufferBeginConfig commandBufferBegin =
+        {
+            .Usage = ECommandBufferUsage::NONE,
+        };
+
+        commandBuffer->Reset();
+        commandBuffer->Begin(commandBufferBegin);
+    }
+
+    void Renderer::EndComputeRender(CommandBufferPtr& commandBuffer)
+    {
+        commandBuffer->End();
+    }
+
+    void Renderer::BeginGraphicsRender(CommandBufferPtr& commandBuffer)
     {
         //begin command buffer
         SCommandBufferBeginConfig commandBufferBegin =
         {
-            .BufferIndex = mCurrentFrame,
             .Usage = ECommandBufferUsage::NONE,
         };
 
-        mComputeCommandBuffers[mCurrentFrame]->Begin(commandBufferBegin);
+        commandBuffer->Reset();
+        commandBuffer->Begin(commandBufferBegin);
     }
 
-    void Renderer::EndComputeRender()
+    void Renderer::EndGraphicsRender(CommandBufferPtr& commandBuffer)
     {
-        SFenceWaitConfig fenceWait =
-        {
-            .WaitAll = true,
-            .Timeout = FLT_MAX,
-        };
-
-        //compute queue submit
-        mComputeCommandBuffers[mCurrentFrame]->End();
-
-        SSubmitComputeConfig submitComputeConfig =
-        {
-            .ComputeQueue = mDevice->GetDeviceData().vkData.ComputeQueue,
-            .SubmitCount = 1,
-            .WaitStageFlags = EPipelineStageFlags::COMPUTE_SHADER_BIT,
-            .WaitSemaphoresCount = 0,
-            .pWaitSemaphores = nullptr,
-            .CommandBuffersCount = 1,
-            .pCommandBuffers = &mComputeCommandBuffers[mCurrentFrame],
-            .SignalSemaphoresCount = 1,
-            .pSignalSemaphores = &mComputeDispatchFinishedSemaphores[mCurrentFrame],
-            .Fence = mComputeFlightFences[mCurrentFrame],
-        };
-
-        mDevice->SubmitCompute(submitComputeConfig);
-
-        while(!mComputeFlightFences[mCurrentFrame]->Wait(fenceWait))
-        {
-            LogMessage(MessageSeverity::Info, "Waiting for compute fence");
-        };
-
-        mComputeFlightFences[mCurrentFrame]->Reset();
-
-        mComputeCommandBuffers[mCurrentFrame]->Reset();
-    }
-
-    uint32_t Renderer::BeginGraphicsRender()
-    {
-        uint32_t imageIndex;
-        SSwapchainAquireNextImageConfig nextImageConfig
-        {
-            .Timeout = UINT64_MAX,
-            .Semaphore = mImageAvailableSemaphores[mCurrentFrame]
-        };
-
-        mSwapchain->GetNextImage(nextImageConfig, &imageIndex);
-
-        //begin command buffer
-        SCommandBufferBeginConfig commandBufferBegin =
-        {
-            .BufferIndex = mCurrentFrame,
-            .Usage = ECommandBufferUsage::NONE,
-        };
-
-        mGraphicsCommandBuffers[mCurrentFrame]->Begin(commandBufferBegin);
-
-        return imageIndex;
-    }
-
-    void Renderer::EndGraphicsRender(uint32_t imageIndex)
-    {
-        SFenceWaitConfig fenceWait =
-        {
-            .WaitAll = true,
-            .Timeout = FLT_MAX,
-        };
-
-        //graphics queue submit
-        mGraphicsCommandBuffers[mCurrentFrame]->End();
-
-        SSubmitGraphicsConfig submitConfig =
-        {
-            .GraphicsQueue = mDevice->GetDeviceData().vkData.GraphicsQueue,
-            .SubmitCount = 1,
-            .WaitStageFlags = EPipelineStageFlags::COLOR_ATTACHMENT_OUTPUT_BIT,
-            .WaitSemaphoresCount = 1,
-            .pWaitSemaphores = &mImageAvailableSemaphores[mCurrentFrame],
-            .CommandBuffersCount = 1,
-            .pCommandBuffers = &mGraphicsCommandBuffers[mCurrentFrame],
-            .SignalSemaphoresCount = 1,
-            .pSignalSemaphores = &mGraphicsRenderFinishedSemaphores[mCurrentFrame],
-            .Fence = mGraphicsFlightFences[mCurrentFrame],
-        };
-
-        mDevice->SubmitGraphics(submitConfig);
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        SPresentConfig presentConfig =
-        {
-            .Queue = mDevice->GetDeviceData().vkData.GraphicsQueue,
-            .WaitSemaphoresCount = 1,
-            .pWaitSemaphores = &mGraphicsRenderFinishedSemaphores[mCurrentFrame],
-            .ImageIndex = imageIndex
-        };
-
-        //mDevice->Present(presentConfig);
-        mSwapchain->Present(presentConfig);
-
-        while(!mGraphicsFlightFences[mCurrentFrame]->Wait(fenceWait))
-        {
-            LogMessage(MessageSeverity::Info, "Waiting for graphics fence");
-        };
-
-        mGraphicsFlightFences[mCurrentFrame]->Reset();
-
-        mGraphicsCommandBuffers[mCurrentFrame]->Reset();
+        commandBuffer->End();
     }
 
     void Renderer::CreateSwapchain(HWND hWnd)
@@ -554,7 +618,7 @@ namespace psm
         mGraphicsRenderFinishedSemaphores.resize(swapchainImages);
         mGraphicsFlightFences.resize(swapchainImages);
 
-        mComputeFlightFences.resize(swapchainImages);
+        //mComputeFlightFences.resize(swapchainImages);
         mComputeDispatchFinishedSemaphores.resize(swapchainImages);
 
         for(int i = 0; i < swapchainImages; i++)
@@ -566,7 +630,7 @@ namespace psm
 
         for(int i = 0; i < swapchainImages; i++)
         {
-            mComputeFlightFences[i] = mDevice->CreateFence({ false });
+            //mComputeFlightFences[i] = mDevice->CreateFence({ false });
             mComputeDispatchFinishedSemaphores[i] = mDevice->CreateSemaphore({ false });
         }
     }
@@ -597,7 +661,7 @@ namespace psm
                 maxCombinedImageSamples
             },
             {
-                EDescriptorType::STORAGE_BUFFER, 
+                EDescriptorType::STORAGE_BUFFER,
                 maxStorageBuffer
             },
             {

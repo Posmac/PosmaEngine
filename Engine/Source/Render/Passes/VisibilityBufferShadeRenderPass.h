@@ -36,8 +36,8 @@ namespace psm
                                             uint32_t framebuffersCount);
             virtual ~VisibilityBufferShadeRenderPassNode();
 
-            virtual void PreRender(CommandBufferPtr& commandBuffer, uint32_t index) override;
-            virtual void PostRender(CommandBufferPtr& commandBuffer) override;
+            virtual void PreRender() override;
+            virtual void PostRender() override;
             virtual void AddResourceReferences(uint32_t framesCount) override;
             virtual void CollectReferences(uint32_t framesCount) override;
             virtual void RecreateFramebuffers(const SwapchainPtr swapchain) override;

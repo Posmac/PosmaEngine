@@ -36,8 +36,10 @@ namespace psm
             mVisBufferImages.clear();
         }
 
-        void VisibilityBufferGeneratorRenderPassNode::PreRender(CommandBufferPtr& commandBuffer, uint32_t index)
+        void VisibilityBufferGeneratorRenderPassNode::PreRender()
         {
+            RenderPassNode::PreRender();
+
             std::array<UClearValue, 2> clearColor{};
             clearColor[0].Color = { {0.2f, 0.2f, 0.2f, 1.0f} };
             clearColor[1].DepthStencil = { 0.0f, 0 };
@@ -45,8 +47,8 @@ namespace psm
             SRenderPassBeginConfig defaultRenderPassBeginConfig =
             {
                 .RenderPass = mRenderPass,
-                .Framebuffer = mFramebuffers[index],
-                .CommandBuffer = commandBuffer,
+                .Framebuffer = mFramebuffers[mCurrentFramebufferIndex],
+                .CommandBuffer = mCurrentCommandBuffer,
                 .Offset = {0, 0},
                 .Extent = {mFramebuffersSize.width, mFramebuffersSize.height},
                 .ClearValuesCount = clearColor.size(),
@@ -56,13 +58,15 @@ namespace psm
 
             mRenderPass->BeginRenderPass(defaultRenderPassBeginConfig);
 
-            mDeviceInternal->SetViewport(commandBuffer, 0.0f, 0.0f, static_cast<float>(mFramebuffersSize.width), static_cast<float>(mFramebuffersSize.width), 0.0f, 1.0f);
-            mDeviceInternal->SetScissors(commandBuffer, { 0, 0 }, { mFramebuffersSize.width, mFramebuffersSize.height });
+            mDeviceInternal->SetViewport(mCurrentCommandBuffer, 0.0f, 0.0f, static_cast<float>(mFramebuffersSize.width), static_cast<float>(mFramebuffersSize.width), 0.0f, 1.0f);
+            mDeviceInternal->SetScissors(mCurrentCommandBuffer, { 0, 0 }, { mFramebuffersSize.width, mFramebuffersSize.height });
         }
 
-        void VisibilityBufferGeneratorRenderPassNode::PostRender(CommandBufferPtr& commandBuffer)
+        void VisibilityBufferGeneratorRenderPassNode::PostRender()
         {
-            mRenderPass->EndRenderPass(commandBuffer);
+            mRenderPass->EndRenderPass(mCurrentCommandBuffer);
+
+            RenderPassNode::PostRender();
         }
 
         void VisibilityBufferGeneratorRenderPassNode::AddResourceReferences(uint32_t framesCount)

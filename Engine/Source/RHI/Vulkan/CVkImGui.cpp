@@ -90,7 +90,6 @@ namespace psm
 
             SCommandBufferBeginConfig begin =
             {
-                .BufferIndex = 0, 
                 .Usage = ECommandBufferUsage::ONE_TIME_SUBMIT_BIT 
             };
 
@@ -107,20 +106,17 @@ namespace psm
 
             FencePtr submitFence = mDeviceInternal->CreateFence(fenceConfig);
 
-            SSubmitGraphicsConfig submitConfig =
+            SSubmitConfig submitConfig =
             {
-                .GraphicsQueue = mDeviceInternal->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
+                .Queue = mDeviceInternal->GetDeviceData().vkData.GraphicsQueue, //not sure if Queue should be abstracted to CVk(IQueue)
                 .SubmitCount = 1,
-                .WaitStageFlags = EPipelineStageFlags::NONE,
-                .WaitSemaphoresCount = 0,
-                .pWaitSemaphores = nullptr,
-                .CommandBuffersCount = 1,
-                .pCommandBuffers = &cmdBuff,
-                .SignalSemaphoresCount = 0,
-                .pSignalSemaphores = nullptr,
+                .WaitStageFlags = {},
+                .WaitSemaphores = {},
+                .CommandBuffers = {cmdBuff},
+                .SignalSemaphores = {},
                 .Fence = submitFence,
             };
-            mDeviceInternal->SubmitGraphics(submitConfig);
+            mDeviceInternal->SubmitQueue(submitConfig);
             mDeviceInternal->WaitIdle();
 
             ImGui_ImplVulkan_DestroyFontUploadObjects();

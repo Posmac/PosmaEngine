@@ -58,11 +58,17 @@ namespace psm
         void ResizeWindow(HWND hWnd);
 
     private:
-        void BeginComputeRender();
-        void EndComputeRender();
+        void BeginComputeRender(CommandBufferPtr& commandBuffer);
+        void BeginGraphicsRender(CommandBufferPtr& commandBuffer);
 
-        uint32_t BeginGraphicsRender();
-        void EndGraphicsRender(uint32_t imageIndex);
+        void EndComputeRender(CommandBufferPtr& commandBuffer);
+        void EndGraphicsRender(CommandBufferPtr& commandBuffer);
+
+        //void SubmitGraphicsRender(CommandBufferPtr& commandBuffer, EPipelineStageFlags stageFlags, SemaphorePtr signalSemaphore, SemaphorePtr waitSemaphore);
+        //void SubmitComputeRender(CommandBufferPtr& commandBuffer, EPipelineStageFlags stageFlags, SemaphorePtr signalSemaphore, SemaphorePtr waitSemaphore);
+
+        //uint32_t GetSwapchainImage();
+        //void Present(uint32_t imageIndex);
 
         void RegisterRenderPasses();
         void CreateSwapchain(HWND hWnd);
@@ -95,16 +101,18 @@ namespace psm
         //graphics
         CommandPoolPtr mGraphicsCommandPool;
         std::vector<CommandBufferPtr> mGraphicsCommandBuffers;
-
         std::vector<SemaphorePtr> mGraphicsRenderFinishedSemaphores;
         std::vector<FencePtr> mGraphicsFlightFences;
+
+        //present
+        std::vector<CommandBufferPtr> mPresentCommandBuffers;
 
         //compute
         CommandPoolPtr mComputeCommandPool;
         std::vector<CommandBufferPtr> mComputeCommandBuffers;
 
         std::vector<SemaphorePtr> mComputeDispatchFinishedSemaphores;
-        std::vector<FencePtr> mComputeFlightFences;
+        //std::vector<FencePtr> mComputeFlightFences;
 
         bool isInit;
         uint32_t mCurrentImageIndex;
