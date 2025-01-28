@@ -22,7 +22,7 @@ layout(set = 2, binding = 3) uniform sampler2D Roughness;
 void main()
 {
     DepthRT = vec4(gl_FragCoord.z, 0, 0, 1);
-    EmissionRT = vec4(1, 0, 0, 1);
+    EmissionRT = vec4(TexCoords, 0, 1);
     SpecularGlossRT = vec4(0, 1, 0, 1);
     RoughMetallicRT = vec4(0, 0, 1, 1);
     NormalRT = normalize(WorldNormal);
