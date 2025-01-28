@@ -14,15 +14,6 @@ namespace psm
 {
     namespace graph
     {
-        struct Particle
-        {
-            glm::vec2 Position;
-            glm::vec2 Velocity;
-            glm::vec4 Color;
-        };
-
-        const uint32_t PARTICLE_COUNT = 8192;
-
         class VisibilityBufferShadeRenderPassNode : public RenderPassNode, std::enable_shared_from_this<VisibilityBufferShadeRenderPassNode>
         {
         public:
@@ -42,16 +33,27 @@ namespace psm
             virtual void CollectReferences(uint32_t framesCount) override;
             virtual void RecreateFramebuffers(const SwapchainPtr swapchain) override;
 
+            void UpdateDescriptors();
+
         private:
             void InitializeBuffers(CommandPoolPtr& commandPool, SResourceExtent3D framebufferSize, uint32_t framebuffersCount);
             void InitializeDescriptors(DescriptorPoolPtr& descriptorPool);
-            void UpdateDescriptors(uint32_t framesCount);
+            void InitializeRenderTargets(CommandPoolPtr& commandPool, SResourceExtent3D framebufferSize, uint32_t framebuffersCount);
 
         private:
-            std::vector<BufferPtr> mShaderStorageBuffers;
-                                                                                            
-            DescriptorSetLayoutPtr mShaderStorageSetLayout;
-            DescriptorSetPtr mShaderStorageSet;
+            std::vector<ImagePtr> mShaderStorageAlbedoResult;
+            std::vector<ImagePtr> mShaderStorageNormalResult;
+            std::vector<ImagePtr> mShaderStorageWorldPosResult;
+
+            //store indices and vertices of all models
+            BufferPtr mVertices;
+            BufferPtr mIndices;
+            BufferPtr mInstances;
+
+            DescriptorSetLayoutPtr mSetLayout;
+            DescriptorSetPtr mSet;
+
+            SamplerPtr mSampler;
         };
 
         using VisibilityBufferShadeRenderPassNodePtr = std::shared_ptr<graph::VisibilityBufferShadeRenderPassNode>;

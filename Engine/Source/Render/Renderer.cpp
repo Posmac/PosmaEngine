@@ -51,6 +51,8 @@ namespace psm
 
         hInstance = static_cast<HINSTANCE>(config.win32.hInstance);
 
+        mConfig = config;
+
         //init general things for rendering
         CreateSwapchain(static_cast<HWND>(config.win32.hWnd));
         CreateSwapchainSyncObjects();
@@ -63,13 +65,17 @@ namespace psm
         OpaqueInstances::GetInstance()->Init(mDevice, mResourceMediator, mDescriptorPool);
         ShadowsGenerator::Instance()->Init(mDevice, mResourceMediator);
 
-        RegisterRenderPasses();
         CreateSampler();
 
         ModelLoader::Instance()->Init(mDevice, mGraphicsCommandPool);
         TextureLoader::Instance()->Init(mDevice, mGraphicsCommandPool);
+    }
 
-        InitImGui(static_cast<HWND>(config.win32.hWnd));
+    void Renderer::PostInit()
+    {
+        RegisterRenderPasses();
+
+        InitImGui(static_cast<HWND>(mConfig.win32.hWnd));
 
         isInit = true;
     }
@@ -155,6 +161,7 @@ namespace psm
             mGraphicsFlightFences[mCurrentFrame]->Reset();
         };
 
+
         //VSP
         auto preVisBufShadeLambda = [this]()
         {
@@ -165,10 +172,21 @@ namespace psm
         {
             mVisBufferShadePipelineNode->Bind(mComputeCommandBuffers[mCurrentFrame], EPipelineBindPoint::COMPUTE);
 
+            graph::VisibilityBufferShadeRenderPassNodePtr node = std::dynamic_pointer_cast<graph::VisibilityBufferShadeRenderPassNode>(mVisBufferShadeRenderPass);
+            node->UpdateDescriptors();
+
             DescriptorSetPtr set = mResourceMediator->GetDescriptorSetByName(graph::VISBUF_SHADE_SET);
             mDevice->BindDescriptorSets(mComputeCommandBuffers[mCurrentFrame], EPipelineBindPoint::COMPUTE, mVisBufferShadePipelineNode->GetPipelineLayout(), { set });
 
-            mDevice->Dispatch(mComputeCommandBuffers[mCurrentFrame], graph::PARTICLE_COUNT / 256, 1, 1);
+            auto imageSize = mSwapchain->GetSwapchainSize();
+
+            auto local_size_x = 16;
+            auto local_size_y = 16;
+            auto num_groups_x = (imageSize.width + local_size_x - 1) / local_size_x;
+            auto num_groups_y = (imageSize.height + local_size_y - 1) / local_size_y;
+            auto num_groups_z = 1;
+
+            mDevice->Dispatch(mComputeCommandBuffers[mCurrentFrame], num_groups_x, num_groups_y, num_groups_z);
         };
 
         auto postVisBufShadeLambda = [this]()
@@ -305,6 +323,7 @@ namespace psm
                                                                                                  mSwapchain->GetSwapchainSize(),
                                                                                                  mSwapchain->GetImagesCount());
 
+
         mCompositeBackbufferPass->AddRenderCallback(renderCompositeLambda);
         mCompositeBackbufferPass->AddPreRenderCallback(preCompositeLambda);
         mCompositeBackbufferPass->AddPostRenderCallback(postCompositeLambda);
@@ -424,6 +443,8 @@ namespace psm
             return;
         }
 
+        buffer.ViewPortSize = {mSwapchain->GetSwapchainSize().width, mSwapchain->GetSwapchainSize().height};
+
         mDevice->UpdateBuffer(mGlobalBuffers[mCurrentFrame], &buffer);
         ShadowsGenerator::Instance()->Update();
 
@@ -470,6 +491,8 @@ namespace psm
         mDevice->CreateSurface(platformConfig);
         CreateSwapchain(mWindow);
         mCompositeBackbufferPass->RecreateFramebuffers(mSwapchain);
+        mVisBufferShadeRenderPass->RecreateFramebuffers(mSwapchain);
+        mGbufferRenderPass->RecreateFramebuffers(mSwapchain);
     }
 
     void Renderer::CreateRenderFrameCommandBuffers()

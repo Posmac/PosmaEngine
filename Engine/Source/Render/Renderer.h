@@ -52,6 +52,7 @@ namespace psm
         //class specific
     public:
         void Init(DevicePtr device, const PlatformConfig& config);
+        void PostInit();
         void Deinit();
 
         void Render(GlobalBuffer& buffer);
@@ -89,6 +90,7 @@ namespace psm
         //old
         HWND mWindow; //abstract it?
         HINSTANCE hInstance;
+        PlatformConfig mConfig;
 
         //new RHI data
         DevicePtr mDevice;

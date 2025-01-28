@@ -41,7 +41,7 @@ namespace psm
             RenderPassNode::PreRender();
 
             std::array<UClearValue, 2> clearColor{};
-            clearColor[0].Color = { {0.2f, 0.2f, 0.2f, 1.0f} };
+            clearColor[0].Color = { {0.0f, 0.0f, 0.0f, 1.0f} };
             clearColor[1].DepthStencil = { 0.0f, 0 };
 
             SRenderPassBeginConfig defaultRenderPassBeginConfig =
@@ -58,7 +58,8 @@ namespace psm
 
             mRenderPass->BeginRenderPass(defaultRenderPassBeginConfig);
 
-            mDeviceInternal->SetViewport(mCurrentCommandBuffer, 0.0f, 0.0f, static_cast<float>(mFramebuffersSize.width), static_cast<float>(mFramebuffersSize.width), 0.0f, 1.0f);
+            mDeviceInternal->SetViewport(mCurrentCommandBuffer, 0.0f, 0.0f, static_cast<float>(mFramebuffersSize.width),
+                                         static_cast<float>(mFramebuffersSize.height), 0.0f, 1.0f);
             mDeviceInternal->SetScissors(mCurrentCommandBuffer, { 0, 0 }, { mFramebuffersSize.width, mFramebuffersSize.height });
         }
 
@@ -241,8 +242,6 @@ namespace psm
             };
 
             mDeviceInternal->ImageLayoutTransition(commandBuffer, mDepthStencilRenderTarget, imageLayoutTransition);
-
-            commandBuffer->End();
 
             mDeviceInternal->SubmitSingleTimeCommandBuffer(cmdPool, commandBuffer);
         }

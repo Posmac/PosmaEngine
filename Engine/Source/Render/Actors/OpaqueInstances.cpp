@@ -41,8 +41,9 @@ namespace psm
     void OpaqueInstances::Deinit()
     {
         m_Models.clear();
-
         m_PerModels.clear();
+        mUniqueModels.clear();
+        mCachedInstanceBuffer.clear();
 
         mInstanceBuffer = nullptr;
 
@@ -214,6 +215,7 @@ namespace psm
             {
                 int index = m_PerModels.size();
                 m_Models.insert({ model, index });
+                mUniqueModels.push_back(model);
 
                 PerModel perModel =
                 {
@@ -541,6 +543,7 @@ namespace psm
         if(mInstanceBuffer != nullptr)
         {
             mInstanceBuffer = nullptr;
+            mCachedInstanceBuffer.clear();
         }
 
         VkDeviceSize bufferSize = sizeof(Instance) * totalInstances;
@@ -554,6 +557,7 @@ namespace psm
             .MemoryProperties = EMemoryProperties::MEMORY_PROPERTY_HOST_VISIBLE_BIT | EMemoryProperties::MEMORY_PROPERTY_HOST_COHERENT_BIT
         };
 
+        mCachedInstanceBuffer.reserve(totalInstances);
         mInstanceBuffer = mDeviceInternal->CreateBuffer(bufferConfig);
 
         SBufferMapConfig mapConfig =
@@ -577,6 +581,7 @@ namespace psm
                     for(int i = 0; i < material.Instances.size(); i++)
                     {
                         *perInstance = material.Instances[i];
+                        mCachedInstanceBuffer.push_back(material.Instances[i]);
                         perInstance++;
                     }
                 }
@@ -667,6 +672,16 @@ namespace psm
         }
 
         mInstanceToWorldConstantBuffer->Unmap();
+    }
+
+    std::vector<OpaqueInstances::Instance>& OpaqueInstances::GetInstances()
+    {
+        return mCachedInstanceBuffer;
+    }
+
+    std::vector<std::shared_ptr<Model>>& OpaqueInstances::GetModels()
+    {
+        return mUniqueModels;
     }
 
     void OpaqueInstances::UpdateDefaultDescriptors(uint32_t imageIndex)

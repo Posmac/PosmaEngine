@@ -112,6 +112,10 @@ namespace psm
 
         void UpdateInstanceBuffer();
         void UpdateMeshToModelData();
+
+        std::vector<Instance>& GetInstances();
+        std::vector<std::shared_ptr<Model>>& GetModels();
+
     private:
         void SetupDescriptors();
         void SetupMaterialDescriptor(DescriptorSetPtr& descriptorSet, const Material& material);
@@ -120,11 +124,13 @@ namespace psm
     private:
         std::unordered_map<std::shared_ptr<Model>, uint32_t> m_Models;
         std::vector<PerModel> m_PerModels;
+        std::vector<std::shared_ptr<Model>> mUniqueModels;
 
         DevicePtr mDeviceInternal;
         graph::ResourceMediatorPtr mResourceMediator;
         DescriptorPoolPtr mDescriptorPoolInternal;
 
+        std::vector<Instance> mCachedInstanceBuffer;
         BufferPtr mInstanceBuffer;
 
         //descriptor sets used by all passes 

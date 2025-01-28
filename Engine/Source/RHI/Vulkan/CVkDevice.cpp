@@ -815,6 +815,8 @@ namespace psm
 
     void CVkDevice::SubmitSingleTimeCommandBuffer(CommandPoolPtr& cmdPool, CommandBufferPtr commandBuffer)
     {
+        commandBuffer->End();
+
         //submits single time command buffer, waits fences to complete and resets it
         SFenceConfig fenceConfig =
         {
@@ -881,7 +883,7 @@ namespace psm
         {
             imagesInfo[i] =
             {
-                .sampler = reinterpret_cast<VkSampler>(updateTextures[i].Sampler->Raw()),
+                .sampler = updateTextures[i].Sampler != nullptr ? reinterpret_cast<VkSampler>(updateTextures[i].Sampler->Raw()) : nullptr,
                 .imageView = reinterpret_cast<VkImageView>(updateTextures[i].Image->RawImageView()),
                 .imageLayout = ToVulkan(updateTextures[i].ImageLayout)
             };

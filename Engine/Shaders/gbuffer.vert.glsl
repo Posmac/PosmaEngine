@@ -16,6 +16,7 @@ layout(set = 0, binding = 0) uniform GlobalBuffer
     mat4 ViewMatrix;
     mat4 ProjectionMatrix;
     mat4 ViewProjectionMatrix;
+    vec2 ViewPortSize;
     float time;
 } globalBuffer;
 

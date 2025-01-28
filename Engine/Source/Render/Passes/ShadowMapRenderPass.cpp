@@ -58,9 +58,11 @@ namespace psm
 
             mRenderPass->BeginRenderPass(shadowMapRenderPassBeginConfig);
 
-            mDeviceInternal->SetViewport(mCurrentCommandBuffer, 0, 0, static_cast<float>(mFramebuffersSize.width), static_cast<float>(mFramebuffersSize.height), 0.0f, 1.0f);
+            mDeviceInternal->SetViewport(mCurrentCommandBuffer, 0, 0, static_cast<float>(mFramebuffersSize.width), 
+                                         static_cast<float>(mFramebuffersSize.height), 0.0f, 1.0f);
             mDeviceInternal->SetScissors(mCurrentCommandBuffer, { 0,0 }, { mFramebuffersSize.width, mFramebuffersSize.height });
-            mDeviceInternal->SetDepthBias(mCurrentCommandBuffer, ShadowsGenerator::Instance()->DepthBias, 0.0f, ShadowsGenerator::Instance()->DepthSlope);
+            mDeviceInternal->SetDepthBias(mCurrentCommandBuffer, ShadowsGenerator::Instance()->DepthBias,
+                                          0.0f, ShadowsGenerator::Instance()->DepthSlope);
         }
 
         void ShadowMapRenderPassNode::CreateRenderPass(const DevicePtr& device)

@@ -1,5 +1,7 @@
 #version 450
 
+#extension GL_ARB_shader_draw_parameters : enable
+
 //binding 0 (perVertex)
 layout(location = 0) in vec4 localPosition;
 layout(location = 1) in vec4 normal;
@@ -16,6 +18,7 @@ layout(set = 0, binding = 0) uniform GlobalBuffer
     mat4 ViewMatrix;
     mat4 ProjectionMatrix;
     mat4 ViewProjectionMatrix;
+    vec2 ViewPortSize;
     float time;
 } globalBuffer;
 
@@ -25,7 +28,7 @@ layout(set = 1, binding = 0) uniform ModelData
 } modelData;
 
 layout(location=0) flat out uint InstanceID;
-layout(location=1) flat out uint PrimitiveID;
+//layout(location=1) flat out uint VertexID;
 
 void main()
 {
@@ -33,5 +36,6 @@ void main()
 	mat4 modelToWorld = modelData.ModelToWorldMatrix * meshToModel;
 	gl_Position = globalBuffer.ViewProjectionMatrix * modelToWorld * localPosition;
     InstanceID = gl_InstanceIndex;
-    PrimitiveID = gl_VertexIndex;
+    //VertexID = gl_PrimitiveID;
+    //gl_PrimitiveID gl_VertexIndex
 }

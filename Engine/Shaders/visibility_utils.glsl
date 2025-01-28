@@ -10,6 +10,6 @@ uint calculateOutputVIID(uint vertexId, uint instanceId)
 //unpacks vertex id and instance id
 void unpackOutputVBID(uint packedID, out uint vertexId, out uint instanceId)
 {
-    vertexId = (packedID >> 23) & 0xFF;
-    instanceId = packedID & 0x007FFFFF;
+    instanceId = (packedID >> 23) & 0xFF;
+    vertexId = packedID & 0x007FFFFF;
 }

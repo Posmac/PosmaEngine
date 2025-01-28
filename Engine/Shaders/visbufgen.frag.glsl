@@ -5,9 +5,9 @@
 layout(location=0) out vec4 VisibilityBufferRT;
 
 layout(location=0) flat in uint InstanceID;
-layout(location=1) flat in uint PrimitiveID;
+//layout(location=1) flat in uint VertexID;
 
 void main()
 {
-	VisibilityBufferRT = unpackUnorm4x8(calculateOutputVIID(PrimitiveID, InstanceID));
+	VisibilityBufferRT = unpackUnorm4x8(calculateOutputVIID(gl_PrimitiveID, InstanceID));
 }

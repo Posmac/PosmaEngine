@@ -11,6 +11,7 @@ namespace psm
         glm::vec4 Position;
         glm::vec4 Normal;
         glm::vec2 TexCoord;
+        glm::vec2 _padding;
 
         bool operator==(const Vertex& other) const;
     };

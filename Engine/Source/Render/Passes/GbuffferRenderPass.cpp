@@ -71,7 +71,8 @@ namespace psm
 
             mRenderPass->BeginRenderPass(shadowMapRenderPassBeginConfig);
 
-            mDeviceInternal->SetViewport(mCurrentCommandBuffer, 0, 0, static_cast<float>(mFramebuffersSize.width), static_cast<float>(mFramebuffersSize.height), 0.0f, 1.0f);
+            mDeviceInternal->SetViewport(mCurrentCommandBuffer, 0, 0, static_cast<float>(mFramebuffersSize.width),
+                                         static_cast<float>(mFramebuffersSize.height), 0.0f, 1.0f);
             mDeviceInternal->SetScissors(mCurrentCommandBuffer, { 0,0 }, { mFramebuffersSize.width, mFramebuffersSize.height });
         }
 
@@ -94,24 +95,19 @@ namespace psm
             for(int i = 0; i < mTargets.size(); i++)
             {
                 foundation::Name albedoRefName = GetResourceIndexedName(GBUFFER_ALBEDO_RENDERTARGET_NAME, i);
-                mResourceMediator->RegisterImageResource(albedoRefName, mTargets[i].AlbedoTarget.Image);
-
                 foundation::Name normalRefName = GetResourceIndexedName(GBUFFER_NORMAL_RENDERTARGET_NAME, i);
-                mResourceMediator->RegisterImageResource(normalRefName, mTargets[i].NormalTarget.Image);
-
                 foundation::Name depthRefName = GetResourceIndexedName(GBUFFER_DEPTH_RENDERTARGET_NAME, i);
-                mResourceMediator->RegisterImageResource(depthRefName, mTargets[i].DepthTarget.Image);
-            
                 foundation::Name worldPosRefName = GetResourceIndexedName(GBUFFER_WORLDPOS_RENDERTARGET_NAME, i);
-                mResourceMediator->RegisterImageResource(worldPosRefName, mTargets[i].WorldPositionsTarget.Image);
-
                 foundation::Name emissionRefName = GetResourceIndexedName(GBUFFER_EMISSION_RENDERTARGET_NAME, i);
-                mResourceMediator->RegisterImageResource(emissionRefName, mTargets[i].EmissionTarget.Image);
-
                 foundation::Name specularGlossRefName = GetResourceIndexedName(GBUFFER_SPECULAR_GLOSS_RENDERTARGET_NAME, i);
-                mResourceMediator->RegisterImageResource(specularGlossRefName, mTargets[i].SpecularGlosinessTarget.Image);
-
                 foundation::Name roughMetallRefName = GetResourceIndexedName(GBUFFER_ROUGH_METAL_RENDERTARGET_NAME, i);
+
+                mResourceMediator->RegisterImageResource(albedoRefName, mTargets[i].AlbedoTarget.Image);
+                mResourceMediator->RegisterImageResource(normalRefName, mTargets[i].NormalTarget.Image);
+                mResourceMediator->RegisterImageResource(depthRefName, mTargets[i].DepthTarget.Image);
+                mResourceMediator->RegisterImageResource(worldPosRefName, mTargets[i].WorldPositionsTarget.Image);
+                mResourceMediator->RegisterImageResource(emissionRefName, mTargets[i].EmissionTarget.Image);
+                mResourceMediator->RegisterImageResource(specularGlossRefName, mTargets[i].SpecularGlosinessTarget.Image);
                 mResourceMediator->RegisterImageResource(roughMetallRefName, mTargets[i].RoughnessMetalnessTarget.Image);
             }
         }
@@ -135,8 +131,6 @@ namespace psm
                 target.Framebuffer = nullptr;
             }
 
-            mTargets.clear();
-
             CreateDepthStencilRenderTarget(swapchain->GetSwapchainSize());
             CreateFramebuffers(swapchain->GetSwapchainSize(), framebuffersCount);
 
@@ -144,13 +138,21 @@ namespace psm
 
             for(int i = 0; i < mTargets.size(); i++)
             {
-                mResourceMediator->UpdateImageReference(GBUFFER_ALBEDO_RENDERTARGET_NAME, mTargets[i].AlbedoTarget.Image);
-                mResourceMediator->UpdateImageReference(GBUFFER_NORMAL_RENDERTARGET_NAME, mTargets[i].NormalTarget.Image);
-                mResourceMediator->UpdateImageReference(GBUFFER_DEPTH_RENDERTARGET_NAME, mTargets[i].DepthTarget.Image);
-                mResourceMediator->UpdateImageReference(GBUFFER_WORLDPOS_RENDERTARGET_NAME, mTargets[i].WorldPositionsTarget.Image);
-                mResourceMediator->UpdateImageReference(GBUFFER_EMISSION_RENDERTARGET_NAME, mTargets[i].EmissionTarget.Image);
-                mResourceMediator->UpdateImageReference(GBUFFER_SPECULAR_GLOSS_RENDERTARGET_NAME, mTargets[i].SpecularGlosinessTarget.Image);
-                mResourceMediator->UpdateImageReference(GBUFFER_ROUGH_METAL_RENDERTARGET_NAME, mTargets[i].RoughnessMetalnessTarget.Image);
+                foundation::Name albedoRefName = GetResourceIndexedName(GBUFFER_ALBEDO_RENDERTARGET_NAME, i);
+                foundation::Name normalRefName = GetResourceIndexedName(GBUFFER_NORMAL_RENDERTARGET_NAME, i);
+                foundation::Name depthRefName = GetResourceIndexedName(GBUFFER_DEPTH_RENDERTARGET_NAME, i);
+                foundation::Name worldPosRefName = GetResourceIndexedName(GBUFFER_WORLDPOS_RENDERTARGET_NAME, i);
+                foundation::Name emissionRefName = GetResourceIndexedName(GBUFFER_EMISSION_RENDERTARGET_NAME, i);
+                foundation::Name specularGlossRefName = GetResourceIndexedName(GBUFFER_SPECULAR_GLOSS_RENDERTARGET_NAME, i);
+                foundation::Name roughMetallRefName = GetResourceIndexedName(GBUFFER_ROUGH_METAL_RENDERTARGET_NAME, i);
+
+                mResourceMediator->UpdateImageReference(albedoRefName, mTargets[i].AlbedoTarget.Image);
+                mResourceMediator->UpdateImageReference(normalRefName, mTargets[i].NormalTarget.Image);
+                mResourceMediator->UpdateImageReference(depthRefName, mTargets[i].DepthTarget.Image);
+                mResourceMediator->UpdateImageReference(worldPosRefName, mTargets[i].WorldPositionsTarget.Image);
+                mResourceMediator->UpdateImageReference(emissionRefName, mTargets[i].EmissionTarget.Image);
+                mResourceMediator->UpdateImageReference(specularGlossRefName, mTargets[i].SpecularGlosinessTarget.Image);
+                mResourceMediator->UpdateImageReference(roughMetallRefName, mTargets[i].RoughnessMetalnessTarget.Image);
             }
         }
 
@@ -462,14 +464,12 @@ namespace psm
 
             mDeviceInternal->ImageLayoutTransition(commandBuffer, mDepthStencilRenderTarget.Image, imageLayoutTransition);
 
-            commandBuffer->End();
-
             mDeviceInternal->SubmitSingleTimeCommandBuffer(cmdPool, commandBuffer);
         }
 
         void GbuffferRenderPassNode::CreateFramebuffers(SResourceExtent3D framebufferSize, uint32_t framesCount)
         {
-            for(int i = 0; i < mTargets.size(); i++)
+            for(int i = 0; i < framesCount; i++)
             {
                 SImageConfig imageConfig =
                 {

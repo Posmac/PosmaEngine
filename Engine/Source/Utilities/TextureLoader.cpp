@@ -263,8 +263,6 @@ namespace psm
             currentIndex++;
         }
 
-        commandBuffer->End();
-
         mDeviceInternal->SubmitSingleTimeCommandBuffer(mCommandPoolInternal, commandBuffer);
 
         mStbiImages.clear();
